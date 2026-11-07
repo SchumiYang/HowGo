@@ -210,6 +210,9 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     const falseSwitches = new Map<string, number>()
     const initFloors = new Map<string, { runs: number; startWrong: number; endWrong: number; oldRuleWrong: number; walks: number }>()
     const areaOf = (tr: Track) => `${tr.level ?? '1F'} ${tr.area}`
+    // the live bug: a WiFi start in the 1F court where nobody surveyed (the walk's own coverage removed), with and
+    // without the floor-void start rule
+    const unsurveyed = new Map<string, { runs: number; start: number; end: number; startNoRule: number; endNoRule: number }>()
     const levelLines: string[] = []
     const perWalk: string[] = []
     const vote = { n: new Map<string, number>(), ok: new Map<string, number>(), margins: new Map<string, number[]>(), streaks: new Map<string, number>() }
@@ -261,6 +264,21 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
           initFloors.set(k, f)
         }
         for (const area of [areaOf(tr), 'ALL']) per.set(area, [...(per.get(area) ?? []), ...v])
+      }
+      if (tr.area === 'arena' || level !== '1F') {
+        const [r2, m2] = withoutRoute(w, level, radiomap, magmap)
+        const u = unsurveyed.get(areaOf(tr)) ?? { runs: 0, start: 0, end: 0, startNoRule: 0, endNoRule: 0 }
+        for (const seed of SEEDS) {
+          floors = []
+          runEngine(w, tr, venueData, r2, m2, { seed }, false)
+          runEngine(w, tr, venueData, r2, m2, { seed, floorVoid: { radiusM: 1.5, startDepthM: 1e3 } }, false)
+          u.runs++
+          u.start += floors[0][0] !== level ? 1 : 0
+          u.end += floors[0][1] !== level ? 1 : 0
+          u.startNoRule += floors[1][0] !== level ? 1 : 0
+          u.endNoRule += floors[1][1] !== level ? 1 : 0
+        }
+        unsurveyed.set(areaOf(tr), u)
       }
       if (level !== '1F') {
         const q = (v: number[], p: number) => [...v].sort((a, b) => a - b)[Math.min(v.length - 1, Math.floor(p * v.length))]
@@ -332,9 +350,13 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     }
     lines.push('runs ending on the wrong floor (automatic level changes; walks are single-floor): '
       + [...falseSwitches].map(([k, v]) => `${k.split(' ')[0]} ${v}`).join(', '))
-    lines.push('WiFi-only start (d2, no seed), wrong floor: old rule = arg-min level on the first scan; now = entrance prior + initial correction:')
+    lines.push('WiFi-only start (d2, no seed), wrong floor: old rule = arg-min level on the first scan; now = arg-min + floor-void start rule + initial correction:')
     for (const [k, f] of [...initFloors].sort()) {
       lines.push(`  ${k.padEnd(14)} old rule ${f.oldRuleWrong}/${f.walks} walks; now: first fix ${f.startWrong}/${f.runs} runs, at the end ${f.endWrong}/${f.runs} runs`)
+    }
+    lines.push('WiFi-only start where the walk itself was not surveyed (its coverage removed), wrong floor: floor-void start rule on / off:')
+    for (const [k, u] of [...unsurveyed].sort()) {
+      lines.push(`  ${k.padEnd(14)} first fix ${u.start}/${u.runs} / ${u.startNoRule}/${u.runs} runs, at the end ${u.end}/${u.runs} / ${u.endNoRule}/${u.runs} runs`)
     }
     lines.push('WiFi level classification per fresh scan (held-out maps; margin = other level − own level, dB):')
     for (const [l, n] of vote.n) {

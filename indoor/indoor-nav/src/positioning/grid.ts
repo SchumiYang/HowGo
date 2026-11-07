@@ -197,6 +197,44 @@ export class OccupancyGrid {
     return true
   }
 
+  private dil = new Map<number, Uint8Array>()
+
+  /** true if a free cell lies within r metres (square neighbourhood) of (x, y): "on this floor" */
+  nearFree(x: number, y: number, r: number): boolean {
+    const k = Math.ceil(r / this.cell)
+    let mask = this.dil.get(k)
+    if (!mask) this.dil.set(k, (mask = this.dilate(k)))
+    const i = Math.floor((x - this.x0) / this.cell)
+    const j = Math.floor((y - this.y0) / this.cell)
+    return i >= 0 && j >= 0 && i < this.w && j < this.h && mask[j * this.w + i] === 1
+  }
+
+  /** free cells dilated by k cells (separable square window, sliding counts) */
+  private dilate(k: number): Uint8Array {
+    const { w, h, free } = this
+    const tmp = new Uint8Array(w * h)
+    const out = new Uint8Array(w * h)
+    for (let j = 0; j < h; j++) {
+      let c = 0
+      for (let i = 0; i < Math.min(k, w); i++) c += free[j * w + i]
+      for (let i = 0; i < w; i++) {
+        if (i + k < w) c += free[j * w + i + k]
+        if (i - k - 1 >= 0) c -= free[j * w + i - k - 1]
+        tmp[j * w + i] = c > 0 ? 1 : 0
+      }
+    }
+    for (let i = 0; i < w; i++) {
+      let c = 0
+      for (let j = 0; j < Math.min(k, h); j++) c += tmp[j * w + i]
+      for (let j = 0; j < h; j++) {
+        if (j + k < h) c += tmp[(j + k) * w + i]
+        if (j - k - 1 >= 0) c -= tmp[(j - k - 1) * w + i]
+        out[j * w + i] = c > 0 ? 1 : 0
+      }
+    }
+    return out
+  }
+
   /** true if every cell on the segment is free */
   segmentFree(ax: number, ay: number, bx: number, by: number): boolean {
     const { w, h, free } = this

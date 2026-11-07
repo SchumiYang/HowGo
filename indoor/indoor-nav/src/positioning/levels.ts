@@ -5,7 +5,9 @@
 import type { NavFeature } from '../data/types'
 
 export interface BaroOptions {
-  /** |pressure − reference| that counts as a floor change (hPa); a 5 m storey is ~0.6 hPa */
+  /** |pressure − reference| that counts as a floor change (hPa). The engine derives it from the venue: 55% of the
+   *  smallest storey height (tianmu 5 m -> 0.33 hPa); a real elevator ride there drops only ~0.4–0.5 hPa, which the
+   *  earlier fixed 0.45 hPa missed (and re-referenced away as drift after 60 s) */
   stepHpa: number
   /** the change must hold this long (ms) */
   holdMs: number
@@ -23,7 +25,7 @@ export interface BaroOptions {
 }
 
 export const DEFAULT_BARO: BaroOptions = {
-  stepHpa: 0.45,
+  stepHpa: 0.33,
   holdMs: 5000,
   windowMs: 60000,
   smoothMs: 2000,

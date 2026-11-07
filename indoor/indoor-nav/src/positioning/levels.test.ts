@@ -48,7 +48,16 @@ describe('BaroDetector', () => {
   })
 
   it('ignores a half step (escalator landing, door draught)', () => {
-    expect(run(new BaroDetector(), baro(200, (s) => 1010 - (s > 50 ? 0.3 : 0)))).toHaveLength(0)
+    expect(run(new BaroDetector(), baro(200, (s) => 1010 - (s > 50 ? 0.2 : 0)))).toHaveLength(0)
+  })
+
+  it('detects an elevator ride: 0.42 hPa in 6 s (~3.5 m), smooth, at 1 Hz (iOS CMAltimeter) and 25 Hz', () => {
+    const ride = (s: number) => 1010 - 0.42 * Math.min(1, Math.max(0, (s - 30) / 6))
+    for (const hz of [1, 25]) {
+      const ev = run(new BaroDetector(), baro(90, ride, hz))
+      expect(ev).toHaveLength(1)
+      expect(ev[0]!.dhM).toBeGreaterThan(2.5)
+    }
   })
 
   it('maps a height change to the adjacent level by elevation', () => {
@@ -190,41 +199,119 @@ describe('automatic floor changes', () => {
     expect(eng.stats.level).toBe('2F')
   })
 
-  it('a WiFi-only start begins on the entrance level when another level is only slightly better', () => {
-    // a scan hearing both floors' APs, 2F a little stronger (the 1F arena under the 2F walkway)
+  it('a WiFi-only start begins on the best-matching floor (users can start anywhere)', () => {
     const eng = createPositioning({ venueData, radiomap, options: { seed: 1 } })
     const changes: LevelChange[] = []
     eng.onLevelChange((c) => changes.push(c))
-    let ts = 9e9
-    const mixed = (t: number): WifiScan => {
-      ts += 5_000_000
-      return { supported: true, status: 'ok', collected_at: t, results: [
-        ...A.map((bssid, i) => ({ bssid, ssid: 'x', level: -54 - i * 6, frequency: 2437, timestamp: ts })),
-        ...B.map((bssid, i) => ({ bssid, ssid: 'x', level: -51 - i * 6, frequency: 2437, timestamp: ts })),
-      ] }
-    }
-    for (let k = 0; k < 5; k++) eng.pushWifiScan(mixed(T0 + k * 8000))
-    expect(eng.stats.level).toBe('1F')
+    eng.pushWifiScan(scanOf(B, T0))
+    eng.pushWifiScan(scanOf(B, T0 + 8000))
+    expect(eng.stats.level).toBe('2F')
+    expect(eng.last?.level).toBe('2F')
     expect(changes).toHaveLength(0)
   })
 
-  it('a WiFi-only start moves off the entrance level on strong evidence over 2 scans (initial correction)', () => {
-    const eng = createPositioning({ venueData, radiomap, options: { seed: 1 } })
+  it('an elevator ride (no steps, ~0.42 hPa) switches floors and re-seeds at the elevator on the new floor', () => {
+    for (const hz of [1, 25]) {
+      const eng = createPositioning({ venueData, options: { seed: 1 } })
+      const changes: LevelChange[] = []
+      eng.onLevelChange((c) => changes.push(c))
+      eng.setKnownPosition(3, 1.5, '1F', { t: T0 })
+      const g = makeGauss(mulberry32(hz))
+      // standing in the cabin: no steps, only the pressure moves (smooth 6 s ride), sensor noise 0.03 hPa
+      for (const [t, p] of baro(90, (s) => 1010 - 0.42 * Math.min(1, Math.max(0, (s - 30) / 6)) + g() * 0.03, hz)) {
+        eng.pushSensorBatch(still(t, { barometer: [[t, p]] }))
+      }
+      expect(changes.map((c) => [c.from, c.to, c.source, c.connector])).toEqual([['1F', '2F', 'barometer', '2F-A']])
+      expect(eng.stats.steps).toBe(0)
+      expect(eng.last?.level).toBe('2F')
+    }
+  })
+
+  it('the barometer threshold follows the venue storey height (55%, here 5 m -> 0.33 hPa)', () => {
+    const eng = createPositioning({ venueData, options: { seed: 1 } })
     const changes: LevelChange[] = []
     eng.onLevelChange((c) => changes.push(c))
-    // 2F-only APs, the user stands mid-corridor (far from any elevator: the normal WiFi switch could not fire)
-    eng.pushWifiScan(scanOf(B, T0))
-    eng.pushWifiScan(scanOf(B, T0 + 8000))
-    eng.pushWifiScan(scanOf(B, T0 + 16000))
-    expect(eng.stats.level).toBe('2F')
-    expect(changes.map((c) => [c.from, c.to, c.source, c.connector])).toEqual([['1F', '2F', 'wifi', null]])
-    expect(eng.last?.level).toBe('2F')
+    eng.setKnownPosition(3, 1.5, '1F', { t: T0 })
+    // 0.25 hPa (~2 m): below the threshold
+    for (const [t, p] of baro(90, (s) => 1010 - (s > 30 ? 0.25 : 0))) eng.pushSensorBatch(still(t, { barometer: [[t, p]] }))
+    expect(changes).toHaveLength(0)
   })
 
   it('autoLevel: false keeps the level', () => {
     const eng = createPositioning({ venueData, options: { seed: 1, autoLevel: false } })
     eng.setKnownPosition(3, 1.5, '1F', { t: T0 })
     for (const [t, p] of baro(60, (s) => 1010 - (s > 20 ? 0.6 : 0))) eng.pushSensorBatch(still(t, { barometer: [[t, p]] }))
+    expect(eng.stats.level).toBe('1F')
+  })
+})
+
+// ---- floor void: 1F is a 40 x 30 m hall (the court), 2F only a 3 m ring round it (no floor over the middle)
+const hall: VenueData = {
+  venue: {
+    id: 'h', name: 'h', origin: { lng: 121.5, lat: 25.1 }, bearing_deg: 0, default_level: '1F',
+    levels: [{ id: '1F', ordinal: 0, name: '1F', elevation_m: 0 }, { id: '2F', ordinal: 1, name: '2F', elevation_m: 5 }],
+  },
+  levels: [
+    { level: { id: '1F', ordinal: 0, name: '1F', elevation_m: 0 }, wallsLoaded: true, walls: [], walls3d: [], pois: [],
+      units: [{ ...rect('1F-hall', '1F', 0, 0, 40, 30), properties: { id: '1F-hall', level: '1F', category: 'court' } }] },
+    { level: { id: '2F', ordinal: 1, name: '2F', elevation_m: 5 }, wallsLoaded: true, walls: [], walls3d: [], pois: [],
+      units: [rect('2F-s', '2F', 0, 0, 40, 3), rect('2F-n', '2F', 0, 27, 40, 30), rect('2F-w', '2F', 0, 0, 3, 30), rect('2F-e', '2F', 37, 0, 40, 30)] },
+  ],
+  nav: [node('1F-el', '1F', [1.5, 1.5]), node('2F-el', '2F', [1.5, 1.5]), edge('1F-el', '2F-el', [1.5, 1.5], [1.5, 1.5], 'elevator')],
+  available: { walls: false, walls3d: false, units: true, pois: false, nav: true },
+}
+// the 1F court has (weak) fingerprints; the 2F ring hears the hall APs B well on its north AND south side
+const C = ['00:11:22:00:00:0c', '00:11:22:00:00:1c', '00:11:22:00:00:2c']
+const hallMap: Radiomap = {
+  bssids: [...B, ...C],
+  params: { likelihood_temper: 0.25 },
+  points: [
+    ...[5, 15, 25, 35].map((x) => fp('1F', x, Object.fromEntries(C.map((b, i) => [b, -70 - i * 5])))).map((p) => ({ ...p, y: 15 })),
+    ...[10, 20, 30].flatMap((x) => [
+      { ...fp('2F', x, Object.fromEntries(B.map((b, i) => [b, -50 - i * 6]))), id: `2F-n${x}`, y: 28.5 },
+      { ...fp('2F', x, Object.fromEntries(B.map((b, i) => [b, -50 - i * 6]))), id: `2F-s${x}`, y: 1.5 },
+    ]),
+  ],
+}
+
+describe('floor void (2F has no floor over the 1F court)', () => {
+  it('a 1F-court scan that WiFi-matches the 2F ring on both sides ends up on 1F, in the court', () => {
+    const eng = createPositioning({ venueData: hall, radiomap: hallMap, options: { seed: 2 } })
+    const changes: LevelChange[] = []
+    eng.onLevelChange((c) => changes.push(c))
+    // the court user hears the hall APs (B) strongly and the court APs (C) weakly: 2F matches ~1 dB better by WiFi
+    const court = (t: number): WifiScan => {
+      scanTs += 5_000_000
+      return { supported: true, status: 'ok', collected_at: t, results: [
+        ...B.map((bssid, i) => ({ bssid, ssid: 'x', level: -50 - i * 6, frequency: 2437, timestamp: scanTs })),
+        ...C.map((bssid, i) => ({ bssid, ssid: 'x', level: -78 - i * 5, frequency: 2437, timestamp: scanTs })),
+      ] }
+    }
+    for (let k = 0; k < 6; k++) eng.pushWifiScan(court(T0 + k * 8000))
+    expect(eng.stats.level).toBe('1F')
+    expect(changes.map((c) => [c.from, c.to])).toEqual([['2F', '1F']])
+    // re-seeded where the 2F cloud's mean was: the middle of the court, not at a connector
+    expect(eng.last!.level).toBe('1F')
+    expect(eng.last!.y).toBeGreaterThan(8)
+    expect(eng.last!.y).toBeLessThan(22)
+  })
+
+  it('a scan that matches only one side of the 2F ring stays on 2F (a 2F start remains possible)', () => {
+    const north: Radiomap = { ...hallMap, points: hallMap.points.filter((p) => p.level === '1F' || p.y > 20) }
+    const eng = createPositioning({ venueData: hall, radiomap: north, options: { seed: 2 } })
+    for (let k = 0; k < 6; k++) eng.pushWifiScan(scanOf(B, T0 + k * 8000))
+    expect(eng.stats.level).toBe('2F')
+    expect(eng.last!.y).toBeGreaterThan(25)
+    expect(eng.stats.floorVoidStreak).toBe(0)
+  })
+
+  it('no WiFi vote for 2F while the estimate is in the 1F court (under the void)', () => {
+    const eng = createPositioning({ venueData: hall, radiomap: hallMap, options: { seed: 2 } })
+    const changes: LevelChange[] = []
+    eng.onLevelChange((c) => changes.push(c))
+    eng.setKnownPosition(20, 15, '1F', { t: T0 })
+    for (let k = 0; k < 6; k++) eng.pushWifiScan(scanOf(B, T0 + 1000 + k * 8000))
+    expect(changes).toHaveLength(0)
     expect(eng.stats.level).toBe('1F')
   })
 })

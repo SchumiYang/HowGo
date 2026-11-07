@@ -84,7 +84,8 @@ export interface LevelChange {
   t: number
   from: string
   to: string
-  /** barometric step, WiFi level vote, or both agreeing */
+  /** barometric step, or WiFi: level vote, or the WiFi-matched estimate sat where this level has no floor (2F over the
+   *  arena void, confidence 0.9) — or both agreeing */
   source: 'barometer' | 'wifi' | 'both'
   confidence: number
   /** nav node the filter was re-seeded at (e.g. 2F-el2), null when no connector links the levels */
