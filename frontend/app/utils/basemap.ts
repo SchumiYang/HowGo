@@ -19,7 +19,9 @@ const ATTRIBUTION = '<a href="https://openfreemap.org" target="_blank">OpenFreeM
   + '<a href="https://www.openmaptiles.org/" target="_blank">© OpenMapTiles</a> '
   + 'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
 
-type Kind = 'light' | 'dark'
+/** light = Positron and dark = Dark, both tuned for HowGo; liberty = OpenFreeMap's default style, used as is. */
+type Kind = 'light' | 'dark' | 'liberty'
+const STYLE_NAME: Record<Kind, string> = { light: 'positron', dark: 'dark', liberty: 'liberty' }
 type Options = {
   /** Multiply label sizes (accessible mode). */
   textScale?: number
@@ -67,6 +69,7 @@ function rasterFallback(tileUrl: string, kind: Kind): Basemap {
       id: 'basemap', source: 'basemap', type: 'raster',
       paint: kind === 'dark'
         ? { 'raster-brightness-min': 0.92, 'raster-brightness-max': 0.06, 'raster-saturation': -1, 'raster-contrast': 0.25 }
+        : kind === 'liberty' ? {}
         : { 'raster-saturation': -0.55, 'raster-contrast': -0.08 },
     }],
   }
@@ -76,7 +79,7 @@ export async function loadBasemap(kind: Kind, fallbackTileUrl: string, options: 
   try {
     const signal = AbortSignal.timeout(8000)
     const [style, tilejson] = await Promise.all([
-      $fetch<StyleSpecification>(`${OPENFREEMAP}/styles/${kind === 'dark' ? 'dark' : 'positron'}`, { signal }),
+      $fetch<StyleSpecification>(`${OPENFREEMAP}/styles/${STYLE_NAME[kind]}`, { signal }),
       $fetch<{ tiles: string[]; minzoom?: number; maxzoom?: number }>(`${OPENFREEMAP}/planet`, { signal }),
     ])
     const [[west, south], [east, north]] = TAIPEI_BOUNDS
@@ -89,6 +92,19 @@ export async function loadBasemap(kind: Kind, fallbackTileUrl: string, options: 
         bounds: [west, south, east, north],
         attribution: ATTRIBUTION,
       },
+    }
+    if (kind === 'liberty') {
+      // Stock style: every source and layer as published. Only the vector source is clipped to Taipei,
+      // layer ids are prefixed so they never clash with the app's own layers, and labels can be enlarged.
+      for (const [name, source] of Object.entries(style.sources)) if (name !== 'openmaptiles') sources[name] = source
+      const layers = style.layers.map((layer): LayerSpecification => {
+        const id = `basemap-${layer.id}`
+        if (!options.textScale || layer.type !== 'symbol' || !layer.layout?.['text-field']) return { ...layer, id } as LayerSpecification
+        const layout = { ...layer.layout } as Record<string, unknown>
+        layout['text-size'] = scaleSize(layout['text-size'] ?? 16, options.textScale) // 16 is MapLibre's default size
+        return { ...layer, id, layout } as LayerSpecification
+      })
+      return { vector: true, glyphs: style.glyphs, sprite: style.sprite, sources, layers }
     }
     const layers = style.layers.flatMap((layer): LayerSpecification[] => {
       if (layer.type === 'background') return [{ ...layer, id: 'basemap-background' }]

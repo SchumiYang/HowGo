@@ -403,10 +403,8 @@ async function createMap() {
   try {
     const [{ Map }, basemap] = await Promise.all([
       import('maplibre-gl'),
-      // Dark vector basemap with labels 1.3× larger and in light cream for contrast on Grey/950.
-      loadBasemap('dark', config.public.tileUrl, {
-        textScale: 1.3, textColor: '#E9E2D2', haloColor: '#0B0D0E', roadColor: '#56626A', buildingColor: '#1E2428',
-      }),
+      // OpenFreeMap's default style (Liberty) as published, with labels 1.3× larger.
+      loadBasemap('liberty', config.public.tileUrl, { textScale: 1.3 }),
     ])
     if (!mapElement.value) return
     // Lines go between the basemap's shapes and its labels so street names stay readable over the route.
@@ -438,7 +436,6 @@ async function createMap() {
           live: empty(),
         },
         layers: [
-          { id: 'background', type: 'background', paint: { 'background-color': '#0B0D0E' } },
           ...baseShapes,
           { id: 'route-casing', source: 'route', type: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#0B0D0E', 'line-width': 13 } },
