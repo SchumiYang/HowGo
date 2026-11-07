@@ -1,6 +1,7 @@
 import { locale, t } from '~/i18n'
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl'
 import { watch } from 'vue'
+import { palette } from './palette'
 
 /** A building with an indoor map (FastAPI GET /v1/indoor/venues). */
 export interface IndoorVenue {
@@ -73,14 +74,14 @@ function injectStyle() {
 .indoor-venue-marker {
   display: inline-flex; align-items: center; gap: 6px;
   min-height: 48px; min-width: 48px; padding: 0 16px 0 12px;
-  border: 2px solid var(--white, #fff); border-radius: 999px;
-  background: var(--primary-700, #356C77); color: var(--white, #fff);
+  border: 2px solid var(--white, ${palette.white}); border-radius: 999px;
+  background: var(--primary-700, ${palette.primary700}); color: var(--white, ${palette.white});
   font: 600 14px/20px "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
   white-space: nowrap; cursor: pointer;
-  box-shadow: var(--shadow-floating, 0 8px 24px -4px #22474E1F, 0 2px 6px -1px #22474E0F);
+  box-shadow: var(--shadow-floating);
 }
-.indoor-venue-marker:hover { background: var(--primary-800, #22474E); }
-.indoor-venue-marker:focus-visible { outline: 3px solid var(--primary-300, #93D4DF); outline-offset: 2px; }
+.indoor-venue-marker:hover { background: var(--primary-800, ${palette.primary800}); }
+.indoor-venue-marker:focus-visible { outline: 3px solid var(--primary-300, ${palette.primary300}); outline-offset: 2px; }
 .indoor-venue-marker[data-compact] { padding: 0; justify-content: center; width: 48px; }
 .indoor-venue-marker[data-compact] .indoor-venue-label { display: none; }
 .indoor-venue-marker[hidden] { display: none; }`

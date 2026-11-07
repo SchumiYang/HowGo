@@ -61,7 +61,7 @@ function onKey(event: KeyboardEvent) {
         </select>
       </label>
 
-      <div class="landing-hero" aria-hidden="true"><AppIcon name="accessible" :size="28" /></div>
+      <div class="landing-hero" aria-hidden="true"><AppIcon name="accessible" :size="40" /></div>
       <h1 class="landing-title">{{ t('歡迎使用無障礙導航') }}</h1>
 
       <div class="landing-modes" role="radiogroup" :aria-label="t('使用模式')" @keydown="onKey">
@@ -69,7 +69,7 @@ function onKey(event: KeyboardEvent) {
           :aria-checked="selected === mode.key" :tabindex="selected === mode.key ? 0 : -1"
           @click="selected = mode.key" @keydown.space.prevent="selected = mode.key"
           @keydown.enter.prevent="emit('choose', mode.key)">
-          <span class="landing-mode-icon" aria-hidden="true"><AppIcon :name="mode.icon" :size="19" /></span>
+          <span class="landing-mode-icon" aria-hidden="true"><AppIcon :name="mode.icon" /></span>
           <div class="landing-mode-body">
             <div class="landing-mode-head">
               <h2>{{ t(mode.title) }}</h2>
@@ -107,7 +107,7 @@ function onKey(event: KeyboardEvent) {
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
-  background: #F6FAFB;
+  background: var(--primary-50);
   color: var(--text-primary);
   font-synthesis: weight;
 }
@@ -128,8 +128,8 @@ function onKey(event: KeyboardEvent) {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  background: var(--grey-100);
-  color: var(--grey-800);
+  background: var(--background-grey);
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 700;
 }
@@ -151,11 +151,11 @@ function onKey(event: KeyboardEvent) {
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--primary-50);
+  /* UI-002: no circular backdrop; the wheelchair sits on the page background, centred over the title. */
+  background: none;
   color: var(--primary-700);
 }
-.landing-title { margin: clamp(8px, 2vh, 16px) 0 0; text-align: center; font-size: 26px; line-height: 36px; font-weight: 800; color: #1B2124; }
+.landing-title { margin: clamp(8px, 2vh, 16px) 0 0; text-align: center; font-size: 26px; line-height: 36px; font-weight: 800; color: var(--text-primary); }
 
 .landing-modes {
   display: grid;
@@ -174,12 +174,12 @@ function onKey(event: KeyboardEvent) {
   padding: clamp(12px, 2.2vh, 18px) 14px;
   border: 2px solid transparent;
   border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 1px 3px #22474E14;
+  background: var(--background-white);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--shadow-tint) 8%, transparent);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.landing-mode[aria-checked="true"] { border-color: var(--primary-500); background: var(--primary-50); box-shadow: none; }
+.landing-mode[aria-checked="true"] { border-color: var(--brand-primary); background: var(--primary-50); box-shadow: none; }
 .landing-mode:focus-visible { outline: 3px solid var(--primary-700); outline-offset: 3px; }
 /* Mode icon at 80% of the mock size. */
 .landing-mode-icon {
@@ -192,14 +192,16 @@ function onKey(event: KeyboardEvent) {
   background: var(--primary-100);
   color: var(--primary-700);
 }
+/* UI-002: the glyph is 75% of the circle's height, centred; the 24x24 viewBox is square, so width matches. */
+.landing-mode-icon :deep(svg) { width: 75%; height: 75%; }
 .landing-mode[data-mode="accessible"] .landing-mode-icon { background: var(--secondary-50); color: var(--secondary-800); box-shadow: inset 0 0 0 1px var(--secondary-200); }
 .landing-mode-body { flex: 1; min-width: 0; }
 .landing-mode-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-right: 34px; }
-.landing-mode h2 { margin: 0; font-size: 19px; line-height: 28px; font-weight: 800; color: #1B2124; }
-.landing-badge { padding: 1px 10px; border-radius: 999px; background: var(--secondary-500); color: #3D2A05; font-size: 13px; line-height: 22px; font-weight: 800; }
+.landing-mode h2 { margin: 0; font-size: 19px; line-height: 28px; font-weight: 800; color: var(--text-primary); }
+.landing-badge { padding: 1px 10px; border-radius: 999px; background: var(--secondary-500); color: var(--secondary-900); font-size: 13px; line-height: 22px; font-weight: 800; }
 .landing-mode-sub { margin: 2px 0 0; font-size: 15px; font-weight: 700; color: var(--primary-700); }
 .landing-mode[data-mode="accessible"] .landing-mode-sub { color: var(--secondary-800); }
-.landing-mode-desc { margin: 10px 0 0; font-size: 16px; line-height: 26px; color: var(--grey-800); }
+.landing-mode-desc { margin: 10px 0 0; font-size: 16px; line-height: 26px; color: var(--text-primary); }
 .landing-features { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .landing-features li {
   display: inline-flex;
@@ -207,10 +209,10 @@ function onKey(event: KeyboardEvent) {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--background-white);
   font-size: 13.5px;
   line-height: 22px;
-  color: var(--grey-800);
+  color: var(--text-primary);
 }
 .landing-mode:not([aria-checked="true"]) .landing-features li { background: var(--grey-50); }
 .landing-features :deep(svg) { flex: none; color: var(--primary-700); }
@@ -225,7 +227,7 @@ function onKey(event: KeyboardEvent) {
   place-items: center;
   border-radius: 50%;
   background: var(--grey-100);
-  color: #fff;
+  color: var(--white);
 }
 .landing-mode[aria-checked="true"] .landing-radio { background: var(--primary-700); }
 
@@ -244,12 +246,12 @@ function onKey(event: KeyboardEvent) {
   border: 0;
   border-radius: 16px;
   background: var(--action);
-  color: #fff;
+  color: var(--white);
   font-size: 19px;
   font-weight: 800;
   box-shadow: var(--shadow-floating);
 }
-.landing-continue:active { background: var(--action-hover); }
+.landing-continue:hover, .landing-continue:active { background: var(--action-hover); }
 .landing-continue:focus-visible { outline: 3px solid var(--primary-800); outline-offset: 3px; }
 @media (max-width: 360px) {
   .landing-inner { padding-inline: 14px; }

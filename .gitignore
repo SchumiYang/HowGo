@@ -4,6 +4,7 @@ __pycache__/
 frontend/node_modules/
 frontend/.nuxt/
 frontend/.output/
+frontend/dist/
 .env
 .ors/
 
@@ -14,3 +15,8 @@ indoor/indoor-nav/dist-survey/
 indoor/mapdata/build/lowo/
 indoor/mapdata/history/
 backend/.pytest_cache/
+
+# 設計稿／交接參考資料（不納入版控）
+uiux_disable_v1/
+室外uiux-v1/
+uiux_edit/

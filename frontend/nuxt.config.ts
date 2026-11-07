@@ -26,7 +26,7 @@ export default defineNuxtConfig({
   },
   ssr: false,
   devtools: { enabled: false },
-  css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/main.css'],
+  css: ['maplibre-gl/dist/maplibre-gl.css', '~/assets/main.css', '~/assets/map-layers.css'],
   app: {
     head: {
       htmlAttrs: { lang: 'zh-Hant' },

@@ -14,6 +14,7 @@ import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl'
 import { createRouteTracker } from '~/utils/navigation'
 import { getFix, locationAvailable, watchFix, type FixError } from '~/utils/geolocation'
 import { LOCAL_CJK_FONT, TAIPEI_BOUNDS, collapseAttribution, loadBasemap } from '~/utils/basemap'
+import { palette } from '~/utils/palette'
 import type { Coordinate, Place } from '~/composables/usePlaceSearch'
 
 type View = 'destination' | 'arrow' | 'map'
@@ -331,7 +332,6 @@ function stopSession() {
   previewStep.value = null
   navState.value = 'waiting'
   navNote.value = ''
-  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }
 
 /** Back from Page 2 ends the session and returns to Page 1 with the destination kept in the field. */
@@ -440,24 +440,24 @@ async function createMap() {
         layers: [
           ...baseShapes,
           { id: 'route-casing', source: 'route', type: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#0B0D0E', 'line-width': 13 } },
+            paint: { 'line-color': palette.grey950, 'line-width': 13 } },
           { id: 'route', source: 'route', type: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#F5BA4B', 'line-width': 8 } },
+            paint: { 'line-color': palette.secondary500, 'line-width': 8 } },
           { id: 'walked', source: 'walked', type: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#6B7780', 'line-width': 8 } },
+            paint: { 'line-color': palette.grey600, 'line-width': 8 } },
           ...baseLabels,
           { id: 'facilities', source: 'facilities', type: 'circle', minzoom: 15,
-            paint: { 'circle-color': '#30383D', 'circle-radius': 7, 'circle-stroke-color': '#F0C87C', 'circle-stroke-width': 2 } },
+            paint: { 'circle-color': palette.grey800, 'circle-radius': 7, 'circle-stroke-color': palette.secondary400, 'circle-stroke-width': 2 } },
           { id: 'step', source: 'step', type: 'circle',
-            paint: { 'circle-color': '#0B0D0E', 'circle-radius': 14, 'circle-stroke-color': '#F5BA4B', 'circle-stroke-width': 4 } },
+            paint: { 'circle-color': palette.grey950, 'circle-radius': 14, 'circle-stroke-color': palette.secondary500, 'circle-stroke-width': 4 } },
           { id: 'destination-halo', source: 'destination', type: 'circle',
-            paint: { 'circle-color': '#F5BA4B', 'circle-radius': 20, 'circle-opacity': 0.25 } },
+            paint: { 'circle-color': palette.secondary500, 'circle-radius': 20, 'circle-opacity': 0.25 } },
           { id: 'destination', source: 'destination', type: 'circle',
-            paint: { 'circle-color': '#F5BA4B', 'circle-radius': 10, 'circle-stroke-color': '#0B0D0E', 'circle-stroke-width': 3 } },
+            paint: { 'circle-color': palette.secondary500, 'circle-radius': 10, 'circle-stroke-color': palette.grey950, 'circle-stroke-width': 3 } },
           { id: 'live-halo', source: 'live', type: 'circle',
-            paint: { 'circle-color': '#FFFFFF', 'circle-radius': 22, 'circle-opacity': 0.18 } },
+            paint: { 'circle-color': palette.white, 'circle-radius': 22, 'circle-opacity': 0.18 } },
           { id: 'live', source: 'live', type: 'circle',
-            paint: { 'circle-color': '#FFFFFF', 'circle-radius': 9, 'circle-stroke-color': '#F5BA4B', 'circle-stroke-width': 4 } },
+            paint: { 'circle-color': palette.white, 'circle-radius': 9, 'circle-stroke-color': palette.secondary500, 'circle-stroke-width': 4 } },
         ],
       },
     })
@@ -552,12 +552,15 @@ function onPointerUp(event: PointerEvent) {
   swipeStart = null
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) stepBy(dx < 0 ? 1 : -1)
 }
-/** At most 7 dots; the window follows the shown step. */
-const dots = computed(() => {
-  const count = steps.value.length
-  const size = Math.min(7, count)
-  const first = Math.min(Math.max(0, shownStepIndex.value - 3), count - size)
-  return Array.from({ length: size }, (_, i) => first + i)
+/* UI-007 step progress: one dot per step; keep the active (yellow) dot scrolled into view. */
+const stepDotsEl = ref<HTMLElement | null>(null)
+watch([shownStepIndex, () => steps.value.length, view], async () => {
+  await nextTick()
+  const row = stepDotsEl.value
+  const dot = row?.querySelector<HTMLElement>('[data-active="true"]')
+  if (!row || !dot || !row.clientWidth) return
+  const left = dot.offsetLeft - (row.clientWidth - dot.offsetWidth) / 2
+  row.scrollTo({ left: Math.max(0, left), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
 })
 
 /* ---------- Arrow artwork ---------- */
@@ -688,11 +691,12 @@ onBeforeUnmount(() => {
               <p v-if="card.detail">{{ t(card.detail) }}</p>
             </div>
           </div>
-          <div class="a11y-card-foot">
-            <span class="a11y-dots" aria-hidden="true">
-              <i v-for="index in dots" :key="index" :class="{ on: index === shownStepIndex }" />
-            </span>
-            <span>{{ t('左右滑動切換步驟（{0}/{1}）', shownStepIndex + 1, steps.length) }}</span>
+          <div v-if="steps.length > 1" class="a11y-card-foot">
+            <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ t('第 {0} 步，共 {1} 步', shownStepIndex + 1, steps.length) }}</p>
+            <div ref="stepDotsEl" class="a11y-dots" aria-hidden="true">
+              <i v-for="(_, index) in steps" :key="index" :data-active="index === shownStepIndex" />
+            </div>
+            <p class="a11y-swipe-hint">{{ t('左右滑動切換') }}</p>
           </div>
           <p v-if="statusLine" class="a11y-status small" role="status">{{ statusLine }}</p>
         </div>
@@ -718,11 +722,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .a11y-mode {
-  --a-bg: #0B0D0E;
-  --a-card: #30383D;
-  --a-accent: #F5BA4B;
-  --a-text: #FCF2DF;
-  --a-focus: #F0C87C;
+  /* High-contrast dark theme, built from UI-001 swatches. */
+  --a-bg: var(--grey-950);
+  --a-card: var(--grey-800);
+  --a-accent: var(--secondary-500);
+  --a-text: var(--secondary-100);
+  --a-focus: var(--secondary-400);
+  --a-muted: var(--grey-200);
+  --a-line: var(--grey-700);
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -761,7 +768,7 @@ onBeforeUnmount(() => {
   font: inherit;
   font-size: 1.375rem;
 }
-.a11y-input::placeholder { color: #C9C2B4; }
+.a11y-input::placeholder { color: var(--a-muted); }
 .a11y-input:focus { outline: 4px solid var(--a-focus); outline-offset: 2px; }
 .a11y-input::-webkit-search-cancel-button { filter: invert(1); }
 .a11y-hint { margin: 20px 4px 0; color: var(--a-text); font-size: 1.125rem; }
@@ -773,7 +780,7 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 4px;
   text-align: left;
-  border: 2px solid #4A555C;
+  border: 2px solid var(--a-line);
   border-radius: 14px;
   background: var(--a-card);
   color: var(--a-accent);
@@ -783,7 +790,7 @@ onBeforeUnmount(() => {
 .a11y-busy { margin-top: 28px; display: flex; align-items: center; gap: 14px; font-size: 1.5rem; font-weight: 700; color: var(--a-text); }
 .a11y-spinner {
   width: 28px; height: 28px; flex: none;
-  border: 4px solid #4A555C; border-top-color: var(--a-accent); border-radius: 50%;
+  border: 4px solid var(--a-line); border-top-color: var(--a-accent); border-radius: 50%;
   animation: a11y-spin 1s linear infinite;
 }
 @keyframes a11y-spin { to { transform: rotate(360deg); } }
@@ -807,7 +814,7 @@ onBeforeUnmount(() => {
   padding: 0 12px;
   border: 0;
   background: none;
-  color: #C9C2B4;
+  color: var(--a-muted);
   font-size: 1rem !important;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -875,17 +882,30 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #4A555C;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  border-top: 1px solid var(--a-line);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
   color: var(--a-text);
   font-size: 1rem;
 }
-.a11y-dots { display: flex; gap: 8px; align-items: center; }
-.a11y-dots i { width: 10px; height: 10px; border-radius: 5px; background: #7A6A48; }
-.a11y-dots i.on { width: 28px; background: var(--a-accent); }
+/* UI-007: one dot per step, current = Secondary/500, others = Grey/200; scrollable row */
+.a11y-dots {
+  position: relative; /* offsetParent for scrolling the active dot into view */
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+.a11y-dots::-webkit-scrollbar { display: none; }
+.a11y-dots i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--grey-200); }
+.a11y-dots i:first-child { margin-left: auto; }
+.a11y-dots i:last-child { margin-right: auto; }
+.a11y-dots i[data-active="true"] { background: var(--secondary-500); }
+.a11y-card .a11y-swipe-hint { margin: 0; }
 
 /* Bottom bar */
 .a11y-bottom {

@@ -67,36 +67,3 @@ export function useRecentPlaces() {
 
   return { recent, remember, clear }
 }
-
-/** Web Speech API voice input; reports honestly when unsupported. */
-export function useVoiceInput(onText: (text: string) => void) {
-  const listening = ref(false)
-  const message = ref('')
-
-  function start() {
-    const Recognition = (window as unknown as Record<string, unknown>).SpeechRecognition
-      ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition
-    if (typeof Recognition !== 'function') {
-      message.value = t('此裝置暫不支援語音搜尋，請改用鍵盤輸入。')
-      return
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recognition = new (Recognition as any)()
-    recognition.lang = locale.value === 'en' ? 'en' : 'zh-TW'
-    recognition.interimResults = false
-    recognition.maxAlternatives = 1
-    message.value = ''
-    listening.value = true
-    recognition.onresult = (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
-      const text = event.results[0]?.[0]?.transcript?.trim()
-      if (text) onText(text)
-    }
-    recognition.onerror = (event: { error: string }) => {
-      message.value = event.error === 'not-allowed' ? t('尚未允許使用麥克風。') : t('沒有辨識到語音，請再試一次。')
-    }
-    recognition.onend = () => { listening.value = false }
-    recognition.start()
-  }
-
-  return { listening, message, start }
-}

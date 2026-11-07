@@ -10,6 +10,9 @@ import { LOCAL_CJK_FONT, TAIPEI_BOUNDS, collapseAttribution, loadBasemap } from 
 import type { IconName } from './components/AppIcon.vue'
 import type { AppMode } from './components/ModeLanding.vue'
 import type { Coordinate, Place } from './composables/usePlaceSearch'
+import { addLayerIcons, layerIconExpression, layerIconFor, layerImageId, type LayerIconName } from './utils/mapLayerIcons'
+import { distanceM, iconPoints, routePasses } from './utils/layerGeometry'
+import { palette } from './utils/palette'
 
 useHead({ htmlAttrs: { lang: () => locale.value } })
 
@@ -77,57 +80,50 @@ type Metadata = {
 }
 
 const categories = [
-  { kind: '1', label: '斜坡道', color: '#137a68' },
-  { kind: '3', label: '路外停車場無障礙電梯', color: '#704395' },
-  { kind: '4', label: '公園', color: '#52812b' },
-  { kind: '7', label: '捷運站及公園無障礙出入口', color: '#285cba' },
-  { kind: '8', label: '友善店家', color: '#a13b52' },
-  { kind: '9', label: '無障礙廁所', color: '#8b479a' },
-  { kind: '14', label: '身障設施', color: '#b65419' },
-  { kind: '15', label: '路邊停車場', color: '#48617f' },
-  { kind: '16', label: '路邊停車格', color: '#8a6525' },
-  { kind: 'accessible-parking', label: '身心障礙停車格', color: '#4d4ab1' },
-  { kind: '18', label: '公車站', color: '#006d92' },
-  { kind: '20', label: '捷運站', color: '#9d305f' },
+  { kind: '1', label: '斜坡道', color: palette.grey700 },
+  { kind: '3', label: '路外停車場無障礙電梯', color: palette.grey700 },
+  { kind: '4', label: '公園', color: palette.green500 },
+  { kind: '7', label: '捷運站及公園無障礙出入口', color: palette.grey700 },
+  { kind: '8', label: '友善店家', color: palette.secondary500 },
+  { kind: '9', label: '無障礙廁所', color: palette.primary800 },
+  { kind: '14', label: '身障設施', color: palette.orange500 },
+  { kind: '15', label: '路邊停車場', color: palette.secondary700 },
+  { kind: '16', label: '路邊停車格', color: palette.secondary700 },
+  { kind: 'accessible-parking', label: '身心障礙停車格', color: palette.primary900 },
+  { kind: '18', label: '公車站', color: palette.grey800 },
+  { kind: '20', label: '捷運站', color: palette.grey800 },
 ] as const
-const [firstCategory, ...otherCategories] = categories
-const facilityColor: ExpressionSpecification = [
-  'match', ['get', 'kind'], firstCategory.kind, firstCategory.color,
-  ...otherCategories.flatMap(({ kind, color }) => [kind, color]), '#475569',
-]
+/** Map marker size for the UI-004 badges (images are 32 CSS px at icon-size 1). */
+const LAYER_ICON_SIZE: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 15, .62, 18, .9]
 
 const walkwayCategories = [
-  { kind: '11', label: '人行道', color: '#00816f' },
-  { kind: '12', label: '標線型人行道', color: '#305fc4' },
-  { kind: '13', label: '行穿線（市府）', color: '#8543a3' },
-  { kind: 'osm-crossing', label: '行人穿越道（OSM）', color: '#a020af' },
-  { kind: 'arcade', label: '騎樓整平路段', color: '#ba5917' },
+  { kind: '11', label: '人行道', color: palette.primary600 },
+  { kind: '12', label: '標線型人行道', color: palette.primary600 },
+  { kind: '13', label: '行穿線（市府）', color: palette.primary600 },
+  { kind: 'osm-crossing', label: '行人穿越道（OSM）', color: palette.primary600 },
+  { kind: 'arcade', label: '騎樓整平路段', color: palette.primary600 },
 ] as const
 const walkwayColor: ExpressionSpecification = [
-  'match', ['get', 'kind'], '11', '#00816f', '12', '#305fc4', '13', '#8543a3', 'arcade', '#ba5917', '#475569',
+  'match', ['get', 'kind'], '11', palette.primary600, '12', palette.primary600, '13', palette.primary600,
+  'arcade', palette.primary600, palette.grey600,
 ]
 
 type LayerKind = FacilityKind | WalkwayKind | 'slope'
 const allLayerKinds: LayerKind[] = [...[...categories, ...walkwayCategories].map(item => item.kind), 'slope']
+// UI-004: each quick-filter group has one badge icon, shared with the map markers and place card.
 const layerGroups = [
-  { label: '人行通道', kinds: ['11', '12', '13', 'osm-crossing', 'arcade'] },
-  { label: '坡度', kinds: ['slope'] },
-  { label: '身障停車格', kinds: ['accessible-parking'] },
-  { label: '出入口／坡道', kinds: ['1', '3', '7'] },
-  { label: '友善店家', kinds: ['8'] },
-  { label: '無障礙廁所', kinds: ['9'] },
-  { label: '大眾運輸', kinds: ['18', '20'] },
-  { label: '公園', kinds: ['4'] },
-  { label: '停車', kinds: ['15', '16'] },
-  { label: '身障設施', kinds: ['14'] },
-] satisfies { label: string; kinds: LayerKind[] }[]
-const SLOPE_COLOR = '#AD7B2B'
-const layerColors = new Map<LayerKind, string>([
-  ...[...categories, ...walkwayCategories].map(item => [item.kind, item.color] as [LayerKind, string]),
-  ['slope', SLOPE_COLOR],
-])
-/** Map colours of a quick-filter group (max 3 dots) so the chips double as a compact legend. */
-const groupColors = (kinds: LayerKind[]) => [...new Set(kinds.map(kind => layerColors.get(kind)!))].slice(0, 3)
+  { label: '人行通道', icon: 'pedestrian', kinds: ['11', '12', '13', 'osm-crossing', 'arcade'] },
+  { label: '坡度', icon: 'slope', kinds: ['slope'] },
+  { label: '身障停車格', icon: 'accessible-parking', kinds: ['accessible-parking'] },
+  { label: '出入口／坡道', icon: 'entrance-ramp', kinds: ['1', '3', '7'] },
+  { label: '友善店家', icon: 'friendly-store', kinds: ['8'] },
+  { label: '無障礙廁所', icon: 'accessible-restroom', kinds: ['9'] },
+  { label: '大眾運輸', icon: 'public-transit', kinds: ['18', '20'] },
+  { label: '公園', icon: 'park', kinds: ['4'] },
+  { label: '停車', icon: 'parking', kinds: ['15', '16'] },
+  { label: '身障設施', icon: 'accessible-facilities', kinds: ['14'] },
+] satisfies { label: string; icon: LayerIconName; kinds: LayerKind[] }[]
+const SLOPE_COLOR = palette.secondary800
 /** Below these zooms the point / walkway layers would cover the whole map, so they are not drawn or fetched. */
 const FACILITY_MIN_ZOOM = 15
 const WALKWAY_MIN_ZOOM = 14
@@ -135,10 +131,14 @@ const SIDEWALK_MIN_ZOOM = 15
 
 // Town Pass Primary family for the route; amber/orange for destination per DESIGN.md.
 const routeColors = {
-  route: '#5AB4C5', casing: '#356C77', walked: '#ADB8BE', alternative: '#71C5D5',
-  sidewalk: '#76A732', guidedSidewalk: '#5E8F28', ramp: '#356C77', slope: '#E7A43C',
+  route: palette.primary500, casing: palette.primary700, walked: palette.grey300, alternative: palette.primary400,
+  // 行經 and 指引側 sidewalks share UI-001's only green; the guided side is told apart by its lighter fill
+  // and a dashed Primary / 700 outline (map and legend swatch alike).
+  sidewalk: palette.green500, guidedSidewalk: palette.green500, guidedOutline: palette.primary700,
+  ramp: palette.primary700, slope: palette.secondary600,
 }
-const LIVE_COLOR = '#1C7ED6'
+// UI-001 has no blue; the live GPS dot uses Primary / 600 with a white ring and halo.
+const LIVE_COLOR = palette.primary600
 const routeKey = [
   { context: 'route', label: '路線', color: routeColors.route },
   { context: 'sidewalk', label: '行經人行道', color: routeColors.sidewalk },
@@ -272,19 +272,14 @@ const browsePlace = shallowRef<Place | null>(null)
 const browseDetails = shallowRef<FeatureDetail[]>([])
 const exploreSearch = usePlaceSearch()
 const exploreInput = useTemplateRef<HTMLInputElement>('exploreInput')
-const voice = useVoiceInput((text) => {
-  exploreSearch.query.value = text
-  exploreInput.value?.focus()
-})
-const walkwayKinds = new Set<string>(walkwayCategories.map(item => item.kind))
-const browseIcon = computed<IconName>(() => {
-  const kind = browseDetails.value[0]?.kind
-  if (!kind) return 'pin'
-  if (walkwayKinds.has(kind)) return 'walk'
-  if (kind === 'slope') return 'slope'
-  if (kind === '1' || kind === '3' || kind === '7' || kind === '9' || kind === '14' || kind === 'accessible-parking') return 'accessible'
-  return 'pin'
-})
+/** UI-005: the card shows the tapped item's category badge (same SVG as the map); plain places keep a pin. */
+const browseLayerIcon = computed(() => layerIconFor(browseDetails.value[0]?.kind))
+const browseLayerLabel = computed(() => layerGroups.find(group => group.icon === browseLayerIcon.value)?.label ?? '')
+
+/** UI-003: closing the card clears the selection so the map runs to the bottom edge again. */
+function clearBrowsePlace() {
+  setBrowsePlace(null)
+}
 const browseTags = computed(() => {
   const detail = browseDetails.value[0]
   if (!detail) return browsePlace.value?.address ? [browsePlace.value.address] : []
@@ -474,7 +469,7 @@ function updatePickerLabel() {
   const pixel = pinPixel()
   if (!map || !pixel) return
   const hits = map.queryRenderedFeatures([[pixel[0] - 6, pixel[1] - 6], [pixel[0] + 6, pixel[1] + 6]], {
-    layers: ['facilities', 'walkways-fill', 'walkways-outline', 'crossings-osm'],
+    layers: ['facilities', 'walkway-icons', 'walkways-fill', 'walkways-outline', 'crossings-osm'],
   })
   const hit = hits[0]?.properties
   const name = typeof hit?.name === 'string' ? hit.name.replace(/^\d+\s*[-_]\s*/, '').replace(/<br\s*\/?>/gi, ' ').trim() : ''
@@ -690,7 +685,6 @@ const progress = ref<number | null>(null)
 const liveFix = shallowRef<Coordinate | null>(null)
 const previewStep = ref<number | null>(null)
 const endConfirm = ref(false)
-const voiceEnabled = ref(false)
 const navNotice = ref('')
 const bearing = ref(0)
 const demoAvailable = ref(false)
@@ -818,7 +812,6 @@ function stopNavigation() {
   demoMode.value = false
   setSource('route-walked', [])
   drawLivePosition(gpsPoint.value)
-  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }
 
 function startNavigation() {
@@ -1027,33 +1020,20 @@ function endNavigation() {
   void selectMode(selectedMode.value)
 }
 
+/** UI-007: north up again; only the bearing changes, so centre and zoom stay put. */
 function resetNorth() {
-  map?.easeTo({ bearing: 0, pitch: 0, duration: 300 })
+  map?.easeTo({ bearing: 0, duration: 300 })
 }
 
-function speak(text: string) {
-  if (!text || typeof speechSynthesis === 'undefined') return
-  speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = locale.value === 'en' ? 'en' : 'zh-TW'
-  speechSynthesis.speak(utterance)
-}
-
-function toggleVoice() {
-  if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
-    navNotice.value = t('此瀏覽器不支援語音播報，請參考文字指引。')
-    return
-  }
-  voiceEnabled.value = !voiceEnabled.value
-  navNotice.value = ''
-  if (voiceEnabled.value) speak(navCard.value.title)
-  else speechSynthesis.cancel()
-}
-
-// Announce once per manoeuvre, not on every distance update.
-watch(() => [currentPassage.value?.at_m, nextManeuver.value?.at_m, navState.value], () => {
-  if (voiceEnabled.value && navState.value === 'active' && previewStep.value === null) speak(navigationTitle.value)
-  if (voiceEnabled.value && navState.value === 'arrived') speak(navMessage.value)
+/* UI-007 step-progress dots: keep the active (yellow) dot scrolled into view. */
+const stepDotsEl = ref<HTMLElement | null>(null)
+watch([shownStepIndex, () => navSteps.value.length, screen], async () => {
+  await nextTick()
+  const row = stepDotsEl.value
+  const dot = row?.querySelector<HTMLElement>('[data-active="true"]')
+  if (!row || !dot) return
+  const left = dot.offsetLeft - (row.clientWidth - dot.offsetWidth) / 2
+  row.scrollTo({ left: Math.max(0, left), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
 })
 
 /* ---------- Map ---------- */
@@ -1068,6 +1048,7 @@ let visibleWalkways: Walkway[] = []
 let routeRequest: AbortController | undefined
 let resizeObserver: ResizeObserver | undefined
 let visibleFacilities: Facilities = { type: 'FeatureCollection', features: [] }
+let visibleSlopes: Feature[] = []
 let inspectionPopup: MapLibrePopup | undefined
 
 const displayedDate = computed(() => {
@@ -1093,19 +1074,138 @@ function applyRouteLayerState() {
   if (!map || !mapReady.value) return
   const picking = screen.value === 'picker'
   for (const id of routeLayerIds) map.setLayoutProperty(id, 'visibility', picking ? 'none' : 'visible')
-  // Background data is dimmed behind a route, but shown fully while picking a point.
+  // Walkway areas the route passes are dimmed under the route's own sidewalk highlight; the
+  // along-route facility icons (UI-006) stay at full strength. Everything is full while picking.
   const dim = !!result.value && !picking
-  map.setPaintProperty('facilities', 'circle-opacity', dim ? .24 : .8)
-  map.setPaintProperty('facilities', 'circle-stroke-opacity', dim ? .24 : 1)
   map.setPaintProperty('walkways-fill', 'fill-opacity', dim ? .11 : ['case', ['==', ['get', 'kind'], '13'], .5, .32])
   map.setPaintProperty('walkways-outline', 'line-opacity', dim ? .36 : .86)
-  map.setPaintProperty('slope-lines', 'line-opacity', dim ? .35 : 1)
-  map.setPaintProperty('slope-markers', 'icon-opacity', dim ? .36 : 1)
+}
+
+/* ---------- Route view layer filter (UI-006) ---------- */
+
+/**
+ * Route view = the route screens except the point picker (which shows the normal map to pick on).
+ * Entering it saves the explore layer filter and shows every category, but only items the selected
+ * route passes; leaving it restores the saved filter.
+ */
+const routeView = computed(() => screen.value !== 'explore' && screen.value !== 'picker')
+let savedLayers: LayerKind[] | null = null
+watch(routeView, (inRoute) => {
+  if (inRoute) {
+    savedLayers ??= [...enabledLayers.value]
+    enabledLayers.value = [...allLayerKinds]
+  } else if (savedLayers) {
+    enabledLayers.value = savedLayers
+    savedLayers = null
+  }
+  redrawLayerData()
+})
+
+/**
+ * The route planner only associates sidewalks, ramps and slopes with a route (`highlights`); other
+ * facilities have no association data, so they are matched by distance to the selected route line.
+ * Points within 15 m count (facilities sit beside the walked path); walkway areas count when the
+ * route runs through them or within 3 m of their edge.
+ */
+const ROUTE_POINT_BUFFER_M = 15
+const ROUTE_AREA_BUFFER_M = 3
+let routeMatchers: { route: RouteResult; point: ReturnType<typeof routePasses>; area: ReturnType<typeof routePasses> } | null = null
+
+/** null = no filtering (map browsing); otherwise a predicate per geometry, or "nothing" when no route yet. */
+function routeFilter(): ((feature: Feature) => boolean) | null {
+  if (!routeView.value) return null
+  const route = result.value
+  if (!route) return () => false
+  if (routeMatchers?.route !== route) {
+    const line = route.route.geometry.coordinates
+    routeMatchers = { route, point: routePasses(line, ROUTE_POINT_BUFFER_M), area: routePasses(line, ROUTE_AREA_BUFFER_M) }
+  }
+  const { point, area } = routeMatchers
+  return feature => feature.geometry?.type === 'Point' ? point(feature.geometry) : area(feature.geometry)
+}
+
+/**
+ * Planner ramps / slopes and the distance-matched facility or slope points of the same category
+ * almost always mark the same spot. Measured against /v1/route-options on 6 Taipei routes, all
+ * 337 planner ramps had the identical facility record underneath, and 13 of 15 planner slopes had
+ * a slope point within 12 m. So in route view there is one badge per location: the planner badge
+ * stays (it carries the route context and halo), and same-category points within MERGE_M are not
+ * drawn separately. Their data is kept on the badge (`merge_id`) so a tap shows both.
+ */
+const MERGE_M = 12
+type PlannerBadge = { mergeId: string; id: Feature['id']; icon: LayerIconName; coordinates: Coordinate }
+let plannerBadges: PlannerBadge[] = []
+const mergedFacilities = new Map<string, Feature[]>()
+const mergedSlopes = new Map<string, Feature[]>()
+
+function plannerHighlights(route: RouteResult | null): Feature[] {
+  plannerBadges = []
+  return (route?.highlights?.features ?? []).map((feature, index) => {
+    const context = feature.properties.route_context
+    if (feature.geometry.type !== 'Point' || (context !== 'ramp' && context !== 'slope')) return feature
+    const mergeId = `h${index}`
+    plannerBadges.push({ mergeId, id: feature.id, icon: context === 'ramp' ? 'entrance-ramp' : 'slope',
+      coordinates: feature.geometry.coordinates as Coordinate })
+    return { ...feature, properties: { ...feature.properties, merge_id: mergeId } }
+  })
+}
+
+/** Drops points that a same-category planner badge already marks, remembering them on that badge. */
+function mergeIntoPlanner<F extends Feature>(features: F[], into: Map<string, Feature[]>): F[] {
+  into.clear()
+  if (!routeView.value || !plannerBadges.length) return features
+  return features.filter((feature) => {
+    if (feature.geometry?.type !== 'Point') return true
+    const icon = layerIconFor(String(feature.properties?.kind ?? ''))
+    const point = feature.geometry.coordinates
+    const badge = plannerBadges.find(item => item.icon === icon && distanceM(item.coordinates, point) <= MERGE_M)
+    if (!badge) return true
+    // The planner ramp is often the very same facility record; only distinct records add information.
+    if (feature.id === undefined || feature.id !== badge.id) into.set(badge.mergeId, [...into.get(badge.mergeId) ?? [], feature])
+    return false
+  })
+}
+
+/** Tapped planner badges expand to the facility / slope records merged into them. */
+function withMerged(hits: MapGeoJSONFeature[]): MapGeoJSONFeature[] {
+  return hits.flatMap((hit) => {
+    const id = hit.properties.merge_id
+    if (typeof id !== 'string') return [hit]
+    const extra = [...mergedFacilities.get(id) ?? [], ...mergedSlopes.get(id) ?? []]
+    return [hit, ...extra.map(feature => ({ ...feature, properties: feature.properties ?? {} }) as unknown as MapGeoJSONFeature)]
+  })
+}
+
+function drawFacilities(features: Facility[]) {
+  const passes = routeFilter()
+  setSource('facilities', mergeIntoPlanner(passes ? features.filter(passes) : features, mergedFacilities))
+}
+
+function drawWalkways(features: Walkway[]) {
+  const passes = routeFilter()
+  const shown = passes ? features.filter(passes) : features
+  setSource('walkways', shown)
+  setSource('walkway-icons', iconPoints(shown))
+}
+
+function drawSlopes(features: Feature[]) {
+  const passes = routeFilter()
+  setSource('slopes', mergeIntoPlanner(passes ? features.filter(passes) : features, mergedSlopes))
+}
+
+/** Re-applies the route filter to the cached data after the route or the screen changes. */
+function redrawLayerData() {
+  if (!mapReady.value) return
+  const types = enabledFacilities.value
+  drawFacilities(visibleFacilities.features.filter(item => types.includes(item.properties.kind)))
+  drawWalkways(visibleWalkways)
+  drawSlopes(showSlopes.value ? visibleSlopes : [])
 }
 
 watch(result, (route) => {
-  setSource('route-highlights', route?.highlights?.features ?? [])
+  setSource('route-highlights', plannerHighlights(route))
   applyRouteLayerState()
+  redrawLayerData()
 })
 
 watch(screen, (value) => {
@@ -1148,7 +1248,7 @@ async function refreshFacilities() {
   if (!bounds || !mapReady.value) return
   facilitiesRequest?.abort()
   const types = enabledFacilities.value
-  setSource('facilities', visibleFacilities.features.filter(item => types.includes(item.properties.kind)))
+  drawFacilities(visibleFacilities.features.filter(item => types.includes(item.properties.kind)))
   facilityMessage.value = ''
   if (!types.length || map!.getZoom() < FACILITY_MIN_ZOOM) return
   const controller = new AbortController()
@@ -1161,7 +1261,7 @@ async function refreshFacilities() {
     })
     if (controller.signal.aborted) return
     visibleFacilities = data
-    setSource('facilities', data.features)
+    drawFacilities(data.features)
     facilityMessage.value = data.truncated ? t('請放大地圖查看其餘設施。') : ''
   } catch {
     if (controller.signal.aborted) return
@@ -1179,7 +1279,7 @@ async function refreshWalkways() {
     : enabledWalkways.value.filter(kind => !['11', '12'].includes(kind) || zoom >= SIDEWALK_MIN_ZOOM)
   walkwayMessage.value = types.length < enabledWalkways.value.length ? t('放大地圖可查看人行道等通行空間。') : ''
   visibleWalkways = visibleWalkways.filter(item => types.includes(item.properties.kind))
-  setSource('walkways', visibleWalkways)
+  drawWalkways(visibleWalkways)
   if (!types.length) return
 
   const bounds = map.getBounds()
@@ -1191,12 +1291,12 @@ async function refreshWalkways() {
     })
     if (controller.signal.aborted) return
     visibleWalkways = data.features
-    setSource('walkways', visibleWalkways)
+    drawWalkways(visibleWalkways)
     if (data.truncated) walkwayMessage.value = t('放大地圖可查看其餘通行空間。')
   } catch {
     if (controller.signal.aborted) return
     visibleWalkways = []
-    setSource('walkways', [])
+    drawWalkways([])
     walkwayMessage.value = t('通行空間圖層暫時無法載入。')
   }
 }
@@ -1207,7 +1307,7 @@ async function refreshSlopes() {
   if (!map || !mapReady.value) return
   slopesRequest?.abort()
   if (!showSlopes.value || map.getZoom() < 14) {
-    setSource('slopes', [])
+    drawSlopes([])
     return
   }
   const controller = new AbortController()
@@ -1219,22 +1319,22 @@ async function refreshSlopes() {
       query: { bbox }, signal: controller.signal,
     })
     if (controller.signal.aborted) return
-    setSource('slopes', data.features.flatMap<Feature>((item) => {
+    // UI-004: slope sections keep their line and get one category icon at the line's midpoint.
+    visibleSlopes = data.features.flatMap<Feature>((item) => {
       const properties = { ...item.properties, kind: 'slope' }
       if (item.geometry.type === 'Point') {
         return [{ ...item, properties: { ...properties, label: t('坡度點位') } }]
       }
       return [
-        item,
-        ...[item.geometry.coordinates[0]!, item.geometry.coordinates.at(-1)!].map((coordinates, i): Feature<Point> => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates },
-          properties: { ...properties, label: i === 0 ? t('坡段起點') : t('坡段終點') },
-        })),
+        { ...item, properties },
+        ...iconPoints([{ ...item, geometry: item.geometry, properties: { ...properties, label: t('坡段') } }]),
       ]
-    }))
+    })
+    drawSlopes(visibleSlopes)
   } catch {
-    if (!controller.signal.aborted) setSource('slopes', [])
+    if (controller.signal.aborted) return
+    visibleSlopes = []
+    drawSlopes([])
   }
 }
 
@@ -1338,9 +1438,10 @@ onMounted(async () => {
           'selected-step': emptySource(),
           'live-position': emptySource(),
           pins: emptySource(),
+          'walkway-icons': emptySource(),
         },
         layers: [
-          { id: 'background', type: 'background', paint: { 'background-color': '#F1F3F4' } },
+          { id: 'background', type: 'background', paint: { 'background-color': palette.grey50 } },
           ...baseShapes,
           { id: 'walkways-fill', source: 'walkways', type: 'fill', minzoom: WALKWAY_MIN_ZOOM,
             filter: ['==', ['geometry-type'], 'Polygon'],
@@ -1350,11 +1451,6 @@ onMounted(async () => {
             paint: { 'line-color': walkwayColor, 'line-width': ['case', ['==', ['get', 'kind'], '13'], 2.5, 1.5],
               'line-opacity': 0.86 } },
           ...baseLabels,
-          { id: 'facilities', source: 'facilities', type: 'circle', minzoom: FACILITY_MIN_ZOOM, paint: {
-            'circle-color': facilityColor,
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 15, 4, 17, 6.5],
-            'circle-opacity': 0.8, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5,
-          } },
           { id: 'route-sidewalk-fill', source: 'route-highlights', type: 'fill',
             filter: ['==', ['get', 'route_context'], 'sidewalk'],
             paint: { 'fill-color': routeColors.sidewalk, 'fill-opacity': .5 } },
@@ -1367,7 +1463,7 @@ onMounted(async () => {
             paint: { 'fill-color': routeColors.guidedSidewalk, 'fill-opacity': .36 } },
           { id: 'guided-sidewalk-outline', source: 'route-highlights', type: 'line',
             filter: ['==', ['get', 'route_context'], 'guided-sidewalk'], layout: { 'line-join': 'round' },
-            paint: { 'line-color': routeColors.guidedSidewalk, 'line-width': 2.5, 'line-dasharray': [2, 1] } },
+            paint: { 'line-color': routeColors.guidedOutline, 'line-width': 2, 'line-dasharray': [2, 1] } },
           { id: 'route-alternatives', source: 'route-alternatives', type: 'line',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
             paint: { 'line-color': routeColors.alternative, 'line-width': 4, 'line-opacity': .65, 'line-dasharray': [1.6, 1.2] } },
@@ -1378,48 +1474,54 @@ onMounted(async () => {
           { id: 'route-walked', source: 'route-walked', type: 'line', layout: { 'line-join': 'round', 'line-cap': 'round' },
             paint: { 'line-color': routeColors.walked, 'line-width': 7 } },
           { id: 'unverified-walkways', source: 'unverified-walkways', type: 'line',
-            paint: { 'line-color': '#F5BA4B', 'line-width': 5, 'line-dasharray': [2, 1.3] } },
+            paint: { 'line-color': palette.secondary500, 'line-width': 5, 'line-dasharray': [2, 1.3] } },
           { id: 'crossings-osm', source: 'walkways', type: 'line', minzoom: WALKWAY_MIN_ZOOM,
             filter: ['==', ['get', 'kind'], 'osm-crossing'],
-            paint: { 'line-color': '#a020af', 'line-dasharray': [1.5, 1],
+            paint: { 'line-color': palette.primary600, 'line-dasharray': [1.5, 1],
               'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 17, 4.5] } },
           { id: 'selected-step', source: 'selected-step', type: 'line',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#FD853A', 'line-width': 7 } },
+            paint: { 'line-color': palette.orange500, 'line-width': 7 } },
           { id: 'route-access-points', source: 'route-access-points', type: 'circle', paint: {
-            'circle-color': '#fff', 'circle-radius': 6, 'circle-stroke-color': routeColors.casing, 'circle-stroke-width': 3,
+            'circle-color': palette.white, 'circle-radius': 6, 'circle-stroke-color': routeColors.casing, 'circle-stroke-width': 3,
           } },
           { id: 'slope-lines', source: 'slopes', type: 'line', filter: ['==', ['geometry-type'], 'LineString'],
             paint: { 'line-color': SLOPE_COLOR, 'line-width': 3, 'line-dasharray': [1.5, 1] } },
+          // UI-004 category badges. Walkway areas / OSM crossings get one badge at a representative
+          // point (thinned by collision); facility and slope points always show theirs.
+          { id: 'walkway-icons', source: 'walkway-icons', type: 'symbol', minzoom: WALKWAY_MIN_ZOOM,
+            layout: { 'icon-image': layerImageId('pedestrian'), 'icon-size': LAYER_ICON_SIZE, 'icon-padding': 4 } },
           { id: 'slope-markers', source: 'slopes', type: 'symbol', filter: ['==', ['geometry-type'], 'Point'],
-            layout: { 'icon-image': 'slope-marker', 'icon-allow-overlap': true } },
+            layout: { 'icon-image': layerImageId('slope'), 'icon-size': LAYER_ICON_SIZE, 'icon-allow-overlap': true } },
+          { id: 'facilities', source: 'facilities', type: 'symbol', minzoom: FACILITY_MIN_ZOOM,
+            layout: { 'icon-image': layerIconExpression, 'icon-size': LAYER_ICON_SIZE, 'icon-allow-overlap': true } },
+          // Planner-associated ramps / slopes along the route (UI-006) use the same category badges.
           { id: 'route-ramp-halo', source: 'route-highlights', minzoom: 14, type: 'circle',
             filter: ['==', ['get', 'route_context'], 'ramp'],
-            paint: { 'circle-color': routeColors.ramp, 'circle-radius': 11, 'circle-opacity': .22 } },
-          { id: 'route-ramps', source: 'route-highlights', minzoom: 14, type: 'circle',
+            paint: { 'circle-color': routeColors.ramp, 'circle-radius': 15, 'circle-opacity': .22 } },
+          { id: 'route-ramps', source: 'route-highlights', minzoom: 14, type: 'symbol',
             filter: ['==', ['get', 'route_context'], 'ramp'],
-            paint: { 'circle-color': routeColors.ramp, 'circle-radius': 6.5, 'circle-stroke-color': '#fff',
-              'circle-stroke-width': 2.5 } },
+            layout: { 'icon-image': layerImageId('entrance-ramp'), 'icon-size': .8, 'icon-allow-overlap': true } },
           { id: 'route-slope-halo', source: 'route-highlights', minzoom: 14, type: 'circle',
             filter: ['==', ['get', 'route_context'], 'slope'],
-            paint: { 'circle-color': routeColors.slope, 'circle-radius': 16, 'circle-opacity': .28 } },
+            paint: { 'circle-color': routeColors.slope, 'circle-radius': 17, 'circle-opacity': .28 } },
           { id: 'route-slope-markers', source: 'route-highlights', minzoom: 14, type: 'symbol',
             filter: ['==', ['get', 'route_context'], 'slope'],
-            layout: { 'icon-image': 'slope-marker', 'icon-size': 1.22, 'icon-allow-overlap': true } },
+            layout: { 'icon-image': layerImageId('slope'), 'icon-size': .9, 'icon-allow-overlap': true } },
           // Live GPS = filled blue dot with halo (spec §4.2 「藍點」); start pin = teal ring with centre dot
           // (matches the endpoint card marker); destination = filled orange.
           { id: 'live-position-halo', source: 'live-position', type: 'circle',
             paint: { 'circle-radius': 20, 'circle-color': LIVE_COLOR, 'circle-opacity': .2 } },
           { id: 'live-position', source: 'live-position', type: 'circle',
-            paint: { 'circle-radius': 8, 'circle-color': LIVE_COLOR, 'circle-stroke-color': '#fff', 'circle-stroke-width': 3 } },
+            paint: { 'circle-radius': 8, 'circle-color': LIVE_COLOR, 'circle-stroke-color': palette.white, 'circle-stroke-width': 3 } },
           { id: 'pins', source: 'pins', type: 'circle', paint: {
-            'circle-color': ['match', ['get', 'endpoint'], 'start', '#fff', '#FD853A'],
+            'circle-color': ['match', ['get', 'endpoint'], 'start', palette.white, palette.orange500],
             'circle-radius': 9,
-            'circle-stroke-color': ['match', ['get', 'endpoint'], 'start', '#356C77', '#fff'],
+            'circle-stroke-color': ['match', ['get', 'endpoint'], 'start', palette.primary700, palette.white],
             'circle-stroke-width': ['match', ['get', 'endpoint'], 'start', 4, 3],
           } },
           { id: 'pins-centre', source: 'pins', type: 'circle', filter: ['==', ['get', 'endpoint'], 'start'],
-            paint: { 'circle-radius': 3.5, 'circle-color': '#356C77' } },
+            paint: { 'circle-radius': 3.5, 'circle-color': palette.primary700 } },
         ],
       },
     })
@@ -1432,27 +1534,7 @@ onMounted(async () => {
     map.on('rotate', () => { bearing.value = map?.getBearing() ?? 0 })
     map.on('load', () => {
       if (map) void addIndoorVenueMarkers(map, { onOpen: openIndoor, visible: () => appMode.value === 'general' })
-      const icon = document.createElement('canvas')
-      icon.width = icon.height = 48
-      const ctx = icon.getContext('2d')
-      if (ctx && map) {
-        ctx.fillStyle = '#AD7B2B'
-        ctx.strokeStyle = '#fff'
-        ctx.lineWidth = 4
-        ctx.beginPath()
-        ctx.arc(24, 24, 21, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
-        ctx.lineJoin = 'round'
-        ctx.lineCap = 'round'
-        ctx.beginPath()
-        ctx.moveTo(13, 32)
-        ctx.lineTo(35, 32)
-        ctx.lineTo(35, 17)
-        ctx.closePath()
-        ctx.stroke()
-        map.addImage('slope-marker', ctx.getImageData(0, 0, 48, 48), { pixelRatio: 2 })
-      }
+      if (map) void addLayerIcons(map, config.app.cdnURL || config.app.baseURL)
       mapReady.value = true
       mapZoom.value = map?.getZoom() ?? mapZoom.value
       applyRouteLayerState()
@@ -1476,7 +1558,8 @@ onMounted(async () => {
       const hits = map.queryRenderedFeatures([
         [event.point.x - 4, event.point.y - 4], [event.point.x + 4, event.point.y + 4],
       ], { layers: ['route-slope-markers', 'route-ramps', 'route-sidewalk-fill', 'guided-sidewalk-fill', 'slope-markers', 'slope-lines',
-        'route-access-points', 'crossings-osm', 'unverified-walkways', 'facilities', 'walkways-fill', 'walkways-outline'] })
+        'route-access-points', 'crossings-osm', 'unverified-walkways', 'facilities', 'walkway-icons', 'walkways-fill',
+        'walkways-outline'] })
       const clicked: Coordinate = [event.lngLat.lng, event.lngLat.lat]
       if (screen.value === 'explore') {
         showLayers.value = false
@@ -1499,7 +1582,7 @@ onMounted(async () => {
       if (!hits.length) return
       const content = document.createElement('div')
       content.className = 'map-inspection'
-      for (const feature of describeHits(hits)) {
+      for (const feature of describeHits(withMerged(hits))) {
         const entry = document.createElement('div')
         entry.className = 'map-inspection-entry'
         const heading = document.createElement('strong')
@@ -1553,10 +1636,6 @@ onBeforeUnmount(() => {
               maxlength="80" autocomplete="off" :aria-label="t('搜尋地點或地址')" :placeholder="t('搜尋地點或地址')"
               @focus="showLayers = false; showModeMenu = false"
               @keydown.esc.prevent="exploreSearch.query.value = ''">
-            <button type="button" class="icon-button ghost" :aria-label="voice.listening.value ? t('正在聆聽') : t('語音搜尋')"
-              :aria-pressed="voice.listening.value" @click="voice.start()">
-              <AppIcon name="mic" />
-            </button>
           </form>
           <button type="button" class="mode-pill" :aria-expanded="showModeMenu" aria-controls="mode-menu"
             @click="showModeMenu = !showModeMenu; showLayers = false">
@@ -1600,9 +1679,7 @@ onBeforeUnmount(() => {
               @click="enabledLayers = [...allLayerKinds]">{{ t('全部') }}</button>
             <button v-for="group in layerGroups" :key="group.label" type="button" class="chip"
               :aria-pressed="groupSelected(group.kinds)" @click="toggleLayerGroup(group.kinds)">
-              <span class="chip-dots" aria-hidden="true">
-                <i v-for="color in groupColors(group.kinds)" :key="color" :style="{ background: color }" />
-              </span>{{ t(group.label) }}
+              <LayerIcon :name="group.icon" />{{ t(group.label) }}
             </button>
           </div>
           <details class="layer-details">
@@ -1611,13 +1688,13 @@ onBeforeUnmount(() => {
               role="group" :aria-label="index === 0 ? t('通行空間') : t('設施點')">
               <label v-for="item in items" :key="item.kind" class="chip check-chip">
                 <input v-model="enabledLayers" type="checkbox" :value="item.kind">
-                <i :style="{ background: item.color }" aria-hidden="true" />{{ t(item.label) }}
+                <LayerIcon :name="layerIconFor(item.kind)!" />{{ t(item.label) }}
                 <small v-if="metadata?.empty_types.some(kind => kind === item.kind)">{{ t('來源無點位') }}</small>
               </label>
-              <label v-if="index === 0" class="chip check-chip"><input v-model="enabledLayers" type="checkbox" value="slope">{{ t('坡度') }}</label>
+              <label v-if="index === 0" class="chip check-chip"><input v-model="enabledLayers" type="checkbox" value="slope"><LayerIcon name="slope" />{{ t('坡度') }}</label>
             </div>
           </details>
-          <p class="hint">{{ t('圓點顏色對應地圖上的設施與通行空間圖示。') }}</p>
+          <p class="hint">{{ t('選項左側的圖示與地圖上的標記相同，可用來辨識設施與通行空間的類別。') }}</p>
           <p v-if="facilitiesHiddenByZoom" class="hint" role="status">{{ t('放大地圖可查看設施點位。') }}</p>
           <p v-if="walkwayMessage" class="hint" role="status">{{ walkwayMessage }}</p>
           <p v-if="facilityMessage" class="hint" role="status">{{ facilityMessage }}</p>
@@ -1633,7 +1710,6 @@ onBeforeUnmount(() => {
           type="button" class="zoom-hint" @click="zoomInForFacilities">
           <AppIcon name="search" :size="16" />{{ t('放大地圖以顯示無障礙設施') }}
         </button>
-        <p v-if="voice.message.value" class="notice" role="status">{{ voice.message.value }}</p>
         <p v-if="mapMessage" class="notice" role="status">{{ mapMessage }}</p>
         <p v-if="locationMessage" class="notice" role="status">{{ locationMessage }}</p>
       </header>
@@ -1649,36 +1725,33 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <section class="place-card" :aria-label="t('選取的地點')" aria-live="polite">
-        <template v-if="browsePlace">
-          <span class="place-icon"><AppIcon :name="browseIcon" :size="26" /></span>
-          <div class="place-body">
+      <!-- UI-003: the card only exists while a place or facility is selected. -->
+      <section v-if="browsePlace" class="place-card" :aria-label="t('選取的地點')" aria-live="polite">
+        <LayerIcon v-if="browseLayerIcon" class="place-badge" :name="browseLayerIcon" :size="52" :label="browseLayerLabel" />
+        <span v-else class="place-icon"><AppIcon name="pin" :size="26" /></span>
+        <div class="place-body">
+          <div class="place-title-row">
             <h2>{{ browsePlace.name }}</h2>
-            <ul v-if="browseTags.length" class="tag-list">
-              <li v-for="tag in browseTags" :key="tag">{{ t(tag) }}</li>
+            <button type="button" class="icon-button ghost place-close" :aria-label="t('取消選取')" @click="clearBrowsePlace">
+              <AppIcon name="close" :size="20" />
+            </button>
+          </div>
+          <ul v-if="browseTags.length" class="tag-list">
+            <li v-for="tag in browseTags" :key="tag">{{ t(tag) }}</li>
+          </ul>
+          <small v-if="browseSource">{{ t(browseSource) }}</small>
+          <details v-if="browseDetails.length > 1" class="nearby-details">
+            <summary>{{ t('同處其他圖資（{0}）', browseDetails.length - 1) }}</summary>
+            <ul>
+              <li v-for="(detail, index) in browseDetails.slice(1)" :key="index">
+                <strong>{{ t(detail.title) }}</strong><small>{{ [detail.name, ...detail.lines].filter(Boolean).join('・') }}</small>
+              </li>
             </ul>
-            <small v-if="browseSource">{{ t(browseSource) }}</small>
-            <details v-if="browseDetails.length > 1" class="nearby-details">
-              <summary>{{ t('同處其他圖資（{0}）', browseDetails.length - 1) }}</summary>
-              <ul>
-                <li v-for="(detail, index) in browseDetails.slice(1)" :key="index">
-                  <strong>{{ t(detail.title) }}</strong><small>{{ [detail.name, ...detail.lines].filter(Boolean).join('・') }}</small>
-                </li>
-              </ul>
-            </details>
-          </div>
-          <button type="button" class="go-button" :disabled="!mapReady" :aria-label="t('設為終點並預覽路線')" @click="openPreview">
-            <AppIcon name="directions" :size="28" />
-          </button>
-        </template>
-        <template v-else>
-          <span class="place-icon muted"><AppIcon name="pin" :size="26" /></span>
-          <div class="place-body">
-            <h2>{{ t('請先選擇地點') }}</h2>
-            <small>{{ t('點選地圖上的設施、人行道或任一位置，也可以用上方搜尋。') }}</small>
-          </div>
-          <button type="button" class="go-button" disabled :aria-label="t('請先選擇地點')"><AppIcon name="directions" :size="28" /></button>
-        </template>
+          </details>
+        </div>
+        <button type="button" class="go-button" :disabled="!mapReady" :aria-label="t('設為終點並預覽路線')" @click="openPreview">
+          <AppIcon name="directions" :size="28" />
+        </button>
       </section>
     </template>
 
@@ -1798,7 +1871,7 @@ onBeforeUnmount(() => {
         <div class="picker-target">
           <span v-if="pickerLabel" class="picker-label">{{ pickerLabel }}</span>
           <span ref="pickerPin" class="picker-pin" :data-target="editingTarget">
-            <svg width="40" height="52" viewBox="0 0 40 52"><path d="M20 52C20 52 0 32 0 20a20 20 0 0 1 40 0c0 12-20 32-20 32Z" fill="currentColor" /><circle cx="20" cy="20" r="8" fill="#fff" /></svg>
+            <svg width="40" height="52" viewBox="0 0 40 52"><path d="M20 52C20 52 0 32 0 20a20 20 0 0 1 40 0c0 12-20 32-20 32Z" fill="currentColor" /><circle cx="20" cy="20" r="8" style="fill: var(--white-50)" /></svg>
           </span>
         </div>
         <span class="picker-hint"><AppIcon name="move" :size="18" />{{ t('拖曳地圖調整中心點') }}</span>
@@ -1811,12 +1884,15 @@ onBeforeUnmount(() => {
     <!-- ============ Page 3 室外即時導航 ============ -->
     <template v-if="screen === 'navigate'">
       <div class="fab-stack nav-fabs">
-        <button type="button" class="fab" :aria-label="bearing === 0 ? t('地圖已朝北') : t('地圖轉回正北')" @click="resetNorth">
-          <AppIcon name="compass" :size="24" class="compass-icon" :style="{ transform: `rotate(${-bearing}deg)` }" />
-        </button>
-        <button type="button" class="fab" :aria-label="voiceEnabled ? t('關閉語音播報') : t('開啟語音播報')" :aria-pressed="voiceEnabled"
-          @click="toggleVoice">
-          <AppIcon :name="voiceEnabled ? 'volume' : 'mute'" :size="24" />
+        <button type="button" class="fab compass-fab" :aria-label="t('將地圖轉回北方朝上')" @click="resetNorth">
+          <!-- public/icons/navigation/compass.svg (adapted from Feather, MIT), inlined so the needle can follow the map bearing -->
+          <svg class="compass-icon" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"
+            :style="{ transform: `rotate(${-bearing}deg)` }">
+            <circle class="compass-face" cx="12" cy="12" r="11.5" />
+            <path class="compass-north" d="M12 5 14.8 12H9.2Z" />
+            <path class="compass-south" d="M9.2 12H14.8L12 19Z" />
+            <circle class="compass-pivot" cx="12" cy="12" r="0.9" />
+          </svg>
         </button>
       </div>
 
@@ -1826,7 +1902,6 @@ onBeforeUnmount(() => {
           <span v-else-if="navState === 'active'" class="badge" data-tone="good">{{ t('GPS 導航中') }}</span>
           <span v-else-if="navState === 'offroute'" class="badge" data-tone="alarm">{{ t('偏離路線') }}</span>
           <span v-else-if="navState !== 'arrived'" class="badge" data-tone="neutral">{{ t('尚未取得導航位置') }}</span>
-          <span v-if="previewStep !== null" class="badge" data-tone="neutral">{{ t('步驟預覽 {0}／{1}', previewStep + 1, navSteps.length) }}</span>
         </div>
         <p v-if="navStatusText" class="nav-status-text" :data-tone="navState === 'offroute' ? 'alarm' : 'neutral'" role="status">
           {{ navStatusText }}
@@ -1845,13 +1920,13 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <p v-if="navNotice" class="notice" role="status">{{ navNotice }}</p>
-        <div v-if="navSteps.length > 1" class="step-dots" role="group" :aria-label="t('導航步驟')">
-          <template v-if="navSteps.length <= 12">
-            <button v-for="(row, index) in navSteps" :key="index" type="button"
-              :aria-label="t('第 {0} 步：{1}', index + 1, localizeRouteText(row.instruction))" :aria-current="index === shownStepIndex ? 'step' : undefined"
-              :data-done="index < currentStepIndex" @click="previewAt(index)" />
-          </template>
-          <span v-else class="step-count">{{ t('{0}／{1}・左右滑動切換', shownStepIndex + 1, navSteps.length) }}</span>
+        <div v-if="navSteps.length > 1" class="step-progress">
+          <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ t('第 {0} 步，共 {1} 步', shownStepIndex + 1, navSteps.length) }}</p>
+          <div ref="stepDotsEl" class="step-dots" aria-hidden="true">
+            <span v-for="(_, index) in navSteps" :key="index" class="step-dot"
+              :data-active="index === shownStepIndex" @click="previewAt(index)" />
+          </div>
+          <p class="step-count">{{ t('左右滑動切換') }}</p>
         </div>
         <div class="nav-actions">
           <button v-if="navState === 'offroute' && previewStep === null" type="button" class="secondary-button" @click="replan">

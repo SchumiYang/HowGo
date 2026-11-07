@@ -9,6 +9,7 @@
  * and the maps use the same box as `maxBounds`.
  */
 import type { LayerSpecification, SourceSpecification, StyleSpecification } from 'maplibre-gl'
+import { palette } from './palette'
 
 /** Taipei City, with a small margin so edge districts are not flush against the viewport limit. */
 export const TAIPEI_BOUNDS: [[number, number], [number, number]] = [[121.44, 24.95], [121.68, 25.22]]
@@ -113,10 +114,10 @@ export async function loadBasemap(kind: Kind, fallbackTileUrl: string, options: 
       const id = `basemap-${layer.id}`
       const sourceLayer = 'source-layer' in layer ? layer['source-layer'] : ''
       if (options.roadColor && layer.type === 'line' && sourceLayer === 'transportation' && /highway|road/.test(layer.id)) {
-        return [{ ...layer, id, paint: { ...layer.paint, 'line-color': layer.id.includes('casing') ? '#0B0D0E' : options.roadColor } }]
+        return [{ ...layer, id, paint: { ...layer.paint, 'line-color': layer.id.includes('casing') ? palette.grey950 : options.roadColor } }]
       }
       if (options.buildingColor && layer.type === 'fill' && sourceLayer === 'building') {
-        return [{ ...layer, id, paint: { ...layer.paint, 'fill-color': options.buildingColor, 'fill-outline-color': '#3A4349' } }]
+        return [{ ...layer, id, paint: { ...layer.paint, 'fill-color': options.buildingColor, 'fill-outline-color': palette.grey800 } }]
       }
       if (layer.type !== 'symbol') return [{ ...layer, id }]
       const layout = { ...layer.layout } as Record<string, unknown>
@@ -126,7 +127,7 @@ export async function loadBasemap(kind: Kind, fallbackTileUrl: string, options: 
       else if (options.textScale && layout['text-field']) layout['text-size'] = Math.round(16 * options.textScale)
       if (options.textColor && layout['text-field']) {
         paint['text-color'] = options.textColor
-        paint['text-halo-color'] = options.haloColor ?? '#000'
+        paint['text-halo-color'] = options.haloColor ?? palette.grey950
         paint['text-halo-width'] = 1.6
       }
       return [{ ...layer, id, layout, paint } as LayerSpecification]
@@ -150,8 +151,8 @@ export async function loadBasemap(kind: Kind, fallbackTileUrl: string, options: 
         'symbol-sort-key': ['coalesce', ['get', 'rank'], 99],
       },
       paint: {
-        'text-color': options.textColor ? '#F0C87C' : '#5E6D76',
-        'text-halo-color': options.haloColor ?? '#FFFFFF',
+        'text-color': options.textColor ? palette.secondary400 : palette.grey600,
+        'text-halo-color': options.haloColor ?? palette.white,
         'text-halo-width': 1.6,
       },
     })
