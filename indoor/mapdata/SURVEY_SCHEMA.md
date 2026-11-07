@@ -35,7 +35,8 @@ positioning engine (`indoor-nav/src/positioning`). Coordinates are local metres 
       "sensors": {                                 // raw batches concatenated, same tuples as the sensor_stream bridge
         "accelerometer": [[t, x, y, z], ...],
         "gyroscope": [[t, x, y, z], ...],
-        "magnetometer": [[t, x, y, z], ...]       // µT, device frame
+        "magnetometer": [[t, x, y, z], ...],      // µT, device frame
+        "barometer": [[t, hPa], ...]              // optional: absent in older walks and on phones without one
       },
       "wifi_scans": [ { "collected_at": 1794030120000, "results": [ ... ] } ]  // scans that completed during the walk
     }

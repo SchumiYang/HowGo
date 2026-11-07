@@ -1,12 +1,13 @@
 /**
  * Exact replay of a live validation run (mapdata/survey/eval/<run_id>.json, ADMIN_API.md "Validation run") through
- * the engine: raw sensor samples in 200 ms batches, WiFi scans at collected_at, every 設為已知位置 seed at its time.
- * At each checkpoint the estimate is the last engine update at or before it — what the app showed.
+ * the engine: raw sensor samples (barometer included, when recorded) in 200 ms batches, WiFi scans at collected_at,
+ * every 設為已知位置 seed at its time. At each checkpoint the estimate is the last engine update at or before it —
+ * what the app showed. A run without seeds replays as a WiFi-only start (the engine picks the floor).
  */
-import type { SensorBatch, Vec3Sample, WifiScan } from '../bridge/townpass'
+import type { BaroSample, SensorBatch, Vec3Sample, WifiScan } from '../bridge/townpass'
 import type { VenueData } from '../data/types'
 import { createPositioning, type PositioningOptions } from './engine'
-import type { Magmap, PositionUpdate, Radiomap } from './types'
+import type { LevelChange, Magmap, PositionUpdate, Radiomap } from './types'
 
 export interface EvalSeed { t: number; level: string; x: number; y: number; heading_deg: number | null; accuracy_m?: number }
 export interface EvalCheckpoint { t: number; level: string; truth: [number, number]; estimate?: [number, number] | null; accuracy_m?: number; error_m?: number }
@@ -19,13 +20,25 @@ export interface EvalRun {
   seeds?: EvalSeed[]
   started_at?: number
   raw?: {
-    sensors?: { accelerometer?: Vec3Sample[]; gyroscope?: Vec3Sample[]; magnetometer?: Vec3Sample[]; magnetometer_accuracy?: [number, number][] }
+    /** barometer: [t, hPa], recorded since 2026-11-08 (older runs have none) */
+    sensors?: { accelerometer?: Vec3Sample[]; gyroscope?: Vec3Sample[]; magnetometer?: Vec3Sample[]; barometer?: BaroSample[]; magnetometer_accuracy?: [number, number][] }
     wifi_scans?: { collected_at: number; results: WifiScan['results'] }[]
+    /** sensors the bridge reported unavailable (e.g. barometer on the A71) */
+    unavailable?: string[]
   }
 }
 
-export interface ReplayCheckpoint { t: number; truth: [number, number]; estimate: [number, number] | null; accuracy_m: number | null; error_m: number | null }
-export interface ReplayResult { checkpoints: ReplayCheckpoint[]; track: PositionUpdate[]; clockShiftMs: number }
+export interface ReplayCheckpoint {
+  t: number
+  truth: [number, number]
+  estimate: [number, number] | null
+  accuracy_m: number | null
+  error_m: number | null
+  /** checkpoint (truth) level and the level the engine was on */
+  level: string
+  estimate_level: string | null
+}
+export interface ReplayResult { checkpoints: ReplayCheckpoint[]; track: PositionUpdate[]; levelChanges: LevelChange[]; clockShiftMs: number }
 
 const hasRaw = (run: EvalRun) => !!run.raw?.sensors?.accelerometer?.length
 
@@ -48,21 +61,23 @@ export interface ReplayOptions {
   decimate?: { accelerometer?: number; gyroscope?: number; magnetometer?: number }
 }
 
-export function replayRun(run: EvalRun, venueData: VenueData, maps: { radiomap: Radiomap | null; magmap: Magmap | null },
+export function replayRun(run: EvalRun, venueData: VenueData, maps: { radiomap: Radiomap | null; magmap: Magmap | Magmap[] | null },
   options: Partial<PositioningOptions> = {}, replay: ReplayOptions = {}): ReplayResult | null {
   if (!hasRaw(run)) return null
   const seeds = [...(run.seeds?.length ? run.seeds : run.seed ? [run.seed] : [])].sort((a, b) => a.t - b.t)
-  if (!seeds.length) return null
+  if (!seeds.length && !run.started_at) return null
   const eo = run.engine?.options ?? {}
   const eng = createPositioning({
     venueData, radiomap: maps.radiomap, magmap: maps.magmap,
     options: { useWifi: eo.useWifi ?? true, useMagnetic: eo.useMagnetic ?? true, ...options },
   })
   const track: PositionUpdate[] = []
+  const levelChanges: LevelChange[] = []
   eng.onUpdate((u) => track.push(u))
+  eng.onLevelChange((c) => levelChanges.push(c))
 
   // samples from before the run (stale bridge buffers) are dropped
-  const t0 = Math.min(run.started_at ?? Infinity, seeds[0].t) - 3000
+  const t0 = Math.min(run.started_at ?? Infinity, seeds[0]?.t ?? Infinity) - 3000
   const s = run.raw!.sensors!
   // a sensor clock off the wall clock (iOS bridge, 2026-11-07: 217 s behind) shows as samples that end long before
   // the last checkpoint; the live engine corrects it from batch arrival times, here the first sample is aligned
@@ -74,6 +89,7 @@ export function replayRun(run: EvalRun, venueData: VenueData, maps: { radiomap: 
     .flatMap((k) => decimate((s[k] ?? []).map((v) => [v[0] + shift, v[1], v[2], v[3]] as Vec3Sample).filter((v) => v[0] >= t0), replay.decimate?.[k])
       .map((v) => [k, v] as const))
     .sort((a, b) => a[1][0] - b[1][0])
+  const baro = (s.barometer ?? []).map((v) => [v[0] + shift, v[1]] as BaroSample).filter((v) => v[0] >= t0)
   type Ev = { t: number; batch?: SensorBatch; scan?: WifiScan; seed?: EvalSeed }
   const ev: Ev[] = []
   let cur: SensorBatch = {}
@@ -87,6 +103,10 @@ export function replayRun(run: EvalRun, venueData: VenueData, maps: { radiomap: 
     ;(cur[k] ??= []).push(v)
   }
   ev.push({ t: tEnd, batch: cur })
+  // barometer samples (~1 Hz iOS, up to 25 Hz Android) go in at their own time, between the 200 ms IMU batches
+  for (const v of baro) ev.push({ t: v[0], batch: { barometer: [v] } })
+  // what the bridge said it could not deliver (the engine marks the barometer as missing)
+  if (run.raw!.unavailable?.length) ev.push({ t: t0, batch: { unavailable: run.raw!.unavailable } })
   for (const sc of run.raw!.wifi_scans ?? []) {
     if (sc.collected_at >= t0) ev.push({ t: sc.collected_at, scan: { supported: true, status: 'ok', collected_at: sc.collected_at, results: sc.results } })
   }
@@ -109,7 +129,8 @@ export function replayRun(run: EvalRun, venueData: VenueData, maps: { radiomap: 
       estimate: last ? [last.x, last.y] : null,
       accuracy_m: last ? last.accuracy_m : null,
       error_m: last ? Math.hypot(last.x - c.truth[0], last.y - c.truth[1]) : null,
+      level: c.level, estimate_level: last?.level ?? null,
     }
   })
-  return { checkpoints, track, clockShiftMs: shift }
+  return { checkpoints, track, levelChanges, clockShiftMs: shift }
 }

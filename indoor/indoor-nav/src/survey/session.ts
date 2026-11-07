@@ -2,7 +2,7 @@
  * Survey session assembly (pure, no DOM). Produces the `tpnav-survey/0` contract of
  * mapdata/SURVEY_SCHEMA.md §2.
  */
-import type { Vec3Sample, WifiResult, WifiScan } from '../bridge/townpass'
+import type { BaroSample, Vec3Sample, WifiResult, WifiScan } from '../bridge/townpass'
 
 export type XY = [number, number]
 export type Direction = 'forward' | 'reverse'
@@ -30,7 +30,8 @@ export interface WalkRecord {
   t_end: number
   marks: { t: number; vertex: number }[]
   phone_pose: PhonePose
-  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[] }
+  /** barometer [t_ms, hPa]: absent in walks recorded before it was added, and on phones without one */
+  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[]; barometer?: BaroSample[] }
   wifi_scans: ScanRecord[]
 }
 

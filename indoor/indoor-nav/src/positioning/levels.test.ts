@@ -5,6 +5,7 @@ import type { XY } from '../geo/frame'
 import { createPositioning } from './engine'
 import { BaroDetector, levelConnectors, levelForHeightChange } from './levels'
 import { mulberry32, makeGauss } from './rng'
+import { replayRun, type EvalRun } from './replay'
 import type { LevelChange, Radiomap } from './types'
 
 const T0 = 1_800_000_000_000
@@ -119,6 +120,31 @@ const still = (t: number, extra: Partial<SensorBatch> = {}): SensorBatch => ({
 })
 
 describe('automatic floor changes', () => {
+  it('replays a recorded live run with barometer samples (elevator ride); runs without them still replay', () => {
+    // 90 s standing in the cabin: IMU at 25 Hz, barometer at 1 Hz, a 0.42 hPa ride at 30–36 s, checkpoint on 2F
+    const imu = Array.from({ length: 90 * 25 }, (_, i) => T0 + i * 40)
+    const run: EvalRun = {
+      run_id: 'synthetic-elevator', started_at: T0,
+      seeds: [{ t: T0 + 500, level: '1F', x: 3, y: 1.5, heading_deg: null }],
+      checkpoints: [{ t: T0 + 85_000, level: '2F', truth: [3, 1.5] }],
+      raw: {
+        sensors: {
+          accelerometer: imu.map((t) => [t, 0, 0, 9.81]), gyroscope: imu.map((t) => [t, 0, 0, 0]), magnetometer: [],
+          barometer: baro(90, (s) => 1010 - 0.42 * Math.min(1, Math.max(0, (s - 30) / 6)), 1),
+        },
+        wifi_scans: [],
+      },
+    }
+    const r = replayRun(run, venueData, { radiomap: null, magmap: null }, { seed: 1 })!
+    expect(r.levelChanges.map((c) => [c.from, c.to, c.source, c.connector])).toEqual([['1F', '2F', 'barometer', '2F-A']])
+    expect(r.checkpoints[0]).toMatchObject({ level: '2F', estimate_level: '2F' })
+    // recorded before the barometer was saved, or on a phone without one (A71): no floor change, still on 1F
+    const old: EvalRun = { ...run, raw: { ...run.raw, sensors: { ...run.raw!.sensors, barometer: undefined }, unavailable: ['barometer'] } }
+    const r2 = replayRun(old, venueData, { radiomap: null, magmap: null }, { seed: 1 })!
+    expect(r2.levelChanges).toEqual([])
+    expect(r2.checkpoints[0]).toMatchObject({ level: '2F', estimate_level: '1F' })
+  })
+
   it('lists the elevator connectors from nav', () => {
     const c = levelConnectors(venueData.nav)
     expect(c.find((x) => x.id === '1F-A')?.partners.map((p) => p.id)).toEqual(['2F-A'])

@@ -46,11 +46,16 @@ distance between two image points for scale + drags/rotates to align). 2 points 
 { "schema": "tpnav-eval/0", "run_id": "20261107-1700-pixel9a", "venue": "tianmu", "device": {…},
   "engine": { "maps": { "radiomap": "real|none", "magmap": "real|none" }, "options": {…} },
   "checkpoints": [ { "t": 1794031000000, "level": "1F", "truth": [x, y], "estimate": [x, y] | null,
-                     "accuracy_m": 2.1, "source": "fused", "confidence": 0.7, "error_m": 1.8 } ],
+                     "accuracy_m": 2.1, "source": "fused", "confidence": 0.7, "error_m": 1.8,
+                     "estimate_level": "1F" | null } ],   // floor the engine was on (a wrong floor shows here)
+  "level_changes": [ { "t": t, "from": "1F", "to": "2F", "source": "barometer|wifi|both", "confidence": 0.8,
+                       "connector": "2F-A" | null } ],   // the engine's onLevelChange events
   "track": [ [t, x, y, accuracy_m, source] ],          // optional, engine updates during the run
   "summary": { "n": 12, "median_m": 1.9, "p90_m": 4.2, "max_m": 6.0 },
   // optional, for exact offline re-runs (≈45 B/sample, ~7 MB per 10 min; UI checkbox 「一併儲存原始感測資料」, default on)
-  "raw": { "sensors": { "accelerometer": [[t,x,y,z]], "gyroscope": [...], "magnetometer": [...] },
+  "raw": { "sensors": { "accelerometer": [[t,x,y,z]], "gyroscope": [...], "magnetometer": [...],
+                        "barometer": [[t, hPa]] },   // optional; same epoch-ms clock as the IMU tuples
+           "unavailable": ["barometer"],             // sensors the bridge reported missing (e.g. A71 has no barometer)
            "wifi_scans": [ { "collected_at": t, "results": [...] } ], "stats": { "samples": 0, "scans": 0, "bytes": 0 },
            "mag_accuracy": [[t, 1]] },   // iOS only: CMMagneticFieldCalibrationAccuracy (1 medium, 2 high) when it changes
   "seed": { "t": t, "level": "1F", "x": 0, "y": 0, "heading_deg": 90 | null, "accuracy_m": 1, "snapped_id": "1F-n12" | null },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, triggerRef, watch } from 'vue'
-import { townpass, type Vec3Sample, type WifiScan } from '../bridge/townpass'
+import { townpass, type BaroSample, type Vec3Sample, type WifiScan } from '../bridge/townpass'
 import { venueBaseUrl } from '../data/loader'
 import type { VenueData } from '../data/types'
 import { getVenue } from '../admin/venue'
@@ -162,7 +162,7 @@ interface Rec {
   pose: PhonePose
   t_start: number
   marks: { t: number; vertex: number }[]
-  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[] }
+  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[]; barometer: BaroSample[] }
   wifi: ScanRecord[]
   wifiNewest: number | null
   offs: (() => void)[]
@@ -194,13 +194,14 @@ function startWalk() {
   }
   const r: Rec = {
     walk: w, direction: walkDir.value, pose: pose.value, t_start: Date.now(), marks: [],
-    sensors: { accelerometer: [], gyroscope: [], magnetometer: [] }, wifi: [], wifiNewest: null, offs: [],
+    sensors: { accelerometer: [], gyroscope: [], magnetometer: [], barometer: [] }, wifi: [], wifiNewest: null, offs: [],
   }
   r.offs.push(
     townpass.onSensorBatch((b) => {
       if (b.accelerometer) r.sensors.accelerometer.push(...b.accelerometer)
       if (b.gyroscope) r.sensors.gyroscope.push(...b.gyroscope)
       if (b.magnetometer) r.sensors.magnetometer.push(...b.magnetometer)
+      if (b.barometer) r.sensors.barometer.push(...b.barometer)
     }),
     townpass.onWifiScan((s, src) => {
       // scan_started is meaningless for stream pushes (older TownPass builds always send false), so only check freshness
@@ -210,7 +211,7 @@ function startWalk() {
     }),
   )
   rec = r
-  townpass.startSensorStream({ sensors: ['accelerometer', 'gyroscope', 'magnetometer'], interval_ms: 20, batch_ms: 200 })
+  townpass.startSensorStream({ sensors: ['accelerometer', 'gyroscope', 'magnetometer', 'barometer'], interval_ms: 20, batch_ms: 200 })
   townpass.startWifiStream(5000)
   recUi.value = { elapsed: 0, acc: 0, gyr: 0, mag: 0, marks: 0, wifi: 0, stopping: false }
   smap?.setNextVertex(nextTurn.value?.xy ?? null)

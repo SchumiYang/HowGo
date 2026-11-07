@@ -1,6 +1,7 @@
 /**
  * Replays the live validation runs that carry raw sensor data (mapdata/survey/eval/*.json) through the current
- * engine and maps, and compares with what the app reported live.
+ * engine and maps (all levels, as the app loads them), and compares with what the app reported live. Runs recorded
+ * with the barometer (since 2026-11-08) replay it too; floor changes and checkpoints on the wrong floor are listed.
  *
  *   npm run eval:positioning        (runs under --mode eval only)
  */
@@ -23,14 +24,13 @@ const readJson = <T>(p: string): T => JSON.parse(readFileSync(p, 'utf8')) as T
 function loadVenue(): VenueData {
   const venue = readJson<Venue>(join(VENUE, 'venue.json'))
   const fc = <F>(p: string) => readJson<{ features: F[] }>(p).features
-  const level = venue.levels.find((l) => l.id === '1F')!
   return {
     venue,
-    levels: [{
+    levels: venue.levels.map((level) => ({
       level, wallsLoaded: true, walls3d: [], pois: [] as PoiFeature[],
-      walls: fc<WallFeature>(join(VENUE, 'levels', '1F', 'walls.geojson')),
-      units: fc<UnitFeature>(join(VENUE, 'levels', '1F', 'units.geojson')),
-    }],
+      walls: fc<WallFeature>(join(VENUE, 'levels', level.id, 'walls.geojson')),
+      units: fc<UnitFeature>(join(VENUE, 'levels', level.id, 'units.geojson')),
+    })),
     nav: fc<NavFeature>(join(VENUE, 'nav.geojson')),
     available: { walls: true, walls3d: false, units: true, pois: false, nav: true },
   }
@@ -44,7 +44,8 @@ describe.skipIf(!available)('replay of live validation runs', () => {
   it('replays every run with raw data', { timeout: 600000 }, () => {
     const venueData = loadVenue()
     const radiomap = readJson<Radiomap>(join(VENUE, 'positioning', 'wifi_radiomap.json'))
-    const magmap = readJson<Magmap>(join(VENUE, 'positioning', 'magmap_1F.json'))
+    const magmap = readdirSync(join(VENUE, 'positioning')).filter((f) => /^magmap_.+\.json$/.test(f))
+      .map((f) => readJson<Magmap>(join(VENUE, 'positioning', f)))
     const lines = ['', 'live runs: live (as recorded) vs replay (current engine + maps, 5 seeds pooled); checkpoint error m, median / p90 / max, and share within accuracy_m']
     let n = 0
     const hits: number[] = []
@@ -69,6 +70,14 @@ describe.skipIf(!available)('replay of live validation runs', () => {
       const fmt = (e: number[]) => (e.length ? `${med(e).toFixed(1).padStart(5)} / ${p90(e).toFixed(1).padStart(5)} / ${Math.max(...e).toFixed(1).padStart(5)}` : '    - /     - /     -')
       lines.push(`${(run.run_id + (dec ? ' @20Hz' : '')).padEnd(32)} ${String(run.device?.model ?? '').padEnd(9)} n=${String(rep.length).padStart(2)}  live ${fmt(live.map((c) => c.error_m!))} (${liveIn}/${live.length} in acc)`
         + `   replay ${fmt(rep.map((c) => c.error_m!))} (${repIn}/${rep.length} in acc)`)
+      if (!dec) {
+        const all = rs.flatMap((x) => x!.checkpoints)
+        const wrong = all.filter((c) => c.estimate_level !== null && c.estimate_level !== c.level).length
+        const baro = run.raw?.sensors?.barometer?.length ?? 0
+        const changes = rs.map((x) => x!.levelChanges.map((c) => `${c.from}->${c.to} ${c.source}${c.connector ? ` @${c.connector}` : ''}`).join(', ') || 'none')
+        lines.push(`    floor: ${wrong}/${all.length} checkpoints on the wrong floor; barometer ${baro ? `${baro} samples` : 'not recorded'}`
+          + `${run.raw?.unavailable?.length ? ` (unavailable: ${run.raw.unavailable.join(', ')})` : ''}; changes per seed: ${[...new Set(changes)].join(' | ')}`)
+      }
       if (process.env.POS_EVAL_VERBOSE) {
         for (const c of r.checkpoints) lines.push(`    t=${((c.t - r.track[0].t) / 1000).toFixed(0).padStart(4)} truth=(${c.truth.map((v) => v.toFixed(1)).join(',')}) est=(${c.estimate?.map((v) => v.toFixed(1)).join(',')}) err=${c.error_m?.toFixed(1)} acc=${c.accuracy_m}`)
       }

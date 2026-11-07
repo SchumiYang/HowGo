@@ -1,17 +1,19 @@
 /**
  * Dev-only: a fake `window.flutterObject` that replays a recorded / synthetic survey walk
- * (mapdata/survey/raw/*.json `walks[]` entry) through sensor_stream and wifi_scan_stream, so live
+ * (mapdata/survey/raw/*.json `walks[]` entry) or a live validation run's raw data (mapdata/survey/eval/*.json `raw`,
+ * barometer included when recorded) through sensor_stream and wifi_scan_stream, so live
  * positioning can be exercised in a desktop browser. Loaded only with `?replay=...` (main.ts):
  *   ?replay=<url of a walk or session JSON>[&walk=<walk_id>][&speed=2]
  *   ?replay=1  with the walk object injected as window.__TPNAV_REPLAY__ (headless screenshots)
  * Timestamps are shifted so the walk starts when sensor_stream starts.
  */
-import type { Vec3Sample, WifiResult } from '../bridge/townpass'
+import type { BaroSample, Vec3Sample, WifiResult } from '../bridge/townpass'
 
 interface Walk {
   walk_id?: string
-  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[] }
+  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[]; barometer?: BaroSample[] }
   wifi_scans?: { collected_at: number; results: WifiResult[] }[]
+  unavailable?: string[]
 }
 
 declare global {
@@ -30,7 +32,7 @@ export async function installReplayBridge() {
   if (!walk && src !== '1') {
     const j = await (await fetch(src)).json()
     const id = params.get('walk')
-    walk = Array.isArray(j.walks) ? (j.walks.find((w: Walk) => !id || w.walk_id === id) ?? j.walks[0]) : j
+    walk = Array.isArray(j.walks) ? (j.walks.find((w: Walk) => !id || w.walk_id === id) ?? j.walks[0]) : j.raw?.sensors ? { walk_id: j.run_id, ...j.raw } : j
   }
   if (!walk) return console.warn('[replay] no walk to replay')
   const w = walk
@@ -45,6 +47,7 @@ export async function installReplayBridge() {
 
   const recordedNow = () => t0 + (performance.now() - wallStart) * speed
   const cursors = { accelerometer: 0, gyroscope: 0, magnetometer: 0 }
+  let baroCursor = 0
 
   window.flutterObject = {
     addEventListener: (_t, l) => listeners.push(l),
@@ -57,9 +60,11 @@ export async function installReplayBridge() {
         wallStart = performance.now()
         shift = Date.now() - t0
         for (const k of Object.keys(cursors) as (keyof typeof cursors)[]) cursors[k] = 0
+        baroCursor = 0
+        if (w.unavailable?.length) emit(name, { unavailable: w.unavailable })
         sensorTimer = setInterval(() => {
           const until = recordedNow()
-          const batch: Record<string, Vec3Sample[]> = {}
+          const batch: Record<string, Vec3Sample[] | BaroSample[]> = {}
           for (const k of Object.keys(cursors) as (keyof typeof cursors)[]) {
             const arr = w.sensors[k]
             const out: Vec3Sample[] = []
@@ -69,6 +74,13 @@ export async function installReplayBridge() {
             }
             if (out.length) batch[k] = out
           }
+          const baro = w.sensors.barometer ?? []
+          const b: BaroSample[] = []
+          while (baroCursor < baro.length && baro[baroCursor][0] <= until) {
+            const s = baro[baroCursor++]
+            b.push([s[0] + shift, s[1]])
+          }
+          if (b.length) batch.barometer = b
           if (Object.keys(batch).length) emit(name, batch)
           if (cursors.accelerometer >= w.sensors.accelerometer.length && sensorTimer) clearInterval(sensorTimer)
         }, data.batch_ms ?? 200)

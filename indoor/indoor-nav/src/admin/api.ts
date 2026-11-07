@@ -111,7 +111,7 @@ export interface RecordedWalk {
   t_start: number
   t_end: number
   marks?: { t: number; vertex: number }[]
-  sensors: { accelerometer: [number, number, number, number][]; gyroscope: [number, number, number, number][]; magnetometer: [number, number, number, number][] }
+  sensors: { accelerometer: [number, number, number, number][]; gyroscope: [number, number, number, number][]; magnetometer: [number, number, number, number][]; barometer?: [number, number][] }
   wifi_scans?: { collected_at: number; results: { bssid: string; ssid: string; level: number; frequency: number; timestamp: number | null }[] }[]
 }
 export const getSessionWalk = (sessionId: string, index: number) =>
@@ -130,6 +130,8 @@ export interface EvalCheckpoint {
   source: string | null
   confidence: number | null
   error_m: number | null
+  /** level the engine was on at the checkpoint (estimate is null when it differs from `level`) */
+  estimate_level?: string | null
 }
 export interface EvalSummary { n: number; median_m: number | null; p90_m: number | null; max_m: number | null }
 export interface EvalRun {
@@ -148,10 +150,15 @@ export interface EvalRun {
   /** first known-position seed; `seeds` lists every 「設為已知位置」 (t, level, x, y, heading_deg clockwise from +y) */
   seed?: EvalSeed | null
   seeds?: EvalSeed[]
+  /** automatic floor changes during the run (engine onLevelChange) */
+  level_changes?: { t: number; from: string; to: string; source: string; confidence: number; connector: string | null }[]
   /** raw bridge data, same tuples as survey walks (SURVEY_SCHEMA.md §2); ~45 B per sample, ~7 MB per 10 min */
   raw?: {
+    /** barometer [t, hPa]: runs recorded before 2026-11-08 have none */
     sensors: RecordedWalk['sensors']
     wifi_scans: NonNullable<RecordedWalk['wifi_scans']>
+    /** sensors the bridge reported unavailable (e.g. ["barometer"]) */
+    unavailable?: string[]
     /** iOS only: [t, magnetometer_accuracy] on change */
     mag_accuracy?: [number, number][]
     stats: { samples: number; scans: number; bytes: number }

@@ -216,6 +216,7 @@ def summarize_session(s, size, mtime):
             "index": i, "walk_id": w.get("walk_id"), "direction": w.get("direction"), "level": w.get("level"),
             "path": w.get("path"), "t_start": w.get("t_start"), "t_end": w.get("t_end"), "marks": w.get("marks") or [],
             "n_mag": len((w.get("sensors") or {}).get("magnetometer") or []), "n_wifi": len(w.get("wifi_scans") or []),
+            "n_baro": len((w.get("sensors") or {}).get("barometer") or []),
         } for i, w in enumerate(walks)],
     }
 
@@ -231,6 +232,12 @@ def error_summary(errors):
     return {"n": len(e), "median_m": percentile(e, .5), "p90_m": percentile(e, .9), "max_m": e[-1] if e else None}
 
 
+def is_baro_sample(v):
+    """[t (epoch ms), hPa]"""
+    return (isinstance(v, list) and len(v) == 2
+            and all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) for x in v))
+
+
 def validate_eval(r):
     if not isinstance(r, dict):
         return "not an object"
@@ -240,6 +247,15 @@ def validate_eval(r):
         return "bad run_id"
     if not isinstance(r.get("checkpoints"), list):
         return "missing checkpoints"
+    raw = r.get("raw")
+    if raw is not None:
+        sensors = raw.get("sensors") if isinstance(raw, dict) else None
+        if not isinstance(sensors, dict):
+            return "bad raw sensors"
+        # optional (runs before 2026-11-08 have none): replayed through the engine's barometric floor detector
+        baro = sensors.get("barometer")
+        if baro is not None and not (isinstance(baro, list) and all(is_baro_sample(v) for v in baro)):
+            return "bad raw barometer"
     return None
 
 
@@ -735,6 +751,8 @@ def list_evals():
                     "kind": r.get("kind") or "live",
                     "summary": r.get("summary") or error_summary([(c or {}).get("error_m") for c in r.get("checkpoints") or []]),
                     "checkpoints": len(r.get("checkpoints") or []), "raw_bytes": ((r.get("raw") or {}).get("stats") or {}).get("bytes"),
+                    "baro_samples": len(((r.get("raw") or {}).get("sensors") or {}).get("barometer") or []),
+                    "level_changes": len(r.get("level_changes") or []),
                     "mtime": st.st_mtime * 1000,
                 })
                 _eval_cache[p] = hit

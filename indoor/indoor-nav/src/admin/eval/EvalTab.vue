@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { townpass, type SensorBatch, type Vec3Sample, type WifiScan } from '../../bridge/townpass'
+import { townpass, type BaroSample, type SensorBatch, type Vec3Sample, type WifiScan } from '../../bridge/townpass'
 import { venueBaseUrl } from '../../data/loader'
 import type { VenueData } from '../../data/types'
 import type { XY } from '../../geo/frame'
 import { createPositioning, loadPositioningMaps, type Positioning } from '../../positioning/engine'
-import type { Magmap, PositionUpdate, Radiomap } from '../../positioning/types'
+import type { LevelChange, Magmap, PositionUpdate, Radiomap } from '../../positioning/types'
 import { modelFromUserAgent } from '../../survey/session'
 import MagCalibrationHint from '../../components/MagCalibrationHint.vue'
 import { AdminMap, circlePolygon, type LocalFeature } from '../AdminMap'
@@ -40,6 +40,9 @@ const truth = ref<{ xy: XY; id: string | null } | null>(null)
 // engine state
 let engine: Positioning | null = null
 let offUpdate: (() => void) | null = null
+let offLevel: (() => void) | null = null
+/** automatic floor changes of this run (barometer / WiFi), saved with live runs */
+const levelChanges = shallowRef<LevelChange[]>([])
 const running = ref(false)
 const last = shallowRef<PositionUpdate | null>(null)
 const engStats = shallowRef<Positioning['stats'] | null>(null)
@@ -96,6 +99,7 @@ function newEngine(): Positioning | null {
   const m = maps.value
   if (!v || !m) return null
   offUpdate?.()
+  offLevel?.()
   const e = createPositioning({
     venueData: v,
     radiomap: useWifi.value ? m.radiomap : null,
@@ -103,6 +107,8 @@ function newEngine(): Positioning | null {
     options: { level: props.level, useWifi: useWifi.value, useMagnetic: useMag.value },
   })
   offUpdate = e.onUpdate((u) => onUpdate(u))
+  offLevel = e.onLevelChange((c) => (levelChanges.value = [...levelChanges.value, c]))
+  levelChanges.value = []
   track.value = []
   last.value = null
   return e
@@ -132,7 +138,10 @@ function onUpdate(u: PositionUpdate) {
 // ---------- raw recording (live runs can be re-run offline: same tuples as survey walks) ----------
 const LIVE_START = { sensorIntervalMs: 20, batchMs: 200, wifiIntervalMs: 30000 }
 interface RawRec {
-  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[] }
+  /** barometer: [t, hPa] (~1 Hz on iOS, up to 25 Hz on Android; empty when the phone has none) */
+  sensors: { accelerometer: Vec3Sample[]; gyroscope: Vec3Sample[]; magnetometer: Vec3Sample[]; barometer: BaroSample[] }
+  /** sensors the bridge reported unavailable (e.g. barometer on the A71) */
+  unavailable: string[]
   wifi_scans: { collected_at: number; results: WifiScan['results'] }[]
   /** [t, accuracy] whenever iOS reports magnetometer_accuracy (absent on Android) */
   mag_accuracy: [number, number][]
@@ -148,7 +157,7 @@ const seeds = ref<SeedRec[]>([])
 const rawSizeMB = computed(() => (rawCounts.value.samples * 45 + rawCounts.value.scans * 2500) / 1e6)
 
 function startRaw() {
-  const r: RawRec = { sensors: { accelerometer: [], gyroscope: [], magnetometer: [] }, wifi_scans: [], mag_accuracy: [], offs: [] }
+  const r: RawRec = { sensors: { accelerometer: [], gyroscope: [], magnetometer: [], barometer: [] }, unavailable: [], wifi_scans: [], mag_accuracy: [], offs: [] }
   rawCounts.value = { samples: 0, scans: 0 }
   r.offs.push(
     townpass.onSensorBatch((b) => {
@@ -162,6 +171,11 @@ function startRaw() {
         r.sensors[k].push(...a)
         rawCounts.value.samples += a.length
       }
+      if (b.barometer?.length) {
+        r.sensors.barometer.push(...b.barometer)
+        rawCounts.value.samples += b.barometer.length
+      }
+      for (const u of b.unavailable ?? []) if (!r.unavailable.includes(u)) r.unavailable.push(u)
     }),
     townpass.onWifiScan((scan) => {
       if (r.wifi_scans.some((w) => w.collected_at === scan.collected_at)) return
@@ -216,9 +230,14 @@ function liveExtra(): Record<string, unknown> {
     start: { sensor_interval_ms: LIVE_START.sensorIntervalMs, batch_ms: LIVE_START.batchMs, wifi_interval_ms: LIVE_START.wifiIntervalMs, engine_uses_wifi: useWifi.value },
     seed: seeds.value[0] ?? null,
     seeds: seeds.value,
+    level_changes: levelChanges.value,
   }
   if (saveRaw.value && raw) {
-    const r = { sensors: raw.sensors, wifi_scans: raw.wifi_scans, ...(raw.mag_accuracy.length ? { mag_accuracy: raw.mag_accuracy } : {}) }
+    const r = {
+      sensors: raw.sensors, wifi_scans: raw.wifi_scans,
+      ...(raw.unavailable.length ? { unavailable: raw.unavailable } : {}),
+      ...(raw.mag_accuracy.length ? { mag_accuracy: raw.mag_accuracy } : {}),
+    }
     extra.raw = { ...r, stats: { samples: rawCounts.value.samples, scans: raw.wifi_scans.length, bytes: JSON.stringify(r).length } }
   }
   return extra
@@ -232,6 +251,7 @@ function addCheckpoint() {
     t: Date.now(), level: props.level, truth: [+truth.value.xy[0].toFixed(2), +truth.value.xy[1].toFixed(2)], estimate: est,
     accuracy_m: u ? +u.accuracy_m.toFixed(2) : null, source: u?.source ?? null, confidence: u ? +u.confidence.toFixed(2) : null,
     error_m: est ? +dist(est, truth.value.xy).toFixed(2) : null,
+    estimate_level: u?.level ?? null,
   })
   drawCheckpoints()
   navigator.vibrate?.(40)
@@ -353,6 +373,8 @@ async function runReplay() {
     const t0 = Math.min(S.accelerometer[0]?.[0] ?? walk.t_start, walk.t_start)
     const t1 = Math.max(S.accelerometer[S.accelerometer.length - 1]?.[0] ?? walk.t_end, walk.t_end)
     const cur = { accelerometer: 0, gyroscope: 0, magnetometer: 0 }
+    const baro = S.barometer ?? []
+    let bi = 0
     const scans = [...(walk.wifi_scans ?? [])].sort((a, b) => a.collected_at - b.collected_at)
     let si = 0
     replay.value.msg = '重播中…'
@@ -364,6 +386,9 @@ async function runReplay() {
         while (cur[k] < arr.length && arr[cur[k]][0] <= t) out.push(arr[cur[k]++])
         if (out.length) batch[k] = out
       }
+      const b0 = bi
+      while (bi < baro.length && baro[bi][0] <= t) bi++
+      if (bi > b0) batch.barometer = baro.slice(b0, bi)
       replayClock = t
       engine.pushSensorBatch(batch)
       while (si < scans.length && scans[si].collected_at <= t) {
@@ -456,6 +481,7 @@ onBeforeUnmount(() => {
   if (ownWifiStream) void townpass.stopWifiStream()
   raw?.offs.forEach((off) => off())
   offUpdate?.()
+  offLevel?.()
   amap?.destroy()
 })
 

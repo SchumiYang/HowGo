@@ -152,7 +152,7 @@ def test_survey_upload_merge_and_walk(client, mapdata):
 
     [summary] = client.get("/v1/indoor/survey/sessions").json()
     assert summary["walks"] == 3 and [w["level"] for w in summary["walk_list"]] == ["1F", "2F", "1F"]
-    assert "sensors" not in summary["walk_list"][0]
+    assert "sensors" not in summary["walk_list"][0] and summary["walk_list"][0]["n_baro"] == 0
     w = client.get("/v1/indoor/survey/session/20261108-100000-a71", params={"walk": 0}).json()["walk"]
     assert w["sensors"]["accelerometer"][0][1] == 0.1235
     assert client.get("/v1/indoor/survey/session/20261108-100000-a71", params={"walk": 9}).status_code == 404
@@ -169,7 +169,31 @@ def test_eval_round_trip(client):
     assert client.post("/v1/indoor/eval", json=run).json() == {"ok": True}
     [item] = client.get("/v1/indoor/eval").json()
     assert item["summary"] == {"n": 2, "median_m": 1, "p90_m": 3, "max_m": 3}
+    assert item["baro_samples"] == 0 and item["level_changes"] == 0
     assert client.post("/v1/indoor/eval", json={**run, "run_id": "../x"}).status_code == 400
+
+
+def test_eval_raw_barometer(client, mapdata):
+    raw = {"sensors": {"accelerometer": [[1000.5, 0, 0, 9.8]], "gyroscope": [], "magnetometer": [],
+                       "barometer": [[1000.0, 1009.87], [2000.0, 1009.41]]},
+           "wifi_scans": [], "unavailable": [], "stats": {"samples": 3, "scans": 0, "bytes": 120}}
+    run = {"schema": "tpnav-eval/0", "run_id": "20261108-1100-pixel9a", "venue": "tv", "device": {"model": "Pixel 9a"},
+           "engine": {"maps": {}}, "checkpoints": [{"t": 2000, "level": "2F", "estimate_level": "2F", "error_m": 1.5}],
+           "level_changes": [{"t": 1900, "from": "1F", "to": "2F", "source": "barometer", "confidence": 0.8,
+                              "connector": "2F-el2"}], "raw": raw}
+    assert client.post("/v1/indoor/eval", json=run).json() == {"ok": True}
+    stored = json.loads((mapdata / "survey/eval/20261108-1100-pixel9a.json").read_text(encoding="utf-8"))
+    assert stored["raw"]["sensors"]["barometer"] == [[1000.0, 1009.87], [2000.0, 1009.41]]
+    assert stored["level_changes"][0]["source"] == "barometer"
+    [item] = client.get("/v1/indoor/eval").json()
+    assert item["baro_samples"] == 2 and item["level_changes"] == 1
+    # older runs (no barometer, A71 reporting it unavailable) still save
+    old = {**run, "run_id": "20261107-1000-a71", "raw": {**raw, "sensors": {k: v for k, v in raw["sensors"].items() if k != "barometer"},
+                                                         "unavailable": ["barometer"]}}
+    assert client.post("/v1/indoor/eval", json=old).json() == {"ok": True}
+    bad = {**run, "raw": {**raw, "sensors": {**raw["sensors"], "barometer": [[1000.0, "x"]]}}}
+    assert client.post("/v1/indoor/eval", json=bad).json()["error"] == "bad raw barometer"
+    assert client.post("/v1/indoor/eval", json={**run, "raw": {"sensors": None}}).json()["error"] == "bad raw sensors"
 
 
 # ---------- build ----------
