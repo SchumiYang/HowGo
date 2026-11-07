@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 const model = defineModel<boolean>({ required: true })
 </script>
 
 <template>
   <label class="toggle">
     <span class="txt">
-      <span class="title">無障礙路線</span>
-      <span class="sub">{{ model ? '只走電梯與無階梯通道' : '可能經過樓梯' }}</span>
+      <span class="title">{{ t('無障礙路線') }}</span>
+      <span class="sub">{{ model ? t('只走電梯與無階梯通道') : t('可能經過樓梯') }}</span>
     </span>
     <input v-model="model" type="checkbox" role="switch" :aria-checked="model" />
     <span class="track" aria-hidden="true"></span>

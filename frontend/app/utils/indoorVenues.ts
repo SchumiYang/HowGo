@@ -1,3 +1,4 @@
+import { locale, t } from '~/i18n'
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl'
 import { watch } from 'vue'
 
@@ -100,18 +101,16 @@ export interface IndoorVenueMarkerOptions {
 export async function addIndoorVenueMarkers(map: MapLibreMap, { onOpen, visible = () => true }: IndoorVenueMarkerOptions): Promise<() => void> {
   const [{ Marker: MarkerCtor }, venues] = await Promise.all([import('maplibre-gl'), fetchIndoorVenues()])
   injectStyle()
-  const markers: { marker: Marker; el: HTMLButtonElement }[] = venues.map((v) => {
+  const markers: { marker: Marker; el: HTMLButtonElement; name: string }[] = venues.map((v) => {
     const el = document.createElement('button')
     el.type = 'button'
     el.className = 'indoor-venue-marker'
-    el.setAttribute('aria-label', `開啟${v.shortName}室內地圖`)
     el.innerHTML = `${BUILDING_ICON}<span class="indoor-venue-label"></span>`
-    el.querySelector('.indoor-venue-label')!.textContent = `${v.shortName} · 室內地圖`
     el.addEventListener('click', (e) => {
       e.stopPropagation()
       onOpen(v.id)
     })
-    return { marker: new MarkerCtor({ element: el, anchor: 'center' }).setLngLat(v.center).addTo(map), el }
+    return { marker: new MarkerCtor({ element: el, anchor: 'center' }).setLngLat(v.center).addTo(map), el, name: v.shortName }
   })
   const update = () => {
     const z = map.getZoom()
@@ -123,8 +122,17 @@ export async function addIndoorVenueMarkers(map: MapLibreMap, { onOpen, visible 
   }
   update()
   map.on('zoom', update)
+  const updateLabels = () => {
+    for (const { el, name } of markers) {
+      el.setAttribute('aria-label', t('開啟{0}室內地圖', t(name)))
+      el.querySelector('.indoor-venue-label')!.textContent = t('{0} · 室內地圖', t(name))
+    }
+  }
+  updateLabels()
+  const stopLabels = watch(locale, updateLabels)
   const stopWatch = watch(visible, update)
   return () => {
+    stopLabels()
     stopWatch()
     map.off('zoom', update)
     for (const { marker } of markers) marker.remove()

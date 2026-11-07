@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { computed } from 'vue'
 
 const props = defineProps<{ bearing: number }>()
@@ -9,7 +10,7 @@ const heading = computed(() => ((Math.round(props.bearing) % 360) + 360) % 360)
 </script>
 
 <template>
-  <button class="compass" :aria-label="`指北，目前方位 ${heading} 度`" @click="emit('reset')">
+  <button class="compass" :aria-label="t('指北，目前方位 {0} 度', heading)" @click="emit('reset')">
     <!-- the needle points to north on screen, i.e. rotated against the map bearing -->
     <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" :style="{ transform: `rotate(${-bearing}deg)` }">
       <path d="M12 2.5l4 9.5h-8z" fill="var(--tp-red600)" />

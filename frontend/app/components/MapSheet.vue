@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '~/i18n'
 const level = defineModel<number>({ required: true })
 const height = ref<number | null>(null)
 const stops = [0.24, 0.53, 0.82]
@@ -49,7 +50,7 @@ function cycle() {
 <template>
   <aside ref="sheet" class="map-sheet" :data-dragging="height !== null"
     :style="{ height: height !== null ? height + 'px' : `max(${MIN_HEIGHT}px, ${stops[level]! * 100}dvh)` }">
-    <button class="sheet-handle" type="button" :aria-label="level === 2 ? '收起路線面板' : '展開路線面板'"
+    <button class="sheet-handle" type="button" :aria-label="level === 2 ? t('收起路線面板') : t('展開路線面板')"
       @pointerdown="start" @pointermove="move" @pointerup="end" @pointercancel="end" @click="cycle"
       @keydown.up.prevent="level = Math.min(2, level + 1)" @keydown.down.prevent="level = Math.max(0, level - 1)">
       <span />

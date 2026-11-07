@@ -746,13 +746,21 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 }
 
 /* ---------- Page 3 室外即時導航 ---------- */
-.nav-fabs { bottom: calc(var(--safe-bottom) + 300px); }
+.nav-fabs {
+  display: flex;
+  top: calc(var(--safe-top) + 8px);
+  bottom: auto;
+  flex-direction: row;
+}
 .compass-icon { color: var(--red-500); transition: transform .2s; }
 .nav-panel {
   position: absolute;
   z-index: 3;
   inset: auto 0 0;
   width: min(100%, 560px);
+  max-height: calc(100dvh - var(--safe-top) - 76px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   margin: auto;
   padding: 14px 20px max(16px, var(--safe-bottom));
   border-radius: 28px 28px 0 0;
@@ -812,8 +820,8 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 .step-dots button[aria-current="step"] { width: 36px; }
 .step-dots button[aria-current="step"]::after { inset: 8px 4px; background: var(--primary-500); }
 .step-count { color: var(--text-muted); font-size: 13px; }
-.nav-actions { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-top: 12px; }
-.nav-actions .alarm-button { min-width: 120px; }
+.nav-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin-top: 12px; }
+.nav-actions .alarm-button { min-width: 88px; }
 .demo-button { display: block; margin: 6px auto 0; min-height: 36px; font-size: 13px; color: var(--secondary-700); }
 
 .dialog-backdrop {
@@ -836,6 +844,26 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 .dialog p { margin-top: 8px; color: var(--text-secondary); }
 .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
 
+@media (max-width: 420px) {
+  .route-tabs { margin-inline: 12px; }
+  .route-tabs button {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 3px 2px 7px;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  .tab-time { white-space: nowrap; }
+  .nav-actions button, .dialog-actions button { padding-inline: 10px; }
+}
+
+@media (max-height: 480px) and (max-width: 899px) {
+  .map-sheet { max-height: calc(100dvh - var(--safe-top) - 136px); }
+  .nav-panel { padding-top: 8px; }
+  .dialog-backdrop { overflow-y: auto; }
+}
+
 /* ---------- Desktop (demo projection) ---------- */
 @media (min-width: 900px) {
   .top-bar, .place-card, .endpoint-card { left: 20px; right: auto; width: 440px; }
@@ -849,7 +877,7 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
     border-radius: 24px;
   }
   .nav-panel { left: 20px; right: auto; bottom: 16px; width: 440px; margin: 0; border-radius: 24px; }
-  .nav-fabs { bottom: 24px; }
+  .nav-fabs { top: auto; bottom: 24px; }
   .map-app .maplibregl-ctrl-top-right { display: block; top: 12px; right: 84px; }
   .explore-fabs { top: 12px; }
 }

@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { computed, ref, shallowRef } from 'vue'
 import { townpass } from '../bridge/townpass'
 import type { VenueData } from '../data/types'
@@ -60,7 +61,7 @@ export function useLivePosition(venueId: string, getData: () => VenueData | null
       const e = await ensureEngine()
       if (!e) return false
       if (!e.start(bridge, { wifiIntervalMs: 30000 })) {
-        error.value = '即時定位需在台北通 App 內使用'
+        error.value = t('即時定位需在台北通 App 內使用')
         return false
       }
       active.value = true

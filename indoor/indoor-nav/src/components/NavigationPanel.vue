@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { computed, ref } from 'vue'
 import type { Step } from '../routing/instructions'
 import StepIcon from './StepIcon.vue'
@@ -26,17 +27,17 @@ const current = computed(() => props.steps[props.activeStep])
 const arrived = computed(() => current.value?.kind === 'arrive')
 const isLast = computed(() => props.activeStep >= props.steps.length - 1)
 /** full sentence for screen readers: "第 2 步，共 6 步。直走 20 公尺後右轉。1F" */
-const spoken = (s: Step, i: number) => `第 ${i + 1} 步，共 ${props.steps.length} 步。${s.text}。${props.levelName(s.level)}`
+const spoken = (s: Step, i: number) => t('第 {0} 步，共 {1} 步。{2}。{3}', i + 1, props.steps.length, s.text, props.levelName(s.level))
 const nextLabel = computed(() => {
   const n = props.steps[props.activeStep + 1]
-  if (!n) return '下一步'
-  if (current.value?.kind === 'elevator' || current.value?.kind === 'stairs') return `已到 ${props.levelName(current.value.toLevel!)}`
-  return '下一步'
+  if (!n) return t('下一步')
+  if (current.value?.kind === 'elevator' || current.value?.kind === 'stairs') return t('已到 {0}', props.levelName(current.value.toLevel!))
+  return t('下一步')
 })
 </script>
 
 <template>
-  <section class="nav" aria-label="導航中">
+  <section class="nav" :aria-label="t('導航中')">
     <!-- next-step card; only the hidden sentence is live, so TalkBack / VoiceOver announce each new
          step but not every metre of the live distance -->
     <div class="next" :class="{ arrived }">
@@ -45,9 +46,9 @@ const nextLabel = computed(() => {
       <div class="body" aria-hidden="true">
         <div class="txt">{{ liveText ?? current?.text }}</div>
         <div class="sub">
-          {{ current ? levelName(current.level) : '' }} · 第 {{ activeStep + 1 }} / {{ steps.length }} 步
-          <template v-if="!arrived && remainingM != null"> · 剩 {{ Math.max(1, Math.round(remainingM)) }} 公尺</template>
-          <template v-else-if="!arrived"> · 全程 {{ summary.meters }} 公尺</template>
+          {{ t('{0} · 第 {1} / {2} 步', current ? levelName(current.level) : '', activeStep + 1, steps.length) }}
+          <template v-if="!arrived && remainingM != null"> {{ t('· 剩 {0} 公尺', Math.max(1, Math.round(remainingM))) }}</template>
+          <template v-else-if="!arrived"> {{ t('· 全程 {0} 公尺', summary.meters) }}</template>
         </div>
       </div>
     </div>
@@ -55,28 +56,28 @@ const nextLabel = computed(() => {
     <div class="live" :class="{ low: live?.low }">
       <template v-if="live">
         <span class="live-dot" aria-hidden="true"></span>
-        <span class="live-txt">{{ live.label }}<span v-if="live.low" class="live-sub">定位精度較低</span></span>
-        <button class="btn text small" @click="emit('reroute')">重新規劃</button>
+        <span class="live-txt">{{ t(live.label) }}<span v-if="live.low" class="live-sub">{{ t('定位精度較低') }}</span></span>
+        <button class="btn text small" @click="emit('reroute')">{{ t('重新規劃') }}</button>
       </template>
       <template v-else>
-        <span class="live-txt">手動切換步驟</span>
-        <button class="btn text small" :disabled="liveStarting" @click="emit('live')">{{ liveStarting ? '啟動中…' : '開啟即時定位' }}</button>
+        <span class="live-txt">{{ t('手動切換步驟') }}</span>
+        <button class="btn text small" :disabled="liveStarting" @click="emit('live')">{{ liveStarting ? t('啟動中…') : t('開啟即時定位') }}</button>
       </template>
     </div>
 
     <div class="ctrl">
-      <button class="btn" :disabled="activeStep <= 0" @click="emit('step', activeStep - 1)">上一步</button>
+      <button class="btn" :disabled="activeStep <= 0" @click="emit('step', activeStep - 1)">{{ t('上一步') }}</button>
       <button v-if="!isLast" class="btn primary" @click="emit('step', activeStep + 1)">{{ nextLabel }}</button>
-      <button v-else class="btn primary" @click="emit('end')">完成</button>
+      <button v-else class="btn primary" @click="emit('end')">{{ t('完成') }}</button>
     </div>
 
     <button class="course" :aria-pressed="courseUp" @click="courseUp = !courseUp">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3l6 16-6-4-6 4z" :fill="courseUp ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
-      隨行方向：{{ courseUp ? '開' : '關' }}
+      {{ t('隨行方向：{0}', courseUp ? '開' : '關') }}
     </button>
 
     <button class="list-toggle" :aria-expanded="showList" aria-controls="step-list" @click="showList = !showList">
-      {{ showList ? '收合路線步驟' : `查看全部 ${steps.length} 個步驟` }}
+      {{ showList ? t('收合路線步驟') : t('查看全部 {0} 個步驟', steps.length) }}
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" :class="{ flip: showList }"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </button>
     <ol v-if="showList" id="step-list" class="steps">
@@ -89,7 +90,7 @@ const nextLabel = computed(() => {
       </li>
     </ol>
 
-    <button class="btn text tn-end" @click="emit('end')">結束導航</button>
+    <button class="btn text tn-end" @click="emit('end')">{{ t('結束導航') }}</button>
   </section>
 </template>
 
@@ -167,7 +168,7 @@ const nextLabel = computed(() => {
 }
 .ctrl {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 8px;
   margin-top: 4px;
 }

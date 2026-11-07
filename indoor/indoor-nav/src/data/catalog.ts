@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { XY } from '../geo/frame'
 import { labelPoint } from '../geo/geometry'
 import type { Target } from '../routing/route'
@@ -90,7 +91,7 @@ export function searchCatalog(catalog: PlaceEntry[], query: string, limit = 20):
   const scored: { p: PlaceEntry; s: number }[] = []
   for (const p of catalog) {
     if (p.searchable === false) continue
-    const fields = [p.ref, p.name, CATEGORY_LABEL[p.category]].filter(Boolean).map((s) => s!.toLowerCase())
+    const fields = [p.ref, p.name, CATEGORY_LABEL[p.category], t(p.name), t(CATEGORY_LABEL[p.category] ?? '')].filter(Boolean).map((s) => s!.toLowerCase())
     let s = 0
     for (const f of fields) {
       if (f === q) s = Math.max(s, 3)

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { locale, t } from '~/i18n'
+import { localizeRouteError, localizeRouteText } from './utils/routeLocale'
+
 import type { Feature, FeatureCollection, LineString, MultiPolygon, Point, Polygon } from 'geojson'
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature, Popup as MapLibrePopup } from 'maplibre-gl'
 import { createRouteTracker } from './utils/navigation'
@@ -7,6 +10,8 @@ import { LOCAL_CJK_FONT, TAIPEI_BOUNDS, collapseAttribution, loadBasemap } from 
 import type { IconName } from './components/AppIcon.vue'
 import type { AppMode } from './components/ModeLanding.vue'
 import type { Coordinate, Place } from './composables/usePlaceSearch'
+
+useHead({ htmlAttrs: { lang: () => locale.value } })
 
 /**
  * Screens follow 室外uiux-v1/ACCESSIBLE_NAV_FLUTTER_WEB_SPEC.md:
@@ -283,10 +288,10 @@ const browseIcon = computed<IconName>(() => {
 const browseTags = computed(() => {
   const detail = browseDetails.value[0]
   if (!detail) return browsePlace.value?.address ? [browsePlace.value.address] : []
-  return [detail.title, ...detail.lines.filter(line => !line.startsWith('資料來源'))]
+  return [detail.title, ...detail.lines.filter(line => !(line.startsWith('資料來源') || line.startsWith('Source:')))]
     .filter((tag, index, all) => tag && tag !== browsePlace.value?.name && all.indexOf(tag) === index)
 })
-const browseSource = computed(() => browseDetails.value[0]?.lines.find(line => line.startsWith('資料來源')) ?? '')
+const browseSource = computed(() => browseDetails.value[0]?.lines.find(line => line.startsWith('資料來源') || line.startsWith('Source:')) ?? '')
 
 const recentPlaces = useRecentPlaces()
 
@@ -335,14 +340,14 @@ const locationMessage = ref('')
 const gpsPoint = shallowRef<Coordinate | null>(null)
 let locationRequest = 0
 
-const endpointLabel = (endpoint: Endpoint) => endpoint === 'start' ? '起點' : '終點'
+const endpointLabel = (endpoint: Endpoint) => endpoint === 'start' ? t('起點') : t('終點')
 const formatCoordinate = (point: Coordinate) => `${point[1].toFixed(5)}, ${point[0].toFixed(5)}`
-const formatDistance = (meters: number) => meters >= 1000 ? `${(meters / 1000).toFixed(1)} 公里` : `${Math.round(meters)} 公尺`
+const formatDistance = (meters: number) => meters >= 1000 ? t('{0} 公里', (meters / 1000).toFixed(1)) : t('{0} 公尺', Math.round(meters))
 
 function endpointText(endpoint: Endpoint) {
   if (endpoints[endpoint]) return endpointNames[endpoint] || formatCoordinate(endpoints[endpoint]!)
-  if (endpoint === 'start' && locating.value) return '定位中…'
-  return endpoint === 'start' && locationMessage.value ? '尚未取得目前位置' : `選擇${endpointLabel(endpoint)}`
+  if (endpoint === 'start' && locating.value) return t('定位中…')
+  return endpoint === 'start' && locationMessage.value ? t('尚未取得目前位置') : t('選擇{0}', endpointLabel(endpoint))
 }
 
 function setEndpoint(endpoint: Endpoint, point: Coordinate, fromLocation = false, name = '') {
@@ -389,8 +394,8 @@ function locate(target: Endpoint | 'browse', onSuccess?: () => void) {
   locationMessage.value = ''
   if (!locationAvailable()) {
     locationMessage.value = window.isSecureContext
-      ? '瀏覽器不支援定位，請改用搜尋或在地圖上選擇。'
-      : '定位需要 HTTPS、localhost 或在 Town Pass App 內開啟，請改用搜尋或在地圖上選擇。'
+      ? t('瀏覽器不支援定位，請改用搜尋或在地圖上選擇。')
+      : t('定位需要 HTTPS、localhost 或在 Town Pass App 內開啟，請改用搜尋或在地圖上選擇。')
     return
   }
   const request = ++locationRequest
@@ -401,7 +406,7 @@ function locate(target: Endpoint | 'browse', onSuccess?: () => void) {
     const point: Coordinate = [fix.longitude, fix.latitude]
     const bounds = metadata.value?.coverage
     if (bounds && (point[0] < bounds[0] || point[0] > bounds[2] || point[1] < bounds[1] || point[1] > bounds[3])) {
-      locationMessage.value = '目前位置超出服務範圍（臺北市），請改用搜尋或在地圖上選擇。'
+      locationMessage.value = t('目前位置超出服務範圍（臺北市），請改用搜尋或在地圖上選擇。')
       return
     }
     gpsPoint.value = point
@@ -410,17 +415,17 @@ function locate(target: Endpoint | 'browse', onSuccess?: () => void) {
       // Spec §4.2: only move the map to the GPS position and show the dot; the selected place and card stay.
       map?.easeTo({ center: point, zoom: Math.max(map.getZoom(), 16), duration: 0 })
     } else {
-      setEndpoint(target, point, true, '目前位置')
+      setEndpoint(target, point, true, t('目前位置'))
     }
     onSuccess?.()
   }, ({ code }: FixError) => {
     if (request !== locationRequest) return
     locating.value = false
     locationMessage.value = code === 1
-      ? '尚未取得目前位置：未允許定位或定位服務未開啟，可改用搜尋或在地圖上選擇。'
+      ? t('尚未取得目前位置：未允許定位或定位服務未開啟，可改用搜尋或在地圖上選擇。')
       : code === 3
-        ? '定位逾時，請重試或改用搜尋、在地圖上選擇。'
-        : '裝置目前無法提供位置，請改用搜尋或在地圖上選擇。'
+        ? t('定位逾時，請重試或改用搜尋、在地圖上選擇。')
+        : t('裝置目前無法提供位置，請改用搜尋或在地圖上選擇。')
   })
 }
 
@@ -499,7 +504,7 @@ function confirmPick() {
   if (!map || !target || !pixel) return
   const { lng, lat } = map.unproject(pixel)
   const point: Coordinate = [lng, lat]
-  commitEndpoint(target, point, false, pickerLabel.value || `地圖選點 ${formatCoordinate(point)}`)
+  commitEndpoint(target, point, false, pickerLabel.value || t('地圖選點 {0}', formatCoordinate(point)))
 }
 
 /* ---------- Route preview (Page 2) ---------- */
@@ -526,42 +531,42 @@ type RouteFact = { text: string; icon: IconName; tone: 'neutral' | 'good' | 'war
 const stairBadge = computed(() => {
   const facts = result.value?.assessment
   if (!facts) return null
-  if (facts.stair_sections === null) return { text: '階梯資料待確認', tone: 'neutral' }
-  return facts.stair_sections > 0 ? { text: '含階梯・不適合輪椅', tone: 'alarm' } : null
+  if (facts.stair_sections === null) return { text: t('階梯資料待確認'), tone: 'neutral' }
+  return facts.stair_sections > 0 ? { text: t('含階梯・不適合輪椅'), tone: 'alarm' } : null
 })
 const routeFacts = computed<RouteFact[]>(() => {
   const facts = result.value?.assessment
   if (!facts) return []
   const rows: (RouteFact | false)[] = [
-    facts.stair_sections === null ? { text: '階梯資料待確認', icon: 'stairs', tone: 'neutral' }
+    facts.stair_sections === null ? { text: t('階梯資料待確認'), icon: 'stairs', tone: 'neutral' }
       : facts.stair_sections > 0
-        ? { text: `${facts.stair_sections} 段階梯・約 ${formatDistance(facts.stairs_m ?? 0)}`, icon: 'stairs', tone: 'alarm' }
-        : { text: '路網未標示階梯', icon: 'check', tone: 'good' },
-    facts.mapped_slope_sections > 0 && { text: `${facts.mapped_slope_sections} 處已知坡段`, icon: 'slope', tone: 'warn' },
-    facts.comfortable_m > 0 && { text: `可行人行道約 ${formatDistance(facts.comfortable_m)}`, icon: 'ruler', tone: 'good' },
-    facts.limited_m > 0 && { text: `勉強可行人行道約 ${formatDistance(facts.limited_m)}`, icon: 'ruler', tone: 'warn' },
-    facts.blocked_m > 0 && { text: `含過窄人行道約 ${formatDistance(facts.blocked_m)}`, icon: 'ruler', tone: 'alarm' },
+        ? { text: t('{0} 段階梯・約 {1}', facts.stair_sections, formatDistance(facts.stairs_m ?? 0)), icon: 'stairs', tone: 'alarm' }
+        : { text: t('路網未標示階梯'), icon: 'check', tone: 'good' },
+    facts.mapped_slope_sections > 0 && { text: t('{0} 處已知坡段', facts.mapped_slope_sections), icon: 'slope', tone: 'warn' },
+    facts.comfortable_m > 0 && { text: t('可行人行道約 {0}', formatDistance(facts.comfortable_m)), icon: 'ruler', tone: 'good' },
+    facts.limited_m > 0 && { text: t('勉強可行人行道約 {0}', formatDistance(facts.limited_m)), icon: 'ruler', tone: 'warn' },
+    facts.blocked_m > 0 && { text: t('含過窄人行道約 {0}', formatDistance(facts.blocked_m)), icon: 'ruler', tone: 'alarm' },
   ]
   return rows.filter((row): row is RouteFact => Boolean(row))
 })
 const minutes = (seconds: number) => Math.max(1, Math.round(seconds / 60))
 const plannedAt = ref(0)
-const arrivalClock = new Intl.DateTimeFormat('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+const arrivalClock = computed(() => new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit', hour12: false }))
 const estimatedArrival = computed(() => result.value && plannedAt.value
-  ? arrivalClock.format(plannedAt.value + result.value.duration_s * 1000) : '')
+  ? arrivalClock.value.format(plannedAt.value + result.value.duration_s * 1000) : '')
 const previewStatus = computed(() => {
-  if (!endpoints.start && !endpoints.end) return '請選擇起點與終點'
-  if (!endpoints.start) return locating.value ? '正在取得目前位置…' : '請選擇起點'
-  if (!endpoints.end) return '請選擇終點'
-  if (busy.value) return '正在規劃路線…'
+  if (!endpoints.start && !endpoints.end) return t('請選擇起點與終點')
+  if (!endpoints.start) return locating.value ? t('正在取得目前位置…') : t('請選擇起點')
+  if (!endpoints.end) return t('請選擇終點')
+  if (busy.value) return t('正在規劃路線…')
   return error.value
 })
 const startDisabledReason = computed(() => {
-  if (!endpoints.start) return '缺少起點'
-  if (!endpoints.end) return '缺少終點'
-  if (busy.value) return '規劃中…'
-  if (!result.value) return '沒有可用路線'
-  if (!result.value.maneuvers?.length) return '此路線沒有導航步驟'
+  if (!endpoints.start) return t('缺少起點')
+  if (!endpoints.end) return t('缺少終點')
+  if (busy.value) return t('規劃中…')
+  if (!result.value) return t('沒有可用路線')
+  if (!result.value.maneuvers?.length) return t('此路線沒有導航步驟')
   return ''
 })
 
@@ -584,7 +589,7 @@ async function searchRoute(mode: RouteMode = selectedMode.value) {
   const [ax, ay] = endpoints.start
   const [bx, by] = endpoints.end
   if (111195 * Math.hypot((bx - ax) * Math.cos(ay * Math.PI / 180), by - ay) < 10) {
-    error.value = '起點與終點太近，請重新確認。'
+    error.value = t('起點與終點太近，請重新確認。')
     return
   }
   const controller = new AbortController()
@@ -610,7 +615,7 @@ async function searchRoute(mode: RouteMode = selectedMode.value) {
     if (controller.signal.aborted) return
     const detail = (failure as { data?: { detail?: { message?: string; endpoint?: Endpoint } } }).data?.detail
     failedEndpoint.value = detail?.endpoint ?? null
-    error.value = detail?.message ?? '目前沒有可預覽的路線，請稍後再試或調整起終點。'
+    error.value = localizeRouteError(detail) ?? t('目前沒有可預覽的路線，請稍後再試或調整起終點。')
   } finally {
     if (routeRequest === controller) {
       busy.value = false
@@ -642,7 +647,7 @@ async function selectMode(mode: RouteMode) {
     return access ? [{
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: access.coordinates },
-      properties: { kind: 'route-access', label: `${endpointLabel(endpoint)}路網接點`, offset_m: access.offset_m },
+      properties: { kind: 'route-access', label: t('{0}路網接點', endpointLabel(endpoint)), offset_m: access.offset_m },
     }] : []
   }))
   const routeTracker = tracker.value
@@ -651,7 +656,7 @@ async function selectMode(mode: RouteMode) {
     return coordinates?.length ? [{
       type: 'Feature' as const,
       geometry: { type: 'LineString' as const, coordinates },
-      properties: { kind: 'unverified-walkway', label: '路網步行通道', source: 'OpenStreetMap' },
+      properties: { kind: 'unverified-walkway', label: t('路網步行通道'), source: 'OpenStreetMap' },
     }] : []
   }))
   await fitRoute(data)
@@ -723,38 +728,38 @@ const nextManeuver = computed(() => progress.value === null ? undefined : result
       || (['left', 'right'].includes(row.action) && row.at_m >= progress.value! - 2)),
 ))
 const navigationTitle = computed(() => {
-  if (currentPassage.value) return currentPassage.value.instruction
+  if (currentPassage.value) return localizeRouteText(currentPassage.value.instruction)
   const next = nextManeuver.value
-  if (!next || progress.value === null) return '接近目的地'
+  if (!next || progress.value === null) return t('接近目的地')
   const remaining = next.at_m - progress.value
-  if (remaining <= 2) return next.instruction
-  return `約 ${formatDistance(remaining)} 後・${next.instruction}`
+  if (remaining <= 2) return localizeRouteText(next.instruction)
+  return t('約 {0} 後・{1}', formatDistance(remaining), localizeRouteText(next.instruction))
 })
 const liveGuidance = computed(() => {
   if (navState.value !== 'active' || !activeStep.value || !tracker.value || progress.value === null) return ''
   const step = activeStep.value
   const offset = progress.value - tracker.value.cumulative[step.from_index]!
-  if (currentPassage.value) return currentPassage.value.note
-    ?? (currentPassage.value.action === 'stairs' ? `約 ${formatDistance(currentPassage.value.end_m - progress.value)}` : '請確認可通行後再通過。')
+  if (currentPassage.value) return (currentPassage.value.note ? localizeRouteText(currentPassage.value.note) : undefined)
+    ?? (currentPassage.value.action === 'stairs' ? t('約 {0}', formatDistance(currentPassage.value.end_m - progress.value)) : t('請確認可通行後再通過。'))
   if (result.value?.unverified_walkways?.some(span => span.at_m <= progress.value! && progress.value! < span.end_m)) {
-    return '路網步行通道，輪椅通行條件未確認。'
+    return t('路網步行通道，輪椅通行條件未確認。')
   }
   if (nextManeuver.value?.action === 'sidewalk' && nextManeuver.value.at_m - progress.value <= 25) {
-    return nextManeuver.value.note ?? ''
+    return localizeRouteText(nextManeuver.value.note ?? '')
   }
   const ranges = step.guidance_ranges ?? (step.guidance ? [step.guidance] : [])
   const available = ranges.filter(range => offset >= range.from_m && (range.to_m === null || offset <= range.to_m))
   const physical = available.filter(range => range.reason === '實體人行道')
   const choices = physical.length ? physical : available
   const along = choices.find(range => range.side === 'along')
-  if (along) return `維持沿${along.reason}前進。`
+  if (along) return t('維持沿{0}前進。', t(along.reason))
   if (physical.some(range => range.side === 'left') && physical.some(range => range.side === 'right')) {
-    return '道路兩側有實體人行道，請維持目前可通行的一側。'
+    return t('道路兩側有實體人行道，請維持目前可通行的一側。')
   }
   const guidance = choices[0]
   if (!guidance) return ''
-  const side = guidance.side === 'left' ? '左側' : '右側'
-  return `若已在${side}，請維持${side}前進。該側有${guidance.reason}。`
+  const side = guidance.side === 'left' ? t('左側') : t('右側')
+  return t('若已在{0}，請維持{1}前進。該側有{2}。', side, side, t(guidance.reason))
 })
 const directionIcons: Record<Maneuver['action'], string> = {
   left: 'M18 20v-6a5 5 0 0 0-5-5H5m5-5L5 9l5 5',
@@ -773,13 +778,13 @@ const stepDistance = (row: Maneuver) => ['straight', 'crossing', 'stairs'].inclu
 const navCard = computed(() => {
   const preview = previewStep.value === null ? null : navSteps.value[previewStep.value]
   if (preview) {
-    return { icon: preview.action, title: preview.instruction + stepDistance(preview), detail: preview.note ?? '' }
+    return { icon: preview.action, title: localizeRouteText(preview.instruction) + stepDistance(preview), detail: localizeRouteText(preview.note ?? '') }
   }
   if (navState.value === 'active') {
     return {
       icon: currentPassage.value?.action ?? nextManeuver.value?.action ?? 'arrive',
       title: navigationTitle.value,
-      detail: liveGuidance.value || (activeStep.value ? `目前路段・${activeStep.value.instruction}` : ''),
+      detail: liveGuidance.value || (activeStep.value ? t('目前路段・{0}', localizeRouteText(activeStep.value.instruction)) : ''),
     }
   }
   if (navState.value === 'arrived') return { icon: 'arrive' as const, title: navMessage.value, detail: '' }
@@ -787,8 +792,8 @@ const navCard = computed(() => {
   const first = navSteps.value[currentStepIndex.value]
   return {
     icon: first?.action ?? 'straight',
-    title: first ? first.instruction + stepDistance(first) : navMessage.value,
-    detail: first?.note ?? '',
+    title: first ? localizeRouteText(first.instruction) + stepDistance(first) : navMessage.value,
+    detail: localizeRouteText(first?.note ?? ''),
   }
 })
 /** Smaller status line under the badges while there is no usable live position. */
@@ -834,10 +839,10 @@ function startNavigation() {
   const start = result.value.route.geometry.coordinates[0] as Coordinate
   map?.easeTo({ duration: 0,  center: start, zoom: Math.max(map.getZoom(), 17), offset: [0, -Math.round(window.innerHeight * .12)] })
   if (!locationAvailable()) {
-    navMessage.value = '此環境無法取得定位，可左右滑動預覽步驟。'
+    navMessage.value = t('此環境無法取得定位，可左右滑動預覽步驟。')
     return
   }
-  navMessage.value = '正在取得導航位置…'
+  navMessage.value = t('正在取得導航位置…')
   stopWatch = watchFix(({ latitude, longitude, accuracy, timestamp }) => {
     const coords = { latitude, longitude, accuracy }
     if (session !== navSession || !tracker.value || timestamp <= lastFixTime) return
@@ -846,11 +851,11 @@ function startNavigation() {
     freshnessTimer = setTimeout(() => {
       if (session !== navSession || navState.value === 'arrived') return
       navState.value = 'waiting'
-      navMessage.value = '定位暫時中斷，等待新的位置更新。'
+      navMessage.value = t('定位暫時中斷，等待新的位置更新。')
     }, 30000)
     if (coords.accuracy > 45 || Date.now() - timestamp > 25000) {
       navState.value = 'waiting'
-      navMessage.value = '定位精度不足，正在等待較準確的位置。'
+      navMessage.value = t('定位精度不足，正在等待較準確的位置。')
       return
     }
     const point: Coordinate = [coords.longitude, coords.latitude]
@@ -866,13 +871,13 @@ function startNavigation() {
         )
         if (distanceToSelection <= startAccess.offset_m + 30) {
           navState.value = 'waiting'
-          navMessage.value = '請先前往地圖標示的起點路網接點。'
+          navMessage.value = t('請先前往地圖標示的起點路網接點。')
           return
         }
       }
       missedFixes++
       navState.value = missedFixes >= 2 ? 'offroute' : 'waiting'
-      navMessage.value = missedFixes >= 2 ? '目前位置偏離路線，可從此處重新規劃。' : '正在確認你與路線的位置。'
+      navMessage.value = missedFixes >= 2 ? t('目前位置偏離路線，可從此處重新規劃。') : t('正在確認你與路線的位置。')
       return
     }
     missedFixes = 0
@@ -885,8 +890,8 @@ function startNavigation() {
       navState.value = 'arrived'
       const endAccess = result.value?.access_points?.end
       navMessage.value = endAccess
-        ? `已抵達路網接點，距目的地直線約 ${endAccess.offset_m} 公尺。`
-        : '已抵達目的地附近。'
+        ? t('已抵達路網接點，距目的地直線約 {0} 公尺。', endAccess.offset_m)
+        : t('已抵達目的地附近。')
       return
     }
     navState.value = 'active'
@@ -898,10 +903,10 @@ function startNavigation() {
     if (code === 1) {
       stopWatch?.()
       stopWatch = null
-      navMessage.value = '未取得定位權限，目前只能預覽步驟。'
+      navMessage.value = t('未取得定位權限，目前只能預覽步驟。')
       return
     }
-    navMessage.value = '目前沒有可用的導航位置，正在等待定位。'
+    navMessage.value = t('目前沒有可用的導航位置，正在等待定位。')
   })
 }
 
@@ -924,7 +929,7 @@ function demoAdvance() {
   drawLivePosition(point)
   if (routeTracker.total - target < 1) {
     navState.value = 'arrived'
-    navMessage.value = '已抵達目的地附近（示範模擬）。'
+    navMessage.value = t('已抵達目的地附近（示範模擬）。')
   } else {
     navState.value = 'active'
     navMessage.value = ''
@@ -937,7 +942,7 @@ async function replan() {
   const point = liveFix.value
   editingTarget.value = null
   go('preview')
-  setEndpoint('start', point, true, '目前位置')
+  setEndpoint('start', point, true, t('目前位置'))
 }
 
 function stepBy(delta: number) {
@@ -1030,13 +1035,13 @@ function speak(text: string) {
   if (!text || typeof speechSynthesis === 'undefined') return
   speechSynthesis.cancel()
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = 'zh-TW'
+  utterance.lang = locale.value === 'en' ? 'en' : 'zh-TW'
   speechSynthesis.speak(utterance)
 }
 
 function toggleVoice() {
   if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
-    navNotice.value = '此瀏覽器不支援語音播報，請參考文字指引。'
+    navNotice.value = t('此瀏覽器不支援語音播報，請參考文字指引。')
     return
   }
   voiceEnabled.value = !voiceEnabled.value
@@ -1068,7 +1073,7 @@ let inspectionPopup: MapLibrePopup | undefined
 const displayedDate = computed(() => {
   const snapshot = metadata.value?.snapshot
   if (!snapshot) return ''
-  return new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei' }).format(
+  return new Intl.DateTimeFormat(locale.value, { timeZone: 'Asia/Taipei' }).format(
     new Date(snapshot.fetched_at ?? snapshot.imported_at),
   )
 })
@@ -1157,10 +1162,10 @@ async function refreshFacilities() {
     if (controller.signal.aborted) return
     visibleFacilities = data
     setSource('facilities', data.features)
-    facilityMessage.value = data.truncated ? '請放大地圖查看其餘設施。' : ''
+    facilityMessage.value = data.truncated ? t('請放大地圖查看其餘設施。') : ''
   } catch {
     if (controller.signal.aborted) return
-    facilityMessage.value = '設施資料暫時無法載入。'
+    facilityMessage.value = t('設施資料暫時無法載入。')
   }
 }
 
@@ -1172,7 +1177,7 @@ async function refreshWalkways() {
   const zoom = map.getZoom()
   const types = zoom < WALKWAY_MIN_ZOOM ? []
     : enabledWalkways.value.filter(kind => !['11', '12'].includes(kind) || zoom >= SIDEWALK_MIN_ZOOM)
-  walkwayMessage.value = types.length < enabledWalkways.value.length ? '放大地圖可查看人行道等通行空間。' : ''
+  walkwayMessage.value = types.length < enabledWalkways.value.length ? t('放大地圖可查看人行道等通行空間。') : ''
   visibleWalkways = visibleWalkways.filter(item => types.includes(item.properties.kind))
   setSource('walkways', visibleWalkways)
   if (!types.length) return
@@ -1187,12 +1192,12 @@ async function refreshWalkways() {
     if (controller.signal.aborted) return
     visibleWalkways = data.features
     setSource('walkways', visibleWalkways)
-    if (data.truncated) walkwayMessage.value = '放大地圖可查看其餘通行空間。'
+    if (data.truncated) walkwayMessage.value = t('放大地圖可查看其餘通行空間。')
   } catch {
     if (controller.signal.aborted) return
     visibleWalkways = []
     setSource('walkways', [])
-    walkwayMessage.value = '通行空間圖層暫時無法載入。'
+    walkwayMessage.value = t('通行空間圖層暫時無法載入。')
   }
 }
 
@@ -1217,14 +1222,14 @@ async function refreshSlopes() {
     setSource('slopes', data.features.flatMap<Feature>((item) => {
       const properties = { ...item.properties, kind: 'slope' }
       if (item.geometry.type === 'Point') {
-        return [{ ...item, properties: { ...properties, label: '坡度點位' } }]
+        return [{ ...item, properties: { ...properties, label: t('坡度點位') } }]
       }
       return [
         item,
         ...[item.geometry.coordinates[0]!, item.geometry.coordinates.at(-1)!].map((coordinates, i): Feature<Point> => ({
           type: 'Feature',
           geometry: { type: 'Point', coordinates },
-          properties: { ...properties, label: i === 0 ? '坡段起點' : '坡段終點' },
+          properties: { ...properties, label: i === 0 ? t('坡段起點') : t('坡段終點') },
         })),
       ]
     }))
@@ -1250,27 +1255,27 @@ watch(enabledFacilities, () => {
 
 function describeHits(hits: MapGeoJSONFeature[]): FeatureDetail[] {
   const features: FeatureDetail[] = []
-  const slopeLabels: Record<string, string> = { up: '上坡', down: '下坡', 'up/down': '有高低差', steep: '陡坡', yes: '有坡度' }
+  const slopeLabels: Record<string, string> = { up: t('上坡'), down: t('下坡'), 'up/down': t('有高低差'), steep: t('陡坡'), yes: t('有坡度') }
   const shown = new Set<string>()
   for (const { properties } of hits) {
     const { kind, name, label, source, width, slope, offset_m, incline, route_context, side, guided } = properties
     const title = route_context === 'sidewalk' || route_context === 'guided-sidewalk' ? String(label)
-      : route_context === 'ramp' ? guided ? '指引側無障礙坡道' : '鄰近無障礙坡道'
-      : kind === '13' ? '行人穿越道' : kind === '11' ? '實體人行道' : String(label)
+      : route_context === 'ramp' ? guided ? t('指引側無障礙坡道') : t('鄰近無障礙坡道')
+      : kind === '13' ? t('行人穿越道') : kind === '11' ? t('實體人行道') : String(label)
     const displayName = typeof name === 'string'
       ? name.replace(/^\d+\s*[-_]\s*/, '').replace(/<br\s*\/?>/gi, '\n').trim()
       : ''
     // Width/slope come from the source data. Missing values stay hidden rather than invented (spec §11).
     const lines = [
-      typeof width === 'number' && width > 0 ? `寬度（來源數值） ${width}` : '',
-      typeof slope === 'number' ? `坡度 ${slope}%`
-        : typeof incline === 'string' ? slopeLabels[incline] ?? `坡度 ${incline}` : '',
-      kind === 'slope' && guided ? '指引側人行道附近的坡度點' : '',
-      side ? `行進方向${side}` : '',
-      !guided && (route_context === 'slope' || route_context === 'ramp') ? '位於路線附近，接點通行條件待確認' : '',
-      source ? `資料來源 ${source}` : kind === '13' ? '資料來源 臺北市交通局' : '',
-      kind === 'unverified-walkway' ? '輪椅通行條件未確認' : '',
-      kind === 'route-access' ? `距原選點直線約 ${offset_m} 公尺` : '',
+      typeof width === 'number' && width > 0 ? t('寬度（來源數值） {0}', width) : '',
+      typeof slope === 'number' ? t('坡度 {0}%', slope)
+        : typeof incline === 'string' ? slopeLabels[incline] ?? t('坡度 {0}', incline) : '',
+      kind === 'slope' && guided ? t('指引側人行道附近的坡度點') : '',
+      side ? t('行進方向{0}', t(String(side))) : '',
+      !guided && (route_context === 'slope' || route_context === 'ramp') ? t('位於路線附近，接點通行條件待確認') : '',
+      source ? t('資料來源 {0}', t(String(source))) : kind === '13' ? t('資料來源 臺北市交通局') : '',
+      kind === 'unverified-walkway' ? t('輪椅通行條件未確認') : '',
+      kind === 'route-access' ? t('距原選點直線約 {0} 公尺', offset_m) : '',
     ].filter(Boolean)
     const key = JSON.stringify([kind, displayName, ...lines])
     if (shown.has(key)) continue
@@ -1423,7 +1428,7 @@ onMounted(async () => {
     map.once('load', () => mapElement.value && collapseAttribution(mapElement.value))
     resizeObserver = new ResizeObserver(() => map?.resize())
     resizeObserver.observe(mapElement.value)
-    map.on('error', () => { mapMessage.value = '部分地圖內容暫時無法載入。' })
+    map.on('error', () => { mapMessage.value = t('部分地圖內容暫時無法載入。') })
     map.on('rotate', () => { bearing.value = map?.getBearing() ?? 0 })
     map.on('load', () => {
       if (map) void addIndoorVenueMarkers(map, { onOpen: openIndoor, visible: () => appMode.value === 'general' })
@@ -1477,7 +1482,7 @@ onMounted(async () => {
         showLayers.value = false
         showModeMenu.value = false
         if (!hits.length) {
-          setBrowsePlace({ name: '地圖選取位置', address: formatCoordinate(clicked), coordinates: clicked, is_road: false })
+          setBrowsePlace({ name: t('地圖選取位置'), address: formatCoordinate(clicked), coordinates: clicked, is_road: false })
           return
         }
         const parking = hits.find(item => item.properties.kind === 'accessible-parking' && item.geometry.type === 'Point')
@@ -1512,7 +1517,7 @@ onMounted(async () => {
     })
     void $fetch<Metadata>('/api/v1/meta').then(data => { metadata.value = data }).catch(() => {})
   } catch {
-    mapMessage.value = '無法開啟互動地圖，請使用支援 WebGL 的瀏覽器。'
+    mapMessage.value = t('無法開啟互動地圖，請使用支援 WebGL 的瀏覽器。')
   }
 })
 
@@ -1535,7 +1540,7 @@ onBeforeUnmount(() => {
   <ModeLanding v-if="appMode === 'landing'" :initial="lastMode" @choose="enterMode" />
   <AccessibleMode v-else-if="appMode === 'accessible'" @exit="switchMode('general')" @home="appMode = 'landing'" />
   <main class="map-app" :data-screen="screen" :inert="appMode !== 'general'">
-    <div ref="mapElement" class="map" aria-label="臺北市無障礙設施地圖" />
+    <div ref="mapElement" class="map" :aria-label="t('臺北市無障礙設施地圖')" />
 
     <!-- ============ Page 1 無障礙地圖 ============ -->
     <template v-if="screen === 'explore'">
@@ -1545,88 +1550,88 @@ onBeforeUnmount(() => {
             @submit.prevent="exploreSearch.results.value[0] && chooseExplorePlace(exploreSearch.results.value[0])">
             <AppIcon name="search" class="search-pill-icon" />
             <input ref="exploreInput" v-model="exploreSearch.query.value" type="search" enterkeyhint="search"
-              maxlength="80" autocomplete="off" aria-label="搜尋地點或地址" placeholder="搜尋地點或地址"
+              maxlength="80" autocomplete="off" :aria-label="t('搜尋地點或地址')" :placeholder="t('搜尋地點或地址')"
               @focus="showLayers = false; showModeMenu = false"
               @keydown.esc.prevent="exploreSearch.query.value = ''">
-            <button type="button" class="icon-button ghost" :aria-label="voice.listening.value ? '正在聆聽' : '語音搜尋'"
+            <button type="button" class="icon-button ghost" :aria-label="voice.listening.value ? t('正在聆聽') : t('語音搜尋')"
               :aria-pressed="voice.listening.value" @click="voice.start()">
               <AppIcon name="mic" />
             </button>
           </form>
           <button type="button" class="mode-pill" :aria-expanded="showModeMenu" aria-controls="mode-menu"
             @click="showModeMenu = !showModeMenu; showLayers = false">
-            <span class="mode-badge">Aa</span>一般
+            <span class="mode-badge">Aa</span>{{ t('一般') }}
           </button>
         </div>
 
         <div v-if="exploreSearch.query.value.trim().length >= 2" class="floating-panel">
           <p v-if="exploreSearch.status.value" class="hint search-status" role="status">{{ exploreSearch.status.value }}</p>
-          <ul v-if="exploreSearch.results.value.length" class="place-list" aria-label="搜尋結果">
+          <ul v-if="exploreSearch.results.value.length" class="place-list" :aria-label="t('搜尋結果')">
             <li v-for="(place, index) in exploreSearch.results.value" :key="index">
               <button type="button" @click="chooseExplorePlace(place)">
                 <AppIcon name="pin" class="place-list-icon" />
                 <span>
                   <strong>{{ place.name }}</strong>
                   <small v-if="place.address">{{ place.address }}</small>
-                  <small v-else-if="place.is_road">道路參考點</small>
+                  <small v-else-if="place.is_road">{{ t('道路參考點') }}</small>
                 </span>
               </button>
             </li>
           </ul>
         </div>
 
-        <section v-if="showModeMenu" id="mode-menu" class="floating-panel mode-menu" aria-label="顯示模式">
-          <h2>顯示模式</h2>
+        <section v-if="showModeMenu" id="mode-menu" class="floating-panel mode-menu" :aria-label="t('顯示模式')">
+          <h2>{{ t('顯示模式') }}</h2>
           <button type="button" class="mode-option" aria-pressed="true" @click="showModeMenu = false">
-            <span><strong>一般模式</strong><small>目前使用中</small></span><AppIcon name="check" />
+            <span><strong>{{ t('一般模式') }}</strong><small>{{ t('目前使用中') }}</small></span><AppIcon name="check" />
           </button>
           <button type="button" class="mode-option" aria-pressed="false" @click="showModeMenu = false; switchMode('accessible')">
-            <span><strong>無障礙模式</strong><small>高對比大字、大圖示導航、固定輪椅路線</small></span>
+            <span><strong>{{ t('無障礙模式') }}</strong><small>{{ t('高對比大字、大圖示導航、固定輪椅路線') }}</small></span>
           </button>
         </section>
 
-        <section v-if="showLayers" id="map-layer-settings" class="floating-panel layer-settings" aria-label="圖層設定">
+        <section v-if="showLayers" id="map-layer-settings" class="floating-panel layer-settings" :aria-label="t('圖層設定')">
           <div class="panel-heading">
-            <h2>圖層</h2>
-            <button type="button" class="text-button" @click="showLayers = false">完成</button>
+            <h2>{{ t('圖層') }}</h2>
+            <button type="button" class="text-button" @click="showLayers = false">{{ t('完成') }}</button>
           </div>
-          <div class="chip-row" role="group" aria-label="快速篩選">
+          <div class="chip-row" role="group" :aria-label="t('快速篩選')">
             <button type="button" class="chip" :aria-pressed="allLayersSelected"
-              @click="enabledLayers = [...allLayerKinds]">全部</button>
+              @click="enabledLayers = [...allLayerKinds]">{{ t('全部') }}</button>
             <button v-for="group in layerGroups" :key="group.label" type="button" class="chip"
               :aria-pressed="groupSelected(group.kinds)" @click="toggleLayerGroup(group.kinds)">
               <span class="chip-dots" aria-hidden="true">
                 <i v-for="color in groupColors(group.kinds)" :key="color" :style="{ background: color }" />
-              </span>{{ group.label }}
+              </span>{{ t(group.label) }}
             </button>
           </div>
           <details class="layer-details">
-            <summary>個別圖層</summary>
+            <summary>{{ t('個別圖層') }}</summary>
             <div v-for="(items, index) in [walkwayCategories, categories]" :key="index" class="chip-row"
-              role="group" :aria-label="index === 0 ? '通行空間' : '設施點'">
+              role="group" :aria-label="index === 0 ? t('通行空間') : t('設施點')">
               <label v-for="item in items" :key="item.kind" class="chip check-chip">
                 <input v-model="enabledLayers" type="checkbox" :value="item.kind">
-                <i :style="{ background: item.color }" aria-hidden="true" />{{ item.label }}
-                <small v-if="metadata?.empty_types.some(kind => kind === item.kind)">來源無點位</small>
+                <i :style="{ background: item.color }" aria-hidden="true" />{{ t(item.label) }}
+                <small v-if="metadata?.empty_types.some(kind => kind === item.kind)">{{ t('來源無點位') }}</small>
               </label>
-              <label v-if="index === 0" class="chip check-chip"><input v-model="enabledLayers" type="checkbox" value="slope">坡度</label>
+              <label v-if="index === 0" class="chip check-chip"><input v-model="enabledLayers" type="checkbox" value="slope">{{ t('坡度') }}</label>
             </div>
           </details>
-          <p class="hint">圓點顏色對應地圖上的設施與通行空間圖示。</p>
-          <p v-if="facilitiesHiddenByZoom" class="hint" role="status">放大地圖可查看設施點位。</p>
+          <p class="hint">{{ t('圓點顏色對應地圖上的設施與通行空間圖示。') }}</p>
+          <p v-if="facilitiesHiddenByZoom" class="hint" role="status">{{ t('放大地圖可查看設施點位。') }}</p>
           <p v-if="walkwayMessage" class="hint" role="status">{{ walkwayMessage }}</p>
           <p v-if="facilityMessage" class="hint" role="status">{{ facilityMessage }}</p>
           <footer class="sources">
-            <a :href="metadata?.source_url || 'https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7'">輪行臺北設施資料</a>
+            <a :href="metadata?.source_url || 'https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7'">{{ t('輪行臺北設施資料') }}</a>
             <span v-if="displayedDate">・{{ displayedDate }}</span><br>
-            <a href="https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e">臺北市騎樓整平圖資</a><br>
-            <a href="https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611">臺北市路邊停車格位</a>
+            <a href="https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e">{{ t('臺北市騎樓整平圖資') }}</a><br>
+            <a href="https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611">{{ t('臺北市路邊停車格位') }}</a>
           </footer>
         </section>
 
         <button v-if="facilitiesHiddenByZoom && !showLayers && !showModeMenu && exploreSearch.query.value.trim().length < 2"
           type="button" class="zoom-hint" @click="zoomInForFacilities">
-          <AppIcon name="search" :size="16" />放大地圖以顯示無障礙設施
+          <AppIcon name="search" :size="16" />{{ t('放大地圖以顯示無障礙設施') }}
         </button>
         <p v-if="voice.message.value" class="notice" role="status">{{ voice.message.value }}</p>
         <p v-if="mapMessage" class="notice" role="status">{{ mapMessage }}</p>
@@ -1634,45 +1639,45 @@ onBeforeUnmount(() => {
       </header>
 
       <div class="fab-stack explore-fabs">
-        <button type="button" class="fab" aria-label="圖層" :aria-expanded="showLayers" aria-controls="map-layer-settings"
+        <button type="button" class="fab" :aria-label="t('圖層')" :aria-expanded="showLayers" aria-controls="map-layer-settings"
           @click="showLayers = !showLayers; showModeMenu = false">
           <AppIcon name="layers" :size="24" />
         </button>
-        <button type="button" class="fab" :aria-label="locating ? '定位中' : '移到目前位置'" :disabled="!mapReady || locating"
+        <button type="button" class="fab" :aria-label="locating ? t('定位中') : t('移到目前位置')" :disabled="!mapReady || locating"
           @click="locate('browse')">
           <AppIcon name="locate" :size="24" />
         </button>
       </div>
 
-      <section class="place-card" aria-label="選取的地點" aria-live="polite">
+      <section class="place-card" :aria-label="t('選取的地點')" aria-live="polite">
         <template v-if="browsePlace">
           <span class="place-icon"><AppIcon :name="browseIcon" :size="26" /></span>
           <div class="place-body">
             <h2>{{ browsePlace.name }}</h2>
             <ul v-if="browseTags.length" class="tag-list">
-              <li v-for="tag in browseTags" :key="tag">{{ tag }}</li>
+              <li v-for="tag in browseTags" :key="tag">{{ t(tag) }}</li>
             </ul>
-            <small v-if="browseSource">{{ browseSource }}</small>
+            <small v-if="browseSource">{{ t(browseSource) }}</small>
             <details v-if="browseDetails.length > 1" class="nearby-details">
-              <summary>同處其他圖資（{{ browseDetails.length - 1 }}）</summary>
+              <summary>{{ t('同處其他圖資（{0}）', browseDetails.length - 1) }}</summary>
               <ul>
                 <li v-for="(detail, index) in browseDetails.slice(1)" :key="index">
-                  <strong>{{ detail.title }}</strong><small>{{ [detail.name, ...detail.lines].filter(Boolean).join('・') }}</small>
+                  <strong>{{ t(detail.title) }}</strong><small>{{ [detail.name, ...detail.lines].filter(Boolean).join('・') }}</small>
                 </li>
               </ul>
             </details>
           </div>
-          <button type="button" class="go-button" :disabled="!mapReady" aria-label="設為終點並預覽路線" @click="openPreview">
+          <button type="button" class="go-button" :disabled="!mapReady" :aria-label="t('設為終點並預覽路線')" @click="openPreview">
             <AppIcon name="directions" :size="28" />
           </button>
         </template>
         <template v-else>
           <span class="place-icon muted"><AppIcon name="pin" :size="26" /></span>
           <div class="place-body">
-            <h2>請先選擇地點</h2>
-            <small>點選地圖上的設施、人行道或任一位置，也可以用上方搜尋。</small>
+            <h2>{{ t('請先選擇地點') }}</h2>
+            <small>{{ t('點選地圖上的設施、人行道或任一位置，也可以用上方搜尋。') }}</small>
           </div>
-          <button type="button" class="go-button" disabled aria-label="請先選擇地點"><AppIcon name="directions" :size="28" /></button>
+          <button type="button" class="go-button" disabled :aria-label="t('請先選擇地點')"><AppIcon name="directions" :size="28" /></button>
         </template>
       </section>
     </template>
@@ -1680,7 +1685,7 @@ onBeforeUnmount(() => {
     <!-- ============ Page 2 導航路線預覽 ============ -->
     <template v-if="screen === 'preview'">
       <header class="endpoint-card">
-        <button type="button" class="icon-button" aria-label="返回地圖" @click="back"><AppIcon name="back" /></button>
+        <button type="button" class="icon-button" :aria-label="t('返回地圖')" @click="back"><AppIcon name="back" /></button>
         <div class="endpoint-rows">
           <button v-for="endpoint in (['start', 'end'] as const)" :key="endpoint" type="button" class="endpoint-row"
             :disabled="!mapReady" @click="editEndpoint(endpoint)">
@@ -1689,7 +1694,7 @@ onBeforeUnmount(() => {
             <strong :class="{ placeholder: !endpoints[endpoint] }">{{ endpointText(endpoint) }}</strong>
           </button>
         </div>
-        <button type="button" class="swap-button" aria-label="交換起點與終點"
+        <button type="button" class="swap-button" :aria-label="t('交換起點與終點')"
           :disabled="busy || (!endpoints.start && !endpoints.end)" @click="swapEndpoints">
           <AppIcon name="swap" :size="24" />
         </button>
@@ -1697,51 +1702,51 @@ onBeforeUnmount(() => {
 
       <MapSheet v-model="sheetLevel">
         <template #summary>
-          <div v-if="hasOptions" class="route-tabs" role="tablist" aria-label="路線方式">
+          <div v-if="hasOptions" class="route-tabs" role="tablist" :aria-label="t('路線方式')">
             <button v-for="mode in routeModes" :key="mode.key" type="button" role="tab"
               :aria-selected="selectedMode === mode.key" @click="selectMode(mode.key)">
               <AppIcon :name="mode.icon" :size="18" />
-              <span>{{ mode.label }}</span>
+              <span>{{ t(mode.label) }}</span>
               <span class="tab-time">{{ routeOptions[mode.key]?.route
-                ? `${minutes(routeOptions[mode.key]!.route!.duration_s)}分` : '無' }}</span>
+                ? t('{0}分', minutes(routeOptions[mode.key]!.route!.duration_s)) : t('無') }}</span>
             </button>
           </div>
           <div v-else class="sheet-status" role="status">
-            <strong>{{ previewStatus || '尚無路線' }}</strong>
+            <strong>{{ previewStatus || t('尚無路線') }}</strong>
             <small v-if="locationMessage">{{ locationMessage }}</small>
             <button v-if="failedEndpoint" type="button" class="text-button"
-              @click="editFailedEndpoint(failedEndpoint)">重選{{ endpointLabel(failedEndpoint) }}</button>
+              @click="editFailedEndpoint(failedEndpoint)">{{ t('重選{0}', endpointLabel(failedEndpoint)) }}</button>
           </div>
         </template>
 
         <section v-if="hasOptions" class="route-overview" aria-live="polite">
           <div class="overview-title">
-            <h2>{{ modeDetails.title }}</h2>
+            <h2>{{ t(modeDetails.title) }}</h2>
             <span v-if="stairBadge" class="badge" :data-tone="stairBadge.tone">{{ stairBadge.text }}</span>
           </div>
           <template v-if="result">
-            <p class="overview-time"><strong>{{ minutes(result.duration_s) }} 分鐘</strong>
-              <span>（{{ formatDistance(result.distance_m) }}・預計抵達 {{ estimatedArrival }}）</span></p>
-            <p class="overview-description">{{ modeDetails.description }}</p>
+            <p class="overview-time"><strong>{{ t('{0} 分鐘', minutes(result.duration_s)) }}</strong>
+              <span>{{ t('（{0}・預計抵達 {1}）', formatDistance(result.distance_m), estimatedArrival) }}</span></p>
+            <p class="overview-description">{{ t(modeDetails.description) }}</p>
             <ul v-if="routeFacts.length" class="fact-list">
               <li v-for="fact in routeFacts" :key="fact.text" :data-tone="fact.tone">
                 <AppIcon :name="fact.icon" :size="15" />{{ fact.text }}
               </li>
             </ul>
-            <p class="hint">摘要依沿線可比對圖資，未覆蓋路段的通行條件待確認，請以現場路況為準。</p>
+            <p class="hint">{{ t('摘要依沿線可比對圖資，未覆蓋路段的通行條件待確認，請以現場路況為準。') }}</p>
 
             <button type="button" class="text-button details-toggle" :aria-expanded="showDetails"
               @click="showDetails = !showDetails; if (showDetails) sheetLevel = 2">
-              {{ showDetails ? '收合路線細節' : '查看路線細節與步驟' }}
+              {{ showDetails ? t('收合路線細節') : t('查看路線細節與步驟') }}
             </button>
             <div v-if="showDetails" class="route-details">
-              <p v-if="result.access_points?.start" class="hint">起點路網接點距原起點直線約 {{ result.access_points.start.offset_m }} 公尺。</p>
-              <p v-if="result.access_points?.end" class="hint">路線到空心圓為止，距原目的地直線約 {{ result.access_points.end.offset_m }} 公尺，接點到目的地的通行條件待確認。</p>
-              <p v-if="result.unverified_walkways?.length" class="hint">黃色虛線為路網步行通道，輪椅通行條件未確認。</p>
-              <ul class="route-key" aria-label="路線圖例">
+              <p v-if="result.access_points?.start" class="hint">{{ t('起點路網接點距原起點直線約 {0} 公尺。', result.access_points.start.offset_m) }}</p>
+              <p v-if="result.access_points?.end" class="hint">{{ t('路線到空心圓為止，距原目的地直線約 {0} 公尺，接點到目的地的通行條件待確認。', result.access_points.end.offset_m) }}</p>
+              <p v-if="result.unverified_walkways?.length" class="hint">{{ t('黃色虛線為路網步行通道，輪椅通行條件未確認。') }}</p>
+              <ul class="route-key" :aria-label="t('路線圖例')">
                 <template v-for="item in routeKey" :key="item.context">
                   <li v-if="item.context === 'route' || result.highlights?.features.some(feature => feature.properties.route_context === item.context)">
-                    <i :style="{ backgroundColor: item.color }" :class="item.context" aria-hidden="true" />{{ item.label }}
+                    <i :style="{ backgroundColor: item.color }" :class="item.context" aria-hidden="true" />{{ t(item.label) }}
                   </li>
                 </template>
               </ul>
@@ -1753,23 +1758,23 @@ onBeforeUnmount(() => {
                       <path :d="directionIcons[row.action]" />
                     </svg>
                     <span>
-                      <strong>{{ row.instruction }}{{ stepDistance(row) }}</strong>
-                      <span v-if="row.note" class="step-note">{{ row.note }}</span>
+                      <strong>{{ localizeRouteText(row.instruction) }}{{ stepDistance(row) }}</strong>
+                      <span v-if="row.note" class="step-note">{{ localizeRouteText(row.note) }}</span>
                       <span v-if="row.action === 'straight' && result.unverified_walkways?.some(
                         span => Math.min(span.end_m, row.end_m) - Math.max(span.at_m, row.at_m) >= 8,
-                      )" class="step-note">含輪椅通行待確認路段</span>
+                      )" class="step-note">{{ t('含輪椅通行待確認路段') }}</span>
                     </span>
                   </button>
                 </li>
               </ol>
             </div>
           </template>
-          <p v-else class="error" role="status">{{ routeOptions[selectedMode]?.error?.message ?? '此方式找不到符合條件的路線。' }}</p>
+          <p v-else class="error" role="status">{{ localizeRouteError(routeOptions[selectedMode]?.error) ?? t('此方式找不到符合條件的路線。') }}</p>
         </section>
 
         <template #footer>
           <button class="primary-button" type="button" :disabled="!!startDisabledReason" @click="startNavigation">
-            <AppIcon name="navigation" />{{ startDisabledReason || '開始導航' }}
+            <AppIcon name="navigation" />{{ startDisabledReason || t('開始導航') }}
           </button>
         </template>
       </MapSheet>
@@ -1783,10 +1788,10 @@ onBeforeUnmount(() => {
     <!-- ============ Page 2-2 選擇起點或終點（地圖選點）============ -->
     <template v-if="screen === 'picker' && editingTarget">
       <header class="picker-header">
-        <button type="button" class="icon-button" aria-label="返回搜尋" @click="back"><AppIcon name="back" /></button>
+        <button type="button" class="icon-button" :aria-label="t('返回搜尋')" @click="back"><AppIcon name="back" /></button>
         <div>
-          <h1>選擇{{ endpointLabel(editingTarget) }}</h1>
-          <small>可平移或縮放調整</small>
+          <h1>{{ t('選擇{0}', endpointLabel(editingTarget)) }}</h1>
+          <small>{{ t('可平移或縮放調整') }}</small>
         </div>
       </header>
       <div class="picker-stage" aria-hidden="true">
@@ -1796,37 +1801,37 @@ onBeforeUnmount(() => {
             <svg width="40" height="52" viewBox="0 0 40 52"><path d="M20 52C20 52 0 32 0 20a20 20 0 0 1 40 0c0 12-20 32-20 32Z" fill="currentColor" /><circle cx="20" cy="20" r="8" fill="#fff" /></svg>
           </span>
         </div>
-        <span class="picker-hint"><AppIcon name="move" :size="18" />拖曳地圖調整中心點</span>
+        <span class="picker-hint"><AppIcon name="move" :size="18" />{{ t('拖曳地圖調整中心點') }}</span>
       </div>
       <footer class="picker-footer">
-        <button type="button" class="primary-button" :disabled="!mapReady" @click="confirmPick">確定</button>
+        <button type="button" class="primary-button" :disabled="!mapReady" @click="confirmPick">{{ t('確定') }}</button>
       </footer>
     </template>
 
     <!-- ============ Page 3 室外即時導航 ============ -->
     <template v-if="screen === 'navigate'">
       <div class="fab-stack nav-fabs">
-        <button type="button" class="fab" :aria-label="bearing === 0 ? '地圖已朝北' : '地圖轉回正北'" @click="resetNorth">
+        <button type="button" class="fab" :aria-label="bearing === 0 ? t('地圖已朝北') : t('地圖轉回正北')" @click="resetNorth">
           <AppIcon name="compass" :size="24" class="compass-icon" :style="{ transform: `rotate(${-bearing}deg)` }" />
         </button>
-        <button type="button" class="fab" :aria-label="voiceEnabled ? '關閉語音播報' : '開啟語音播報'" :aria-pressed="voiceEnabled"
+        <button type="button" class="fab" :aria-label="voiceEnabled ? t('關閉語音播報') : t('開啟語音播報')" :aria-pressed="voiceEnabled"
           @click="toggleVoice">
           <AppIcon :name="voiceEnabled ? 'volume' : 'mute'" :size="24" />
         </button>
       </div>
 
-      <section class="nav-panel" aria-label="導航指引">
+      <section class="nav-panel" :aria-label="t('導航指引')">
         <div class="nav-status-row">
-          <span v-if="demoMode" class="badge" data-tone="warn">示範模擬位置</span>
-          <span v-else-if="navState === 'active'" class="badge" data-tone="good">GPS 導航中</span>
-          <span v-else-if="navState === 'offroute'" class="badge" data-tone="alarm">偏離路線</span>
-          <span v-else-if="navState !== 'arrived'" class="badge" data-tone="neutral">尚未取得導航位置</span>
-          <span v-if="previewStep !== null" class="badge" data-tone="neutral">步驟預覽 {{ previewStep + 1 }}／{{ navSteps.length }}</span>
+          <span v-if="demoMode" class="badge" data-tone="warn">{{ t('示範模擬位置') }}</span>
+          <span v-else-if="navState === 'active'" class="badge" data-tone="good">{{ t('GPS 導航中') }}</span>
+          <span v-else-if="navState === 'offroute'" class="badge" data-tone="alarm">{{ t('偏離路線') }}</span>
+          <span v-else-if="navState !== 'arrived'" class="badge" data-tone="neutral">{{ t('尚未取得導航位置') }}</span>
+          <span v-if="previewStep !== null" class="badge" data-tone="neutral">{{ t('步驟預覽 {0}／{1}', previewStep + 1, navSteps.length) }}</span>
         </div>
         <p v-if="navStatusText" class="nav-status-text" :data-tone="navState === 'offroute' ? 'alarm' : 'neutral'" role="status">
           {{ navStatusText }}
         </p>
-        <div class="nav-instruction" tabindex="0" aria-live="polite" aria-roledescription="可左右滑動的導航步驟"
+        <div class="nav-instruction" tabindex="0" aria-live="polite" :aria-roledescription="t('可左右滑動的導航步驟')"
           @pointerdown="swipeStart" @pointerup="swipeEnd" @pointercancel="swipeCancel"
           @keydown.left.prevent="stepBy(-1)" @keydown.right.prevent="stepBy(1)">
           <span class="direction-tile" :data-warn="stairWarningStep">
@@ -1836,41 +1841,41 @@ onBeforeUnmount(() => {
           <div class="instruction-text">
             <strong>{{ navCard.title }}</strong>
             <span v-if="navCard.detail">{{ navCard.detail }}</span>
-            <small v-if="remaining && navState !== 'arrived'">預估 {{ remaining.minutes }} 分鐘・剩餘 {{ formatDistance(remaining.meters) }}</small>
+            <small v-if="remaining && navState !== 'arrived'">{{ t('預估 {0} 分鐘・剩餘 {1}', remaining.minutes, formatDistance(remaining.meters)) }}</small>
           </div>
         </div>
         <p v-if="navNotice" class="notice" role="status">{{ navNotice }}</p>
-        <div v-if="navSteps.length > 1" class="step-dots" role="group" aria-label="導航步驟">
+        <div v-if="navSteps.length > 1" class="step-dots" role="group" :aria-label="t('導航步驟')">
           <template v-if="navSteps.length <= 12">
             <button v-for="(row, index) in navSteps" :key="index" type="button"
-              :aria-label="`第 ${index + 1} 步：${row.instruction}`" :aria-current="index === shownStepIndex ? 'step' : undefined"
+              :aria-label="t('第 {0} 步：{1}', index + 1, localizeRouteText(row.instruction))" :aria-current="index === shownStepIndex ? 'step' : undefined"
               :data-done="index < currentStepIndex" @click="previewAt(index)" />
           </template>
-          <span v-else class="step-count">{{ shownStepIndex + 1 }}／{{ navSteps.length }}・左右滑動切換</span>
+          <span v-else class="step-count">{{ t('{0}／{1}・左右滑動切換', shownStepIndex + 1, navSteps.length) }}</span>
         </div>
         <div class="nav-actions">
           <button v-if="navState === 'offroute' && previewStep === null" type="button" class="secondary-button" @click="replan">
-            <AppIcon name="navigation" />從此處重新規劃
+            <AppIcon name="navigation" />{{ t('從此處重新規劃') }}
           </button>
           <button v-else type="button" class="secondary-button" :disabled="previewStep === null" @click="previewStep = null">
-            <AppIcon name="locate" />回到目前進度
+            <AppIcon name="locate" />{{ t('回到目前進度') }}
           </button>
           <button type="button" class="alarm-button" @click="requestEnd">
-            <AppIcon :name="navState === 'arrived' ? 'check' : 'close'" />{{ navState === 'arrived' ? '完成' : '結束' }}
+            <AppIcon :name="navState === 'arrived' ? 'check' : 'close'" />{{ navState === 'arrived' ? t('完成') : t('結束') }}
           </button>
         </div>
         <button v-if="demoAvailable && navState !== 'arrived'" type="button" class="text-button demo-button" @click="demoAdvance">
-          示範：模擬前進（開發用）
+          {{ t('示範：模擬前進（開發用）') }}
         </button>
       </section>
 
       <div v-if="endConfirm" class="dialog-backdrop" @click.self="endConfirm = false">
         <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="end-title" aria-describedby="end-desc">
-          <h2 id="end-title">結束導航？</h2>
-          <p id="end-desc">結束後會回到路線預覽，起終點與選擇的路線會保留。</p>
+          <h2 id="end-title">{{ t('結束導航？') }}</h2>
+          <p id="end-desc">{{ t('結束後會回到路線預覽，起終點與選擇的路線會保留。') }}</p>
           <div class="dialog-actions">
-            <button type="button" class="secondary-button" autofocus @click="endConfirm = false">取消</button>
-            <button type="button" class="alarm-button solid" @click="endNavigation">結束導航</button>
+            <button type="button" class="secondary-button" autofocus @click="endConfirm = false">{{ t('取消') }}</button>
+            <button type="button" class="alarm-button solid" @click="endNavigation">{{ t('結束導航') }}</button>
           </div>
         </div>
       </div>

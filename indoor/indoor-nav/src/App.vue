@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from './i18n'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { parseNavQr, townpass } from './bridge/townpass'
 import CategoryButtons from './components/CategoryButtons.vue'
@@ -52,7 +53,7 @@ onBeforeUnmount(() => {
 const nav = useNavigator(venueId)
 const {
   data, loadError, level, levels, frame, graph, catalog, canRoute, start, accessibleOnly,
-  route, routeError, routePlace, destLabel, steps, summary, navigating, activeStep, startHeading, levelName,
+  route, routeError, routeFailure, routePlace, destLabel, steps, summary, navigating, activeStep, startHeading, levelName,
 } = nav
 
 const mapView = useTemplateRef<InstanceType<typeof MapView>>('mapView')
@@ -205,7 +206,7 @@ onMounted(async () => {
   if (!data.value) return
   document.title = pageTitle(data.value.venue)
   const s = params.get('start')
-  if (s && !nav.setStartNode(s, 'url')) say(`找不到起點「${s}」`)
+  if (s && !nav.setStartNode(s, 'url')) say(t('找不到起點「{0}」', s))
   if (start.value) level.value = start.value.level
   if (props.initialLevel && levels.value.some((l) => l.id === props.initialLevel)) level.value = props.initialLevel
   // automatic start position (no QR codes): locate from WiFi unless the link names a start
@@ -241,7 +242,7 @@ function routeToDestination(d: string) {
     catalog.value.find((c) => c.id.toLowerCase() === q || c.navNode?.toLowerCase() === q) ??
     catalog.value.find((c) => c.ref?.toLowerCase() === q || c.name.toLowerCase() === q)
   if (p) goTo(p)
-  else say(`找不到「${d}」`)
+  else say(t('找不到「{0}」', d))
 }
 
 // ---- actions ----
@@ -253,7 +254,7 @@ function onPick(p: MapPick) {
     else locator.dismiss()
     if (live.active.value) live.seed(p.xy[0], p.xy[1], p.level)
     finishLocate()
-    say(`起點：${start.value?.label}`)
+    say(t('起點：{0}', start.value?.label))
     return
   }
   if (route.value) return
@@ -320,7 +321,7 @@ function switchToilet() {
 
 const toiletSwitchLabel = computed(() =>
   toiletGender.value && nav.destination.value?.label === GENDER_TOILET_LABEL[toiletGender.value]
-    ? `改去${GENDER_TOILET_LABEL[otherGender(toiletGender.value)]}`
+    ? t('改去{0}', t(GENDER_TOILET_LABEL[otherGender(toiletGender.value)]))
     : undefined,
 )
 
@@ -340,7 +341,7 @@ function startHere(p: PlaceEntry) {
   if (!(p.navNode && nav.setStartNode(p.navNode, 'place'))) nav.setStartPlace(p.level, p.xy, 'place')
   endLocate()
   selected.value = null
-  say(`起點：${start.value?.label}`)
+  say(t('起點：{0}', start.value?.label))
 }
 
 // ---- live positioning ----
@@ -375,11 +376,11 @@ function dismissTip() {
 async function startLive(headingDeg?: number | null): Promise<boolean> {
   const s = start.value
   if (!s) {
-    say('請先設定起點')
+    say(t('請先設定起點'))
     return false
   }
   if (!(await live.start())) {
-    say(live.error.value ?? '無法啟動即時定位')
+    say(live.error.value ?? t('無法啟動即時定位'))
     return false
   }
   live.seed(s.xy[0], s.xy[1], s.level, headingDeg)
@@ -474,9 +475,9 @@ const locateChip = computed(() => {
   if (locator.state === 'locating') return { kind: 'locating' as const }
   if (locator.state === 'estimate' && locator.estimate) {
     const e = locator.estimate
-    return { kind: 'estimate' as const, place: `${nav.describePlace(e.level, e.xy)}附近`, acc: Math.max(1, Math.round(e.accuracy_m)) }
+    return { kind: 'estimate' as const, place: t('{0}附近', nav.describePlace(e.level, e.xy)), acc: Math.max(1, Math.round(e.accuracy_m)) }
   }
-  if (locator.state === 'fallback') return { kind: 'fallback' as const, fallbackLabel: start.value?.label ?? '主入口' }
+  if (locator.state === 'fallback') return { kind: 'fallback' as const, fallbackLabel: start.value?.label ?? t('主入口') }
   return null
 })
 
@@ -534,11 +535,11 @@ watch(live.last, (u) => {
     if (e.type === 'advance') activeStep.value = e.step
     else if (e.type === 'arrive') {
       activeStep.value = e.step
-      say(`已抵達 ${destLabel.value ?? '目的地'}`)
+      say(t('已抵達 {0}', destLabel.value ?? t('目的地')))
     } else if (e.type === 'off-route') {
       // a fix this uncertain can't tell "off the route" from noise; 重新規劃 stays available
       if (u.accuracy_m > 1.5 * tracker.opts.offRouteM) continue
-      say('已偏離路線，已重新規劃')
+      say(t('已偏離路線，已重新規劃'))
       reroute()
       return
     }
@@ -688,11 +689,11 @@ async function scanQr() {
   const r = await townpass.scanQrCode()
   scanning.value = false
   if (!r.ok) {
-    say(r.reason === 'unavailable' ? '掃描定位碼需在台北通 App 內使用' : `掃描失敗：${r.message}`)
+    say(r.reason === 'unavailable' ? t('掃描定位碼需在台北通 App 內使用') : t('掃描失敗：{0}', r.message))
     return
   }
   const q = parseNavQr(r.data)
-  if (!q) return say('無法辨識的定位碼')
+  if (!q) return say(t('無法辨識的定位碼'))
   if (q.venue !== venueId) {
     const u = new URL(location.href)
     u.searchParams.set('venue', q.venue)
@@ -703,11 +704,11 @@ async function scanQr() {
   if (nav.setStartNode(q.node, 'qr')) {
     endLocate()
     locate()
-    say(`起點：${start.value!.label}`)
-  } else say(`找不到定位點「${q.node}」`)
+    say(t('起點：{0}', start.value!.label))
+  } else say(t('找不到定位點「{0}」', q.node))
 }
 
-const accessibleBlocked = computed(() => accessibleOnly.value && !!routeError.value?.includes('無障礙路線'))
+const accessibleBlocked = computed(() => accessibleOnly.value && routeFailure.value === 'unreachable')
 /** the dot: live position when positioning runs, else the chosen start point */
 const me = computed(() => {
   const u = live.last.value
@@ -723,8 +724,8 @@ const liveChip = computed(() => {
   const u = live.last.value
   if (!live.active.value) return null
   return u
-    ? { label: `定位：${LIVE_SOURCE_LABEL[u.source]} ±${Math.max(1, Math.round(u.accuracy_m))} 公尺`, low: live.lowConfidence.value }
-    : { label: '定位中…', low: false }
+    ? { label: t('定位：{0} ±{1} 公尺', t(LIVE_SOURCE_LABEL[u.source]), Math.max(1, Math.round(u.accuracy_m))), low: live.lowConfidence.value }
+    : { label: t('定位中…'), low: false }
 })
 </script>
 
@@ -752,16 +753,16 @@ const liveChip = computed(() => {
 
     <div ref="side" class="side">
       <LevelSwitcher v-if="levels.length > 1" :model-value="level" @update:model-value="onManualLevel" :levels="levels" :route-levels="summary?.levels" :levels-with-nav="levelsWithNav" />
-      <button v-if="data?.available.walls3d" class="tn-fab view" :aria-pressed="view3d" aria-label="立體檢視（3D）" @click="toggleView">
+      <button v-if="data?.available.walls3d" class="tn-fab view" :aria-pressed="view3d" :aria-label="t('立體檢視（3D）')" @click="toggleView">
         <span class="view-mode">{{ view3d ? '3D' : '2D' }}</span>
-        <span class="view-cap" aria-hidden="true">{{ view3d ? '立體' : '平面' }}</span>
+        <span class="view-cap" aria-hidden="true">{{ view3d ? t('立體') : t('平面') }}</span>
       </button>
-      <button v-if="levelFloorplan" class="tn-fab view" :aria-pressed="showFloorplan" aria-label="顯示建築平面圖底圖" @click="showFloorplan = !showFloorplan">
-        <span class="view-mode">圖</span>
-        <span class="view-cap" aria-hidden="true">{{ showFloorplan ? '底圖開' : '底圖' }}</span>
+      <button v-if="levelFloorplan" class="tn-fab view" :aria-pressed="showFloorplan" :aria-label="t('顯示建築平面圖底圖')" @click="showFloorplan = !showFloorplan">
+        <span class="view-mode">{{ t('圖') }}</span>
+        <span class="view-cap" aria-hidden="true">{{ showFloorplan ? t('底圖開') : t('底圖') }}</span>
       </button>
       <CompassButton v-if="rotated" :bearing="bearing" @reset="mapView?.resetNorth()" />
-      <button class="tn-fab" :aria-label="locateShowsAll || !start ? '顯示全館' : '回到目前位置'" @click="locate">
+      <button class="tn-fab" :aria-label="locateShowsAll || !start ? t('顯示全館') : t('回到目前位置')" @click="locate">
         <svg v-if="locateShowsAll || !start" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         <svg v-else viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
           <circle cx="12" cy="12" r="4" fill="currentColor" />
@@ -780,10 +781,10 @@ const liveChip = computed(() => {
         <button v-if="levelToast.undoLabel" class="btn" @click="undoLevel">{{ levelToast.undoLabel }}</button>
       </div>
       <button v-if="suggestLevel && suggestLevel !== level" class="level-suggest" @click="(level = suggestLevel), (suggestLevel = null)">
-        你目前在 {{ levelName(suggestLevel) }}（點此切換）
+        {{ t('你目前在 {0}（點此切換）', levelName(suggestLevel)) }}
       </button>
       <div v-if="canRoute && level && !levelsWithNav.includes(level)" class="level-note" role="status">
-        {{ levelName(level) }} 目前僅有平面圖，尚無導航
+        {{ t('{0} 目前僅有平面圖，尚無導航', levelName(level)) }}
       </div>
     </div>
 
@@ -798,14 +799,14 @@ const liveChip = computed(() => {
       :class="{ dragging: dragH !== null }"
       :data-snap="snap"
       :style="{ maxHeight: sheetMaxH + 'px' }"
-      aria-label="導航面板"
+      :aria-label="t('導航面板')"
     >
       <button
         type="button"
         class="grip-btn"
         aria-controls="tn-sheet"
         :aria-expanded="snap !== 'peek'"
-        aria-label="面板高度：點按展開或收合，上下鍵調整，可拖曳"
+        :aria-label="t('面板高度：點按展開或收合，上下鍵調整，可拖曳')"
         @pointerdown="onGripDown"
         @pointermove="onGripMove"
         @pointerup="onGripUp"
@@ -818,11 +819,11 @@ const liveChip = computed(() => {
       </button>
 
       <div v-if="loadError" class="state" role="alert">
-        <b>無法載入場館</b>
+        <b>{{ t('無法載入場館') }}</b>
         <div class="mut">{{ loadError }}</div>
-        <div v-if="venueId !== 'mock'" class="mut">若是新場館資料，請先執行 <code>npm run sync-data</code>。</div>
+        <div v-if="venueId !== 'mock'" class="mut">{{ t('若是新場館資料，請先執行') }} <code>npm run sync-data</code>。</div>
       </div>
-      <div v-else-if="!data" class="state mut" role="status">載入中…</div>
+      <div v-else-if="!data" class="state mut" role="status">{{ t('載入中…') }}</div>
 
       <template v-else>
         <NavigationPanel
@@ -857,8 +858,8 @@ const liveChip = computed(() => {
         />
 
         <div v-else-if="picking" class="picking" role="status">
-          <p>請點選地圖上的位置作為起點</p>
-          <button class="btn" @click="picking = false">取消</button>
+          <p>{{ t('請點選地圖上的位置作為起點') }}</p>
+          <button class="btn" @click="picking = false">{{ t('取消') }}</button>
         </div>
 
         <PlaceCard
@@ -875,8 +876,8 @@ const liveChip = computed(() => {
           <div v-if="routeError" class="alert" role="alert">
             <span>{{ routeError }}</span>
             <div class="alert-actions">
-              <button v-if="accessibleBlocked" class="btn" @click="accessibleOnly = false">改用一般路線</button>
-              <button class="btn text" @click="endRoute">關閉</button>
+              <button v-if="accessibleBlocked" class="btn" @click="accessibleOnly = false">{{ t('改用一般路線') }}</button>
+              <button class="btn text" @click="endRoute">{{ t('關閉') }}</button>
             </div>
           </div>
           <StartChip
@@ -893,12 +894,12 @@ const liveChip = computed(() => {
           />
           <CategoryButtons v-if="!searchQuery.trim()" :disabled="!canRoute" @action="onCategory" />
           <div v-if="askGender && !searchQuery.trim()" ref="genderChoice" class="gender-choice" role="group" aria-labelledby="gender-q">
-            <span id="gender-q">要去哪一間廁所？</span>
+            <span id="gender-q">{{ t('要去哪一間廁所？') }}</span>
             <button v-for="g in (['male', 'female'] as const)" :key="g" class="btn" @click="pickGender(g)">
-              <img :src="iconDataUrl(`toilet.${g}`)" width="28" height="28" alt="" />{{ GENDER_TOILET_LABEL[g] }}
+              <img :src="iconDataUrl(`toilet.${g}`)" width="28" height="28" alt="" />{{ t(GENDER_TOILET_LABEL[g]) }}
             </button>
           </div>
-          <p v-if="!canRoute" class="note">此場館尚無導航資料，目前僅顯示平面圖。</p>
+          <p v-if="!canRoute" class="note">{{ t('此場館尚無導航資料，目前僅顯示平面圖。') }}</p>
           <SearchBox v-model="searchQuery" :catalog="catalog" :level-name="levelName" @select="onSearch" />
         </div>
       </template>
@@ -1045,6 +1046,12 @@ const liveChip = computed(() => {
   border-radius: 28px 28px 0 0;
   box-shadow: var(--tpnav-sheet-shadow);
   transition: max-height 0.25s ease;
+}
+@media (min-width: 480px) and (max-height: 480px) {
+  .sheet {
+    right: 84px;
+    width: min(calc(100% - 84px), 560px);
+  }
 }
 .sheet.dragging {
   transition: none;

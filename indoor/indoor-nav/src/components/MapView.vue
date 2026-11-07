@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import type { PaddingOptions } from 'maplibre-gl'
 import type { VenueData } from '../data/types'
@@ -67,7 +68,7 @@ defineExpose({
 </script>
 
 <template>
-  <div ref="el" class="tn-map" role="application" aria-label="室內地圖"></div>
+  <div ref="el" class="tn-map" role="application" :aria-label="t('室內地圖')"></div>
 </template>
 
 <style scoped>

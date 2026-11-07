@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { onMounted, useTemplateRef } from 'vue'
 
 const emit = defineEmits<{ close: [] }>()
@@ -15,10 +16,10 @@ onMounted(() => btn.value?.focus())
         <rect x="15" y="12" width="18" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="2.5" />
         <path d="M24 2l6 7h-12z" fill="currentColor" />
       </svg>
-      <h2 id="tip-title">開始即時定位</h2>
-      <p id="tip-body">請將手機平拿、頂端朝前進方向（傾斜不超過 45°）。</p>
-      <p class="safety">本服務僅供參考，無法取代手杖或導盲犬。</p>
-      <button ref="btn" class="btn primary" @click="emit('close')">知道了</button>
+      <h2 id="tip-title">{{ t('開始即時定位') }}</h2>
+      <p id="tip-body">{{ t('請將手機平拿、頂端朝前進方向（傾斜不超過 45°）。') }}</p>
+      <p class="safety">{{ t('本服務僅供參考，無法取代手杖或導盲犬。') }}</p>
+      <button ref="btn" class="btn primary" @click="emit('close')">{{ t('知道了') }}</button>
     </div>
   </div>
 </template>

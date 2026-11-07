@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { XY } from '../geo/frame'
 import { dist, projectOnSegment, turnAngle } from '../geo/geometry'
 import type { Route } from './route'
@@ -46,7 +47,7 @@ const UTURN_DEG = 145
 /** the destination side (左側/右側) is only mentioned when the final approach is this short */
 const SIDE_MAX_M = 15
 
-const fmtM = (m: number) => `${Math.max(1, Math.round(m))} 公尺`
+const fmtM = (m: number) => t('{0} 公尺', Math.max(1, Math.round(m)))
 
 type Side = 'left' | 'right'
 type Item =
@@ -155,10 +156,10 @@ const TURN_TEXT: Record<Maneuver, string> = { 'turn-left': '左轉', 'turn-right
 
 export function buildSteps(route: Route, opts: InstructionOptions = {}): Step[] {
   const name = opts.levelName ?? ((id: string) => id)
-  const destName = opts.destinationName ?? '目的地'
+  const destName = t(opts.destinationName ?? '目的地')
   const last = route.points[route.points.length - 1]
-  const arrive: Step = { kind: 'arrive', text: `抵達 ${destName}`, level: last?.level ?? '', xy: last?.xy ?? [0, 0] }
-  if (route.points.length < 2) return [{ ...arrive, text: `您已在${destName}` }]
+  const arrive: Step = { kind: 'arrive', text: t('抵達 {0}', destName), level: last?.level ?? '', xy: last?.xy ?? [0, 0] }
+  if (route.points.length < 2) return [{ ...arrive, text: t('您已在{0}', destName) }]
 
   const items = segment(route, opts.levelOrdinal).filter((it) => it.t === 'vertical' || it.distance >= 0.5)
   const steps: Step[] = []
@@ -166,21 +167,21 @@ export function buildSteps(route: Route, opts: InstructionOptions = {}): Step[] 
     const prev = items[k - 1]
     const next = items[k + 1]
     if (it.t === 'vertical') {
-      const verb = it.up === undefined ? '' : it.up ? '上樓' : '下樓'
+      const verb = it.up === undefined ? '' : it.up ? t('上樓') : t('下樓')
       steps.push({
         kind: it.kind, level: it.level, xy: it.xy, toLevel: it.toLevel, up: it.up,
-        text: `${it.kind === 'elevator' ? '搭電梯' : '走樓梯'}${verb}到 ${name(it.toLevel)}`,
+        text: t('{0}{1}到 {2}', t(it.kind === 'elevator' ? '搭電梯' : '走樓梯'), verb, name(it.toLevel)),
       })
       return
     }
     const maneuver: Maneuver = next?.t === 'run' && next.start !== 'depart' && next.start !== 'resume' ? next.start : 'straight'
     const end =
-      maneuver !== 'straight' ? `後${TURN_TEXT[maneuver]}`
-      : next?.t === 'vertical' ? (next.kind === 'elevator' ? '後抵達電梯' : '後抵達樓梯')
-      : it.arriveSide ? `後，${destName}在${it.arriveSide === 'left' ? '左' : '右'}側`
-      : `後抵達 ${destName}`
-    const prefix = prev?.t === 'vertical' ? (prev.kind === 'elevator' ? '出電梯，' : '離開樓梯，') : ''
-    steps.push({ kind: 'walk', level: it.level, xy: it.xy, maneuver, distance: it.distance, text: `${prefix}直走 ${fmtM(it.distance)}${end}` })
+      maneuver !== 'straight' ? t('後{0}', t(TURN_TEXT[maneuver]))
+      : next?.t === 'vertical' ? (next.kind === 'elevator' ? t('後抵達電梯') : t('後抵達樓梯'))
+      : it.arriveSide ? t('後，{0}在{1}側', destName, t(it.arriveSide === 'left' ? '左' : '右'))
+      : t('後抵達 {0}', destName)
+    const prefix = prev?.t === 'vertical' ? (prev.kind === 'elevator' ? t('出電梯，') : t('離開樓梯，')) : ''
+    steps.push({ kind: 'walk', level: it.level, xy: it.xy, maneuver, distance: it.distance, text: t('{0}直走 {1}{2}', prefix, fmtM(it.distance), end) })
   })
   steps.push(arrive)
   return steps

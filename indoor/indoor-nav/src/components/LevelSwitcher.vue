@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { computed } from 'vue'
 import type { Level } from '../data/types'
 
@@ -8,11 +9,11 @@ const model = defineModel<string>({ required: true })
 // highest floor on top, like an elevator panel
 const ordered = computed(() => [...props.levels].sort((a, b) => b.ordinal - a.ordinal))
 const label = (l: Level) =>
-  `${l.name}${props.routeLevels?.includes(l.id) ? '，路線經過' : ''}${props.levelsWithNav && !props.levelsWithNav.includes(l.id) ? '，僅平面圖' : ''}`
+  `${l.name}${props.routeLevels?.includes(l.id) ? t('，路線經過') : ''}${props.levelsWithNav && !props.levelsWithNav.includes(l.id) ? t('，僅平面圖') : ''}`
 </script>
 
 <template>
-  <div class="levels" role="radiogroup" aria-label="切換樓層">
+  <div class="levels" role="radiogroup" :aria-label="t('切換樓層')">
     <button
       v-for="l in ordered"
       :key="l.id"

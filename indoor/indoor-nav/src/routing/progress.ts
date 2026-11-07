@@ -221,7 +221,9 @@ export function trimRoute(route: Route, snap: RouteSnap | null): Route {
 /** A walk step's text with the live distance to its end (「直走 12 公尺後右轉」). */
 export function liveStepText(step: Step, remainingM: number | null): string {
   if (step.kind !== 'walk' || remainingM === null) return step.text
-  return step.text.replace(/直走 \d+ 公尺/, `直走 ${Math.max(1, Math.round(remainingM))} 公尺`)
+  const meters = Math.max(1, Math.round(remainingM))
+  return step.text.replace(/直走 \d+ 公尺/, `直走 ${meters} 公尺`)
+    .replace(/(continue straight for )\d+( m\b)/i, (_match, prefix: string, suffix: string) => prefix + meters + suffix)
 }
 
 /** Previewing a route with live positioning: move its start to the live fix? */

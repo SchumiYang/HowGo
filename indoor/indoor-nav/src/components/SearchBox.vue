@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { computed } from 'vue'
 import { CATEGORY_LABEL, searchCatalog, type PlaceEntry } from '../data/catalog'
 
@@ -20,31 +21,31 @@ function choose(p: PlaceEntry) {
 <template>
   <div class="search" role="search">
     <label class="box">
-      <span class="visually-hidden">搜尋地點</span>
+      <span class="visually-hidden">{{ t('搜尋地點') }}</span>
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4.4 4.4-1.4 1.4-4.4-4.4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z" fill="currentColor" /></svg>
       <input
         v-model="query"
         type="search"
         enterkeyhint="search"
-        placeholder="搜尋教室編號（如 A101）、設施"
+        :placeholder="t('搜尋教室編號（如 A101）、設施')"
         autocomplete="off"
         @keydown.enter="results[0] && choose(results[0])"
       />
-      <button v-if="query" class="clear" aria-label="清除搜尋" @click="query = ''">
+      <button v-if="query" class="clear" :aria-label="t('清除搜尋')" @click="query = ''">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
       </button>
     </label>
     <template v-if="active">
-      <p class="visually-hidden" role="status">{{ results.length ? `找到 ${results.length} 個結果` : '沒有結果' }}</p>
+      <p class="visually-hidden" role="status">{{ results.length ? t('找到 {0} 個結果', results.length) : t('沒有結果') }}</p>
       <ul v-if="results.length" class="results">
         <li v-for="p in results" :key="p.key">
           <button class="item" @click="choose(p)">
             <span class="name">{{ p.ref && !p.name.includes(p.ref) ? `${p.ref} ${p.name}` : p.name }}</span>
-            <span class="meta">{{ CATEGORY_LABEL[p.category] ?? p.category }} · {{ levelName(p.level) }}</span>
+            <span class="meta">{{ t(CATEGORY_LABEL[p.category] ?? p.category) }} · {{ levelName(p.level) }}</span>
           </button>
         </li>
       </ul>
-      <p v-else class="empty">找不到「{{ query }}」</p>
+      <p v-else class="empty">{{ t('找不到「{0}」', query) }}</p>
     </template>
   </div>
 </template>

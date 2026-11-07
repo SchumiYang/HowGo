@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { buildCatalog, CATEGORY_LABEL, placeTarget, QUICK_ACTIONS, quickActionPlaces, type PlaceEntry, type QuickActionId } from '../data/catalog'
 import { loadLevelWalls, loadVenue } from '../data/loader'
@@ -57,6 +58,7 @@ export function useNavigator(venueId: string) {
   /** why route last changed: a new route, or the same route re-smoothed with newly loaded walls */
   const routeChange = ref<'new' | 'refined'>('new')
   const routeError = ref<string | null>(null)
+  const routeFailure = ref<RouteFailure | null>(null)
   /** false = route preview (destination card), true = turn-by-turn */
   const navigating = ref(false)
   const activeStep = ref(0)
@@ -149,7 +151,7 @@ export function useNavigator(venueId: string) {
       return g.type === 'Polygon' ? pointInPolygon(xy, g.coordinates) : g.coordinates.some((poly) => pointInPolygon(xy, poly))
     })
     const name = u ? u.properties.name || u.properties.ref || CATEGORY_LABEL[u.properties.category] : null
-    return `${levelName(lv)} ${name ?? '地圖上的位置'}`
+    return `${levelName(lv)} ${name ?? t('地圖上的位置')}`
   }
 
   function setStartPlace(lv: string, xy: XY, source: PositionSource = 'tap') {
@@ -170,27 +172,28 @@ export function useNavigator(venueId: string) {
     rawRoute = null
     route.value = null
     routeError.value = null
+    routeFailure.value = null
     activeStep.value = 0
     navigating.value = false
     const dest = destination.value
     const g = graph.value
     if (!dest) return
     if (!g || !g.edges.length) {
-      routeError.value = FAILURE_TEXT['no-graph']
+      routeError.value = t(FAILURE_TEXT['no-graph'])
       return
     }
     if (!dest.places.length) {
-      routeError.value = `此場館沒有「${dest.label}」`
+      routeError.value = t('此場館沒有「{0}」', dest.label)
       return
     }
     const s = start.value
     if (!s) {
-      routeError.value = '請先設定起點：點地圖或掃描定位碼'
+      routeError.value = t('請先設定起點：點地圖或掃描定位碼')
       return
     }
     if (!navLevels.value.has(s.level)) {
       const where = [...navLevels.value].map(levelName).join('、')
-      routeError.value = `${levelName(s.level)} 尚無導航資料，請在 ${where} 設定起點`
+      routeError.value = t('{0} 尚無導航資料，請在 {1} 設定起點', levelName(s.level), where)
       return
     }
     const origin: Origin = s.node ? { node: s.node } : { place: { level: s.level, xy: s.xy } }
@@ -201,8 +204,12 @@ export function useNavigator(venueId: string) {
       route.value = smoothRoute(res.route, levelGeometry)
       navigating.value = wasNavigating
     }
-    else if (res.reason === 'unreachable' && accessibleOnly.value) routeError.value = `沒有通往「${dest.label}」的無障礙路線`
-    else routeError.value = FAILURE_TEXT[res.reason]
+    else {
+      routeFailure.value = res.reason
+      routeError.value = res.reason === 'unreachable' && accessibleOnly.value
+        ? t('沒有通往「{0}」的無障礙路線', t(dest.label))
+        : t(FAILURE_TEXT[res.reason])
+    }
   }
 
   function navigateTo(places: PlaceEntry[], label: string) {
@@ -220,6 +227,7 @@ export function useNavigator(venueId: string) {
     rawRoute = null
     route.value = null
     routeError.value = null
+    routeFailure.value = null
     navigating.value = false
   }
 
@@ -244,7 +252,7 @@ export function useNavigator(venueId: string) {
 
   return {
     data, loadError, level, levels, frame, graph, catalog, canRoute,
-    start, accessibleOnly, destination, route, routeChange, routeError, routePlace, destLabel, steps, summary, navigating, activeStep, startHeading,
+    start, accessibleOnly, destination, route, routeChange, routeError, routeFailure, routePlace, destLabel, steps, summary, navigating, activeStep, startHeading,
     levelName, levelOrdinal, describePlace, load, prefetchWalls, setStartPlace, setStartNode, navigateTo, navigateQuick, clearRoute,
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '~/i18n'
 /**
  * Full-screen indoor navigation over the outdoor map. The indoor app (indoor/indoor-nav, with its
  * own maplibre-gl v6) is loaded only when this opens. Embedded safe areas follow the host:
@@ -15,17 +16,17 @@ function close() {
 
 // shown while the indoor bundle loads / if it fails: always keep a way back to the outdoor map
 const BackPill = () =>
-  h('button', { type: 'button', class: 'indoor-overlay-back', 'aria-label': '返回室外地圖', onClick: close }, [
+  h('button', { type: 'button', class: 'indoor-overlay-back', 'aria-label': t('返回室外地圖'), onClick: close }, [
     h('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, [h('path', { d: 'M19 12H5m6-6-6 6 6 6' })]),
-    h('span', '室外地圖'),
+    h('span', t('室外地圖')),
   ])
 
 const IndoorNav = defineAsyncComponent({
   loader: () => import('#indoor/IndoorNav.vue'),
   delay: 150,
   timeout: 30000,
-  loadingComponent: { render: () => h('div', { class: 'indoor-overlay-state', role: 'status' }, [BackPill(), h('p', '載入室內地圖中…')]) },
-  errorComponent: { render: () => h('div', { class: 'indoor-overlay-state', role: 'alert' }, [BackPill(), h('p', '室內地圖暫時無法載入，請稍後再試。')]) },
+  loadingComponent: { render: () => h('div', { class: 'indoor-overlay-state', role: 'status' }, [BackPill(), h('p', t('載入室內地圖中…'))]) },
+  errorComponent: { render: () => h('div', { class: 'indoor-overlay-state', role: 'alert' }, [BackPill(), h('p', t('室內地圖暫時無法載入，請稍後再試。'))]) },
 })
 
 function onKey(e: KeyboardEvent) {
@@ -37,7 +38,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <div class="indoor-overlay" role="dialog" aria-modal="true" :aria-label="`${props.venue === 'tianmu' ? '天母體育館' : props.venue} 室內導航`">
+  <div class="indoor-overlay" role="dialog" aria-modal="true" :aria-label="t('{0} 室內導航', props.venue === 'tianmu' ? t('天母體育館') : props.venue)">
     <IndoorNav :venue="props.venue" :destination="props.destination" @close="close" />
   </div>
 </template>

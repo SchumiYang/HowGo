@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 /**
  * Reacting to the positioning engine's automatic floor-change detection
  * (`onLevelChange({ t, from, to, source, confidence })`, barometer and/or WiFi level vote).
@@ -97,16 +98,16 @@ export class LevelChangeController {
       case 'advance':
         this.lastUndo = a.undo
         this.hooks.advance(a.step, a.level)
-        this.hooks.notify(`已偵測到 ${a.level}（${src}）`, `不對，還在 ${a.undo.level}`)
+        this.hooks.notify(t('已偵測到 {0}（{1}）', a.level, src), t('不對，還在 {0}', a.undo.level))
         break
       case 'reroute':
         this.lastUndo = null
         this.hooks.reroute(a.level)
-        this.hooks.notify(`已偵測到 ${a.level}（${src}），重新規劃路線`)
+        this.hooks.notify(t('已偵測到 {0}（{1}），重新規劃路線', a.level, src))
         break
       case 'follow':
         this.hooks.follow(a.level)
-        this.hooks.notify(`已偵測到 ${a.level}（${src}）`)
+        this.hooks.notify(t('已偵測到 {0}（{1}）', a.level, src))
         break
       case 'suggest':
         this.hooks.suggest(a.level)

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '~/i18n'
+import { localizeRouteError, localizeRouteText } from '~/utils/routeLocale'
 /**
  * Accessible mode (uiux_disable_v1/ACCESSIBLE_MODE_FLOW.md). It is the entry screen of the microservice.
  *   destination = Page 1 目的地選擇
@@ -64,7 +66,7 @@ let attempt = 0
 const here = shallowRef<{ at: Coordinate; time: number } | null>(null)
 const metersBetween = ([ax, ay]: Coordinate, [bx, by]: Coordinate) =>
   111195 * Math.hypot((bx - ax) * Math.cos(ay * Math.PI / 180), by - ay)
-const distanceLabel = (place: Place) => here.value ? `距離約 ${formatDistance(metersBetween(here.value.at, place.coordinates))}` : ''
+const distanceLabel = (place: Place) => here.value ? t('距離約 {0}', formatDistance(metersBetween(here.value.at, place.coordinates))) : ''
 
 function warmUpLocation() {
   if (!locationAvailable()) return
@@ -87,7 +89,7 @@ async function plan() {
   const run = ++attempt
   failure.value = ''
   if (!locationAvailable()) {
-    failure.value = '此環境無法取得目前位置，請開啟定位後再試一次。'
+    failure.value = t('此環境無法取得目前位置，請開啟定位後再試一次。')
     return
   }
   phase.value = 'locating'
@@ -101,8 +103,8 @@ async function plan() {
     if (run !== attempt) return
     phase.value = 'idle'
     failure.value = (error as FixError).code === 1
-      ? '沒有定位權限，無法規劃路線。請允許定位後再試一次。'
-      : '暫時取得不到目前位置，請到空曠處再試一次。'
+      ? t('沒有定位權限，無法規劃路線。請允許定位後再試一次。')
+      : t('暫時取得不到目前位置，請到空曠處再試一次。')
     return
   }
   if (run !== attempt) return
@@ -120,11 +122,11 @@ async function plan() {
     if (run !== attempt) return
     phase.value = 'idle'
     const detail = (error as { data?: { detail?: { message?: string } } }).data?.detail
-    failure.value = detail?.message ?? '目前找不到可用的輪椅路線，請稍後再試或換一個目的地。'
+    failure.value = localizeRouteError(detail) ?? t('目前找不到可用的輪椅路線，請稍後再試或換一個目的地。')
   }
 }
 
-const busyText = computed(() => phase.value === 'locating' ? '正在取得目前位置…' : phase.value === 'routing' ? '正在規劃輪椅路線…' : '')
+const busyText = computed(() => phase.value === 'locating' ? t('正在取得目前位置…') : phase.value === 'routing' ? t('正在規劃輪椅路線…') : '')
 
 /* ---------- Navigation session (shared by Page 2 and Page 3) ---------- */
 
@@ -201,7 +203,7 @@ const bends = computed<Bend[]>(() => {
     row.action !== 'straight' && row.action !== 'advice' && Math.abs(row.at_m - bend.at) <= 15))
 })
 
-const formatDistance = (meters: number) => meters >= 1000 ? `${(meters / 1000).toFixed(1)} 公里` : `${Math.max(1, Math.round(meters))} 公尺`
+const formatDistance = (meters: number) => meters >= 1000 ? t('{0} 公里', (meters / 1000).toFixed(1)) : t('{0} 公尺', Math.max(1, Math.round(meters)))
 /**
  * Headline verb: "左轉，沿忠誠路前進" → "左轉"; the full sentence stays in the detail line. For turns the verb
  * follows the measured angle (iconFor) so the words always match the arrow; "靠左/右前進" is kept as is.
@@ -211,47 +213,47 @@ const TURN_WORDS: Partial<Record<Icon, string>> = {
   sharpLeft: '向左急轉', sharpRight: '向右急轉', uturn: '迴轉',
 }
 /** The rest of the sentence after the verb ("沿忠誠路二段前進"), else the step note. */
-const instructionDetail = (row: Maneuver) => row.instruction.split(/[，,]/).slice(1).join('，') || row.note || ''
+const instructionDetail = (row: Maneuver) => localizeRouteText(row.instruction.split(/[，,]/).slice(1).join('，') || row.note || '')
 function shortInstruction(row: Maneuver) {
   const first = row.instruction.split(/[，,]/)[0] ?? row.instruction
-  if ((row.action === 'left' || row.action === 'right') && !first.includes('靠')) return TURN_WORDS[iconFor(row)] ?? first
-  return first
+  if ((row.action === 'left' || row.action === 'right') && !first.includes('靠')) return t(TURN_WORDS[iconFor(row)] ?? first)
+  return localizeRouteText(first)
 }
 const stepLength = (row: Maneuver) => row.end_m > row.at_m ? ` ${formatDistance(row.end_m - row.at_m)}` : ''
 
 /** Live guidance for Page 2: the next real action and the distance to it. */
 const live = computed<{ action: Icon; title: string; detail: string }>(() => {
-  if (navState.value === 'arrived') return { action: 'arrive', title: '已抵達目的地附近', detail: destination.value?.name ?? '' }
+  if (navState.value === 'arrived') return { action: 'arrive', title: t('已抵達目的地附近'), detail: destination.value?.name ?? '' }
   const at = progress.value ?? 0
   const passage = steps.value.find(row => (row.action === 'crossing' || row.action === 'stairs') && row.at_m - 2 <= at && row.end_m > at)
-  if (passage) return { action: passage.action, title: passage.instruction, detail: passage.note ?? '請確認可通行後再通過。' }
+  if (passage) return { action: passage.action, title: localizeRouteText(passage.instruction), detail: passage.note ? localizeRouteText(passage.note) : t('請確認可通行後再通過。') }
   const next = steps.value.find(row => row.action !== 'straight' && row.action !== 'advice' && row.action !== 'sidewalk'
     && (row.at_m >= at + 1 || (isTurn(row.action) && row.at_m >= at - 2)))
   const bend = bends.value.find(item => item.at >= at - 3 && (!next || item.at < next.at_m - 10))
   if (bend && bend.at - at <= 60) {
     // Graded by the measured angle: a gentle curve, an unannounced turn, or a near reversal.
-    const side = bend.side === 'left' ? '左' : '右'
+    const side = bend.side === 'left' ? t('左') : t('右')
     const size = Math.abs(bend.angle)
     const [action, what] = size >= 135
-      ? ['uturn' as const, `向${side}迴轉`]
+      ? ['uturn' as const, t('向{0}迴轉', side)]
       : size >= 60
-        ? [bend.side, `${side}轉`]
-        : [bend.side === 'left' ? 'bendLeft' as const : 'bendRight' as const, `道路向${side}彎`]
+        ? [bend.side, t('{0}轉', side)]
+        : [bend.side === 'left' ? 'bendLeft' as const : 'bendRight' as const, t('道路向{0}彎', side)]
     const remaining = bend.at - at
     return {
       action,
-      title: remaining <= 8 ? what : `前進 ${formatDistance(remaining)}後${what}`,
-      detail: size >= 60 ? '請沿黃色路線轉向' : '請順著人行道前進',
+      title: remaining <= 8 ? what : t('前進 {0}後{1}', formatDistance(remaining), what),
+      detail: size >= 60 ? t('請沿黃色路線轉向') : t('請順著人行道前進'),
     }
   }
-  if (!next) return { action: 'straight', title: '直行至目的地', detail: '' }
+  if (!next) return { action: 'straight', title: t('直行至目的地'), detail: '' }
   const remaining = next.at_m - at
   if (next.action === 'arrive') {
-    return { action: remaining <= 10 ? 'arrive' : 'straight', title: remaining <= 10 ? '即將抵達目的地' : `前進 ${formatDistance(remaining)}後抵達`, detail: '' }
+    return { action: remaining <= 10 ? 'arrive' : 'straight', title: remaining <= 10 ? t('即將抵達目的地') : t('前進 {0}後抵達', formatDistance(remaining)), detail: '' }
   }
-  const title = remaining <= 8 ? shortInstruction(next) : `前進 ${formatDistance(remaining)}後${shortInstruction(next)}`
+  const title = remaining <= 8 ? shortInstruction(next) : t('前進 {0}後{1}', formatDistance(remaining), shortInstruction(next))
   const current = steps.value[currentStepIndex.value]
-  return { action: remaining <= 8 || isTurn(next.action) ? iconFor(next) : 'straight', title, detail: instructionDetail(next) || current?.note || '' }
+  return { action: remaining <= 8 || isTurn(next.action) ? iconFor(next) : 'straight', title, detail: instructionDetail(next) || localizeRouteText(current?.note ?? '') }
 })
 
 /** What Page 2 / Page 3 show: the swipe preview when there is one, else live guidance. */
@@ -262,8 +264,8 @@ const card = computed(() => {
 })
 
 const statusLine = computed(() => {
-  if (previewStep.value !== null) return '預覽中，按「現在位置」回到目前步驟'
-  if (navState.value === 'offroute') return '目前位置偏離路線'
+  if (previewStep.value !== null) return t('預覽中，按「現在位置」回到目前步驟')
+  if (navState.value === 'offroute') return t('目前位置偏離路線')
   if (navState.value === 'waiting') return navNote.value
   return ''
 })
@@ -279,13 +281,13 @@ function startSession(data: Route, start: Coordinate) {
 /** GPS tracking for the current route. Does not touch the view or history. */
 function beginTracking() {
   navState.value = 'waiting'
-  navNote.value = '正在確認你與路線的位置…'
+  navNote.value = t('正在確認你與路線的位置…')
   const id = ++session
   stopWatch = watchFix(({ latitude, longitude, accuracy, timestamp }) => {
     if (id !== session || !tracker.value || navState.value === 'arrived') return
     if (accuracy > 45 || Date.now() - timestamp > 25000) {
       navState.value = 'waiting'
-      navNote.value = '定位精度不足，正在等待較準確的位置。'
+      navNote.value = t('定位精度不足，正在等待較準確的位置。')
       return
     }
     const point: Coordinate = [longitude, latitude]
@@ -295,12 +297,12 @@ function beginTracking() {
       const routeStart = route.value?.route.geometry.coordinates[0] as Coordinate | undefined
       if (progress.value === null && routeStart && metersBetween(point, routeStart) <= 150) {
         navState.value = 'waiting'
-        navNote.value = `請先前往路線起點，約 ${formatDistance(metersBetween(point, routeStart))}（地圖上黃線的開頭）`
+        navNote.value = t('請先前往路線起點，約 {0}（地圖上黃線的開頭）', formatDistance(metersBetween(point, routeStart)))
         return
       }
       missedFixes++
       navState.value = missedFixes >= 2 ? 'offroute' : 'waiting'
-      navNote.value = '正在確認你與路線的位置…'
+      navNote.value = t('正在確認你與路線的位置…')
       return
     }
     missedFixes = 0
@@ -316,7 +318,7 @@ function beginTracking() {
   }, ({ code }: FixError) => {
     if (id !== session) return
     navState.value = 'waiting'
-    navNote.value = code === 1 ? '沒有定位權限，無法更新目前位置。' : '暫時沒有定位訊號，正在等待。'
+    navNote.value = code === 1 ? t('沒有定位權限，無法更新目前位置。') : t('暫時沒有定位訊號，正在等待。')
   })
 }
 
@@ -342,7 +344,7 @@ function endSession() {
 async function replan() {
   const place = destination.value
   if (!place || !liveFix.value) return
-  navNote.value = '正在重新規劃…'
+  navNote.value = t('正在重新規劃…')
   try {
     const data = await $fetch<Route>('/api/v1/routes', {
       method: 'POST',
@@ -355,7 +357,7 @@ async function replan() {
     liveFix.value = start
     beginTracking()
   } catch {
-    navNote.value = '重新規劃失敗，請稍後再試。'
+    navNote.value = t('重新規劃失敗，請稍後再試。')
   }
 }
 
@@ -468,7 +470,7 @@ async function createMap() {
     })
     map.on('error', () => {})
   } catch {
-    mapError.value = '地圖暫時無法載入，仍可使用大圖示導航。'
+    mapError.value = t('地圖暫時無法載入，仍可使用大圖示導航。')
   }
 }
 
@@ -606,11 +608,11 @@ onBeforeUnmount(() => {
   <div class="a11y-mode" :data-view="view">
     <!-- ============ Page 1 目的地選擇 ============ -->
     <section v-if="view === 'destination'" class="a11y-destination" aria-labelledby="a11y-title">
-      <h1 id="a11y-title" class="a11y-title">去哪裡？</h1>
+      <h1 id="a11y-title" class="a11y-title">{{ t('去哪裡？') }}</h1>
       <form role="search" class="a11y-form" @submit.prevent="input?.blur()">
-        <label for="a11y-input" class="a11y-label">目的地：</label>
+        <label for="a11y-input" class="a11y-label">{{ t('目的地：') }}</label>
         <input id="a11y-input" ref="input" v-model="query" class="a11y-input" type="search" enterkeyhint="search"
-          maxlength="80" autocomplete="off" placeholder="請輸入目的地" :disabled="phase !== 'idle'"
+          maxlength="80" autocomplete="off" :placeholder="t('請輸入目的地')" :disabled="phase !== 'idle'"
           @input="failure = ''">
       </form>
 
@@ -620,40 +622,40 @@ onBeforeUnmount(() => {
 
       <div v-else-if="failure" class="a11y-failure" role="alert">
         <p>{{ failure }}</p>
-        <button type="button" class="a11y-button" @click="plan">再試一次</button>
+        <button type="button" class="a11y-button" @click="plan">{{ t('再試一次') }}</button>
       </div>
 
       <template v-else-if="query.trim().length >= 2 && query !== destination?.name">
         <p v-if="searchStatus" class="a11y-hint" role="status">{{ searchStatus }}</p>
-        <ul v-if="results.length" class="a11y-results" aria-label="搜尋結果">
+        <ul v-if="results.length" class="a11y-results" :aria-label="t('搜尋結果')">
           <li v-for="(place, index) in results" :key="index">
             <button type="button" @click="choose(place)">
               <strong>{{ place.name }}</strong>
               <small v-if="place.address || place.is_road || here">
-                {{ [place.address || (place.is_road ? '道路參考點' : ''), distanceLabel(place)].filter(Boolean).join('・') }}
+                {{ [place.address || (place.is_road ? t('道路參考點') : ''), distanceLabel(place)].filter(Boolean).join('・') }}
               </small>
             </button>
           </li>
         </ul>
       </template>
 
-      <button type="button" class="a11y-switch" @click="emit('exit')">切換到一般模式（地圖與多種路線）</button>
+      <button type="button" class="a11y-switch" @click="emit('exit')">{{ t('切換到一般模式（地圖與多種路線）') }}</button>
     </section>
 
     <!-- ============ Page 2 / Page 3 shared top bar ============ -->
     <template v-else>
       <header class="a11y-topbar">
-        <p class="a11y-dest" :aria-label="`目的地：${destination?.name ?? ''}`">
+        <p class="a11y-dest" :aria-label="t('目的地：{0}', destination?.name ?? '')">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="arrowArt.arrive.fill" transform="scale(.2)" fill="currentColor" /></svg>
-          <span>目的地：</span><strong>{{ destination?.name }}</strong>
+          <span>{{ t('目的地：') }}</span><strong>{{ destination?.name }}</strong>
         </p>
       </header>
 
       <!-- ============ Page 2 大圖示導航 ============ -->
-      <section v-show="view === 'arrow'" class="a11y-arrow-view" aria-label="大圖示導航">
-        <h2 class="a11y-instruction" aria-live="polite">{{ card.title }}</h2>
-        <p v-if="card.detail" class="a11y-detail">{{ card.detail }}</p>
-        <svg class="a11y-arrow" viewBox="0 0 120 120" role="img" :aria-label="LABELS[card.action]">
+      <section v-show="view === 'arrow'" class="a11y-arrow-view" :aria-label="t('大圖示導航')">
+        <h2 class="a11y-instruction" aria-live="polite">{{ t(card.title) }}</h2>
+        <p v-if="card.detail" class="a11y-detail">{{ t(card.detail) }}</p>
+        <svg class="a11y-arrow" viewBox="0 0 120 120" role="img" :aria-label="t(LABELS[card.action])">
           <g :transform="mirrored(card.action) ? 'matrix(-1 0 0 1 120 0)' : undefined">
           <path v-if="arrowArt[card.action].stroke" :d="arrowArt[card.action].stroke" fill="none" stroke="currentColor"
             stroke-width="24" stroke-linejoin="round" :stroke-linecap="card.action === 'stairs' ? 'square' : 'butt'" />
@@ -662,15 +664,15 @@ onBeforeUnmount(() => {
         </svg>
         <p v-if="statusLine" class="a11y-status" role="status">{{ statusLine }}</p>
         <button v-if="navState === 'offroute' && previewStep === null" type="button" class="a11y-button" @click="replan">
-          從這裡重新規劃
+          {{ t('從這裡重新規劃') }}
         </button>
       </section>
 
       <!-- ============ Page 3 地圖輔助導航 ============ -->
-      <section v-show="view === 'map'" class="a11y-map-view" aria-label="地圖輔助導航">
-        <div ref="mapElement" class="a11y-map" role="img" aria-label="路線地圖：黃色為輪椅路線，白點為目前位置" />
+      <section v-show="view === 'map'" class="a11y-map-view" :aria-label="t('地圖輔助導航')">
+        <div ref="mapElement" class="a11y-map" role="img" :aria-label="t('路線地圖：黃色為輪椅路線，白點為目前位置')" />
         <p v-if="mapError" class="a11y-failure-inline" role="alert">{{ mapError }}</p>
-        <div class="a11y-card" tabindex="0" aria-roledescription="可左右滑動的導航步驟"
+        <div class="a11y-card" tabindex="0" :aria-roledescription="t('可左右滑動的導航步驟')"
           @pointerdown="onPointerDown" @pointerup="onPointerUp" @pointercancel="swipeStart = null"
           @keydown.left.prevent="stepBy(-1)" @keydown.right.prevent="stepBy(1)">
           <div class="a11y-card-main">
@@ -682,32 +684,32 @@ onBeforeUnmount(() => {
               </g>
             </svg>
             <div>
-              <h2 aria-live="polite">{{ card.title }}</h2>
-              <p v-if="card.detail">{{ card.detail }}</p>
+              <h2 aria-live="polite">{{ t(card.title) }}</h2>
+              <p v-if="card.detail">{{ t(card.detail) }}</p>
             </div>
           </div>
           <div class="a11y-card-foot">
             <span class="a11y-dots" aria-hidden="true">
               <i v-for="index in dots" :key="index" :class="{ on: index === shownStepIndex }" />
             </span>
-            <span>左右滑動切換步驟（{{ shownStepIndex + 1 }}/{{ steps.length }}）</span>
+            <span>{{ t('左右滑動切換步驟（{0}/{1}）', shownStepIndex + 1, steps.length) }}</span>
           </div>
           <p v-if="statusLine" class="a11y-status small" role="status">{{ statusLine }}</p>
         </div>
       </section>
 
-      <nav class="a11y-bottom" aria-label="導航操作">
+      <nav class="a11y-bottom" :aria-label="t('導航操作')">
         <button type="button" @click="backToLive">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-4a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0-13v3m0 14v3M2 12h3m14 0h3" /></svg>
-          現在位置
+          {{ t('現在位置') }}
         </button>
         <button v-if="view === 'arrow'" type="button" @click="openMap">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Zm0 0v14m6-12v14" /></svg>
-          開啟地圖
+          {{ t('開啟地圖') }}
         </button>
         <button v-else type="button" @click="closeMap()">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Zm0 0v14m6-12v14" /></svg>
-          關閉地圖
+          {{ t('關閉地圖') }}
         </button>
       </nav>
     </template>
@@ -850,10 +852,12 @@ onBeforeUnmount(() => {
 
 /* Page 3 */
 .a11y-map-view { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.a11y-map { flex: 1; min-height: 0; background: var(--a-bg); }
+.a11y-map { flex: 1; min-height: 56px; background: var(--a-bg); }
 .a11y-failure-inline { position: absolute; top: 12px; left: 16px; right: 16px; margin: 0; padding: 12px; border-radius: 12px; background: var(--a-card); color: var(--a-text); }
 .a11y-card {
-  flex: none;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   margin: 12px 16px;
   padding: 16px 18px;
   border: 3px solid var(--a-accent);
@@ -862,11 +866,13 @@ onBeforeUnmount(() => {
   touch-action: pan-y;
   user-select: none;
 }
+.a11y-card-main > div { min-width: 0; overflow-wrap: anywhere; }
 .a11y-card-main { display: flex; gap: 16px; align-items: center; }
 .a11y-card-icon { width: 64px; height: 64px; flex: none; padding: 8px; box-sizing: border-box; border: 2px solid var(--a-accent); border-radius: 14px; background: var(--a-bg); }
 .a11y-card h2 { margin: 0; font-size: 1.625rem; font-weight: 800; line-height: 1.3; }
 .a11y-card p { margin: 4px 0 0; color: var(--a-text); font-size: 1.0625rem; }
 .a11y-card-foot {
+  flex-wrap: wrap;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #4A555C;
@@ -885,12 +891,13 @@ onBeforeUnmount(() => {
 .a11y-bottom {
   flex: none;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   border-top: 2px solid var(--a-accent);
   background: var(--a-card);
   padding-bottom: var(--safe-bottom, 0px);
 }
 .a11y-bottom button {
+  padding: 6px 8px;
   min-height: 96px;
   display: flex;
   flex-direction: column;
@@ -905,6 +912,16 @@ onBeforeUnmount(() => {
 }
 .a11y-bottom button + button { border-left: 2px solid var(--a-accent); }
 .a11y-bottom svg { width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-height: 480px) {
+  .a11y-destination { padding-top: calc(var(--safe-top, 0px) + 18px); }
+  .a11y-title { margin-bottom: 16px; }
+  .a11y-topbar { padding-block: calc(var(--safe-top, 0px) + 6px) 4px; }
+  .a11y-dest { min-height: 48px; padding-block: 6px; }
+  .a11y-card { margin-block: 4px; padding: 8px 12px; }
+  .a11y-card-icon { width: 44px; height: 44px; }
+  .a11y-bottom svg { width: 26px; height: 26px; }
+}
 
 @media (max-height: 640px) {
   .a11y-instruction { font-size: 1.875rem; }

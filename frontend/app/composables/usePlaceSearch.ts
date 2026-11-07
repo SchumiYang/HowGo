@@ -1,3 +1,4 @@
+import { locale, t } from '~/i18n'
 export type Coordinate = [number, number]
 export type Place = { name: string; address: string; coordinates: Coordinate; is_road: boolean }
 
@@ -13,7 +14,7 @@ export function usePlaceSearch() {
     status.value = ''
     if (text.length < 2) return
     const request = new AbortController()
-    status.value = '搜尋中…'
+    status.value = t('搜尋中…')
     const timer = setTimeout(async () => {
       try {
         const data = await $fetch<{ results: Place[] }>('/api/v1/places', {
@@ -21,9 +22,9 @@ export function usePlaceSearch() {
         })
         if (request.signal.aborted) return
         results.value = data.results
-        status.value = data.results.length ? '' : '找不到符合的地點，可改用路名或在地圖上選擇。'
+        status.value = data.results.length ? '' : t('找不到符合的地點，可改用路名或在地圖上選擇。')
       } catch {
-        if (!request.signal.aborted) status.value = '搜尋暫時無法使用，可改在地圖上選擇。'
+        if (!request.signal.aborted) status.value = t('搜尋暫時無法使用，可改在地圖上選擇。')
       }
     }, 300)
     onCleanup(() => {
@@ -76,12 +77,12 @@ export function useVoiceInput(onText: (text: string) => void) {
     const Recognition = (window as unknown as Record<string, unknown>).SpeechRecognition
       ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition
     if (typeof Recognition !== 'function') {
-      message.value = '此裝置暫不支援語音搜尋，請改用鍵盤輸入。'
+      message.value = t('此裝置暫不支援語音搜尋，請改用鍵盤輸入。')
       return
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const recognition = new (Recognition as any)()
-    recognition.lang = 'zh-TW'
+    recognition.lang = locale.value === 'en' ? 'en' : 'zh-TW'
     recognition.interimResults = false
     recognition.maxAlternatives = 1
     message.value = ''
@@ -91,7 +92,7 @@ export function useVoiceInput(onText: (text: string) => void) {
       if (text) onText(text)
     }
     recognition.onerror = (event: { error: string }) => {
-      message.value = event.error === 'not-allowed' ? '尚未允許使用麥克風。' : '沒有辨識到語音，請再試一次。'
+      message.value = event.error === 'not-allowed' ? t('尚未允許使用麥克風。') : t('沒有辨識到語音，請再試一次。')
     }
     recognition.onend = () => { listening.value = false }
     recognition.start()
