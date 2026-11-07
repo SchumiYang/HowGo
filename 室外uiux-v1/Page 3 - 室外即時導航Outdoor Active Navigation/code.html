@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-TW"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_blank" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;min-height:100vh;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary-800": "#22474E", "primary-200": "#B4E2EA", "on-primary-fixed": "#001f25", "surface-container-highest": "#dfe3e5", "outline-variant": "#bdc8cb", "on-error": "#ffffff", "on-tertiary-container": "#622f00", "secondary-800": "#74521B", "surface-bright": "#f6fafc", "surface-tint": "#006876", "primary-900": "#112629", "on-surface-variant": "#3e494b", "on-primary": "#ffffff", "secondary": "#7d5700", "inverse-primary": "#7bd3e5", "on-surface": "#181c1e", "secondary-600": "#E7A43C", "background": "#f6fafc", "surface": "#f6fafc", "grey-900": "#171B1D", "primary-50": "#EDF8FA", "primary-600": "#468D9B", "on-primary-fixed-variant": "#004e59", "primary-700": "#356C77", "secondary-400": "#F0C87C", "primary-fixed": "#a0efff", "primary-300": "#93D4DF", "outline": "#6e797b", "surface-container-high": "#e5e9eb", "on-secondary": "#ffffff", "secondary-fixed": "#ffdeaa", "orange-500": "#FD853A", "on-primary-container": "#00434d", "error": "#ba1a1a", "on-tertiary-fixed-variant": "#6f3806", "grey-50": "#F1F3F4", "secondary-500": "#F5BA4B", "grey-950": "#0B0D0E", "primary-400": "#71C5D5", "on-tertiary": "#ffffff", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "on-secondary-fixed": "#271900", "primary-500": "#5AB4C5", "red-300": "#E29494", "secondary-700": "#AD7B2B", "grey-100": "#E3E7E9", "primary-950": "#081315", "primary-fixed-dim": "#7bd3e5", "grey-200": "#CAD1D5", "primary": "#006876", "secondary-fixed-dim": "#f8bd4d", "surface-container": "#eaeef0", "inverse-on-surface": "#edf1f3", "grey-700": "#475259", "grey-800": "#30383D", "secondary-200": "#F8E3BC", "secondary-100": "#FCF2DF", "tertiary-fixed": "#ffdcc6", "tertiary-fixed-dim": "#ffb784", "secondary-950": "#1C1304", "on-secondary-container": "#725000", "surface-container-low": "#f0f4f6", "on-tertiary-fixed": "#301400", "red-500": "#D45251", "green-500": "#76A732", "on-error-container": "#93000a", "primary-container": "#5ab4c5", "on-secondary-fixed-variant": "#5f4100", "secondary-300": "#F4D69E", "secondary-50": "#FDF8ED", "orange-300": "#F4B992", "surface-variant": "#dfe3e5", "tertiary-container": "#e3965e", "grey-300": "#ADB8BE", "tertiary": "#8c4f1d", "grey-500": "#738995", "grey-400": "#91A0A8", "on-background": "#181c1e", "grey-600": "#5E6D76", "secondary-900": "#3C2B0B", "secondary-container": "#fec252", "primary-100": "#DBF1F5", "inverse-surface": "#2c3133", "surface-dim": "#d6dbdd" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "gutter": "1rem", "space-lg": "1.5rem", "space-xl": "2rem", "space-xs": "0.25rem" }, fontFamily: { "font-H2-regular": ["\"PingFang TC, Roboto, sans-serif\""], "font-H3-semibold": ["\"PingFang TC, Roboto, sans-serif\""], "font-H1-regular": ["\"PingFang TC, Roboto, sans-serif\""], "font-H1-semibold": ["\"PingFang TC, Roboto, sans-serif\""], "font-H2-semibold": ["\"PingFang TC, Roboto, sans-serif\""], "font-Caption-regular": ["\"PingFang TC, Roboto, sans-serif\""], "font-H3-regular": ["\"PingFang TC, Roboto, sans-serif\""], "font-Body-regular": ["\"PingFang TC, Roboto, sans-serif\""], "font-Body-semibold": ["\"PingFang TC, Roboto, sans-serif\""] }, fontSize: { "font-H2-regular": ["24px", { lineHeight: "32px", fontWeight: "400" }], "font-H3-semibold": ["16px", { lineHeight: "22px", fontWeight: "600" }], "font-H1-regular": ["36px", { lineHeight: "48px", fontWeight: "400" }], "font-H1-semibold": ["36px", { lineHeight: "48px", fontWeight: "600" }], "font-H2-semibold": ["24px", { lineHeight: "32px", fontWeight: "600" }], "font-Caption-regular": ["12px", { lineHeight: "18px", fontWeight: "400" }], "font-H3-regular": ["16px", { lineHeight: "22px", fontWeight: "400" }], "font-Body-regular": ["14px", { lineHeight: "20px", fontWeight: "400" }], "font-Body-semibold": ["14px", { lineHeight: "20px", fontWeight: "600" }] } } } };</script></head><body class="bg-surface text-on-surface m-0 p-0 min-h-screen relative flex flex-col font-font-Body-regular text-font-Body-regular select-none overflow-hidden">
+<!-- Clean Native Status Bar (Minimal, No status pill) -->
+<header class="fixed top-0 inset-x-0 z-50 pointer-events-none pt-safe"><div class="h-11 px-6 flex items-center justify-between text-grey-900"><div class="flex items-center"><span class="font-font-Body-semibold text-font-Body-semibold tracking-tight text-grey-900">09:41</span></div><div class="flex items-center gap-1.5 text-grey-900"><span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span><span class="material-symbols-outlined text-[16px]">wifi</span><span class="material-symbols-outlined text-[20px]">battery_full</span></div></div></header>
+<main class="flex-1 flex flex-col relative w-full h-screen bg-[#EBF0EE] overflow-hidden">
+<!-- Map Canvas Section (74% height) -->
+<div class="relative w-full h-[74vh] overflow-hidden select-none">
+<!-- SVG Vector Map for Crisp Outdoor Navigation -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="xMidYMid slice" viewbox="0 0 390 620" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Soft Heading Cone Gradient -->
+<lineargradient id="headingBeam" x1="0%" x2="0%" y1="100%" y2="0%">
+<stop offset="0%" stop-color="#5AB4C5" stop-opacity="0.45"></stop>
+<stop offset="100%" stop-color="#5AB4C5" stop-opacity="0"></stop>
+</lineargradient>
+<!-- Subtle shadow filter for map pins -->
+<filter height="160%" id="pin-shadow" width="160%" x="-30%" y="-30%">
+<fedropshadow dx="0" dy="2" flood-color="#000000" flood-opacity="0.18" stddeviation="2.5"></fedropshadow>
+</filter>
+</defs>
+<!-- Background: Urban Block Base -->
+<rect fill="#EBF0EC" height="620" width="390"></rect>
+<!-- Park / Green Zones (Tianmu Sports Park Grounds) -->
+<path d="M 0 0 L 210 0 L 215 160 L 195 240 L 160 380 L 0 420 Z" fill="#D6E8D5"></path>
+<path d="M 230 20 L 390 20 L 390 320 L 240 320 L 225 210 Z" fill="#DCEBDE"></path>
+<path d="M 0 460 L 170 430 L 190 620 L 0 620 Z" fill="#E1EFE3"></path>
+<circle cx="90" cy="180" fill="#C8E2C7" opacity="0.6" r="65"></circle>
+<circle cx="330" cy="160" fill="#D1E8D1" opacity="0.5" r="80"></circle>
+<!-- Campus / Arena Buildings Footprints -->
+<!-- 天母體育館 Complex -->
+<rect fill="#D3DCD7" height="75" rx="6" stroke="#CAD3CD" stroke-width="1" width="105" x="180" y="70"></rect>
+<rect fill="#E2EAE5" height="52" rx="4" width="80" x="192" y="82"></rect>
+<!-- Surrounding building blocks -->
+<rect fill="#DDE4DF" height="70" rx="4" stroke="#D0D8D3" stroke-width="1" width="90" x="24" y="240"></rect>
+<rect fill="#DDE4DF" height="110" rx="6" stroke="#D0D8D3" stroke-width="1" width="120" x="250" y="360"></rect>
+<rect fill="#DCE3DE" height="85" rx="5" width="100" x="270" y="210"></rect>
+<!-- Main Roadway: 忠誠路二段 -->
+<!-- Outer road outline -->
+<path d="M 215 620 L 202 440 L 190 330 L 180 230 L 158 135 L 210 95" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"></path>
+<path d="M 215 620 L 202 440 L 190 330 L 180 230 L 158 135 L 210 95" fill="none" stroke="#F8FBF9" stroke-linecap="round" stroke-linejoin="round" stroke-width="26"></path>
+<!-- Cross streets / walkways -->
+<path d="M 0 310 L 390 325" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="14"></path>
+<path d="M 175 140 L 390 120" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="12"></path>
+<path d="M 0 490 L 390 510" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="16"></path>
+<!-- Road Centerlines (Dashed) -->
+<path d="M 224 620 L 211 440 L 199 330 L 189 230" fill="none" stroke="#CAD4CF" stroke-dasharray="8 6" stroke-width="1.5"></path>
+<!-- Sidewalk Pedestrian Way Texture -->
+<path d="M 197 620 L 185 440 L 173 330 L 163 230 L 146 138 L 195 98" fill="none" stroke="#E2EBE5" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+<!-- STREET TEXT LABELS ON MAP -->
+<text fill="#738995" font-family="'PingFang TC', sans-serif" font-size="11" font-weight="500" letter-spacing="1" x="76" y="390">忠誠路二段（人行道）</text>
+<text fill="#91A0A8" font-family="'PingFang TC', sans-serif" font-size="10" font-weight="500" x="260" y="195">天母棒球場園區</text>
+<text fill="#475259" font-family="'PingFang TC', sans-serif" font-size="11" font-weight="600" text-anchor="middle" x="232" y="112">天母體育館</text>
+<!-- 1. COMPLETED ROUTE SEGMENT (Trailing behind user: Pale muted gray/teal dashed) -->
+<path d="M 207 580 L 195 450" fill="none" opacity="0.6" stroke="#91A0A8" stroke-dasharray="6 6" stroke-linecap="round" stroke-width="6"></path>
+<!-- 2. ACTIVE NAVIGATION ROUTE (Clean, narrow 8px polyline with Town Pass teal) -->
+<!-- White crisp border underlay for pristine contrast -->
+<path d="M 195 450 L 184 330 L 174 230 L 154 135 L 202 96" fill="none" opacity="0.95" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="11"></path>
+<!-- Active route line in #5AB4C5 Town Pass teal -->
+<path d="M 195 450 L 184 330 L 174 230 L 154 135 L 202 96" fill="none" id="activeRoutePath" stroke="#5AB4C5" stroke-linecap="round" stroke-linejoin="round" stroke-width="7.5"></path>
+<!-- Directional Chevron indicators along the active route -->
+<polyline fill="none" points="181,375 184,367 187,375" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<polyline fill="none" points="171,275 174,267 177,275" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<polyline fill="none" points="154,175 156,167 160,175" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<!-- 3. USER POSITION & HEADING CONE (NO black triangles) -->
+<g transform="translate(195, 450)">
+<!-- Forward vision cone -->
+<polygon fill="url(#headingBeam)" points="-28,-80 28,-80 0,0"></polygon>
+<!-- Radar pulse rings -->
+<circle cx="0" cy="0" fill="#5AB4C5" opacity="0.2" r="22">
+<animate attributename="r" dur="2.4s" repeatcount="indefinite" values="14;28;14"></animate>
+<animate attributename="opacity" dur="2.4s" repeatcount="indefinite" values="0.3;0.05;0.3"></animate>
+</circle>
+<circle cx="0" cy="0" fill="#B4E2EA" opacity="0.45" r="14"></circle>
+<!-- GPS Dot White Border -->
+<circle cx="0" cy="0" fill="#FFFFFF" filter="url(#pin-shadow)" r="9"></circle>
+<!-- Active User Dot -->
+<circle cx="0" cy="0" fill="#006876" r="6.5"></circle>
+<!-- Small Heading White Arrow Inside Puck -->
+<path d="M 0 -4.5 L 3.2 2.5 L 0 1 L -3.2 2.5 Z" fill="#FFFFFF"></path>
+</g>
+</svg>
+<!-- Small Accessibility Badge Near Turn (Clean, subtle pill) -->
+<div class="absolute top-[215px] left-[130px] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 bg-surface-container-lowest/95 backdrop-blur-sm px-2 py-0.5 rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.08)] border border-primary-100">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">accessible_forward</span>
+<span class="font-font-Caption-regular text-[11px] font-semibold text-primary-800">坡道 2.1%</span>
+</div>
+<!-- Small Compact Destination Pin for 天母體育館 (Small orange pin icon, no massive black card) -->
+<div class="absolute top-[96px] left-[202px] -translate-x-1/2 -translate-y-full pointer-events-none flex flex-col items-center">
+<div class="w-7 h-7 rounded-full bg-secondary-500 text-on-primary shadow-md flex items-center justify-center ring-2 ring-white">
+<span class="material-symbols-outlined text-[16px] leading-none" style="font-variation-settings: 'FILL' 1;">sports_score</span>
+</div>
+<div class="w-1.5 h-1.5 bg-secondary-500 rotate-45 -mt-0.5"></div>
+</div>
+<!-- Right-side Floating Controls (Moved down to lower-right above bottom panel) -->
+<div class="absolute bottom-5 right-4 z-20 flex flex-col items-center gap-2.5">
+<!-- Button 1: Compass (White circular button, 44x44, subtle shadow, dark needle) -->
+<button aria-label="重設地圖朝北" class="w-11 h-11 rounded-full bg-surface-container-lowest text-grey-800 shadow-[0_3px_12px_rgba(0,0,0,0.12)] flex items-center justify-center active:scale-95 transition-transform" id="btnNorthReset" type="button">
+<div class="relative w-5 h-5 flex items-center justify-center" id="compassIcon">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<polygon fill="#ba1a1a" points="12,3 15.5,12 12,9.5"></polygon>
+<polygon fill="#91A0A8" points="12,21 8.5,12 12,14.5"></polygon>
+<circle cx="12" cy="12" fill="#30383D" r="1.5"></circle>
+</svg>
+</div>
+</button>
+<!-- Button 2: Voice Navigation Speaker Toggle (White circular button, 44x44, active primary teal speaker) -->
+<button aria-label="語音播報開關" class="w-11 h-11 rounded-full bg-surface-container-lowest text-primary shadow-[0_3px_12px_rgba(0,0,0,0.12)] flex items-center justify-center active:scale-95 transition-colors" id="btnVoiceToggle" type="button">
+<span class="material-symbols-outlined text-[20px]" id="voiceIcon" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+</button>
+</div>
+</div>
+<!-- Redesigned Bottom Navigation Panel (Compact 26% height) -->
+<div class="relative w-full z-30 bg-surface-container-lowest rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)] px-5 pt-3 pb-safe flex-1 flex flex-col justify-between -mt-3">
+<!-- Subtle Drag Handle -->
+<div class="w-10 h-1 bg-grey-200 rounded-full mx-auto mb-2"></div>
+<div class="flex flex-col gap-2.5">
+<!-- A. Main Navigation Instruction Row -->
+<div class="flex items-center gap-3.5" id="stepContent">
+<!-- Directional Big Badge Icon (Primary Teal) -->
+<div class="w-12 h-12 rounded-2xl bg-[#5AB4C5] flex items-center justify-center text-white shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[30px]" id="stepArrow">straight</span>
+</div>
+<!-- Instruction Text Column -->
+<div class="flex-1 min-w-0">
+<h2 class="text-[20px] leading-7 font-bold text-grey-800 tracking-tight" id="stepTitle">直走 300 公尺</h2>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-[14px] font-medium text-grey-700" id="stepSubtitle">進入斜坡道</span>
+<!-- Small pill: 坡度 2.1% -->
+<span class="inline-flex items-center gap-0.5 bg-primary-50 text-primary-800 text-[11px] font-semibold px-2 py-0.5 rounded-full" id="stepBadge">
+<span class="material-symbols-outlined text-[13px]">accessible</span>
+              坡度 2.1%
+            </span>
+</div>
+<!-- Sub-info: 預估時間與剩餘距離 -->
+<div class="text-[12px] text-grey-500 font-font-Caption-regular mt-0.5 flex items-center gap-1.5" id="stepMetrics">
+<span class="font-medium text-primary-700">預估 4 分鐘</span>
+<span>・</span>
+<span>剩餘 350 公尺</span>
+</div>
+</div>
+</div>
+<!-- B. Swipeable Step Indicator (Compact 5 dots) -->
+<div class="flex items-center justify-center gap-1.5 py-1" id="dotsContainer">
+<button aria-label="第 1 步" class="step-dot w-5 h-1.5 rounded-full bg-primary-500 transition-all duration-200" data-step="0" type="button"></button>
+<button aria-label="第 2 步" class="step-dot w-1.5 h-1.5 rounded-full bg-grey-200 transition-all duration-200" data-step="1" type="button"></button>
+<button aria-label="第 3 步" class="step-dot w-1.5 h-1.5 rounded-full bg-grey-200 transition-all duration-200" data-step="2" type="button"></button>
+<button aria-label="第 4 步" class="step-dot w-1.5 h-1.5 rounded-full bg-grey-200 transition-all duration-200" data-step="3" type="button"></button>
+<button aria-label="第 5 步" class="step-dot w-1.5 h-1.5 rounded-full bg-grey-200 transition-all duration-200" data-step="4" type="button"></button>
+</div>
+</div>
+<!-- C. Two Bottom Action Buttons -->
+<div class="flex items-center gap-3 w-full pb-2 pt-1">
+<!-- Left (wider): 回到目前進度 (Subtle gray background, location icon) -->
+<button class="flex-1 h-11 rounded-xl bg-grey-50 hover:bg-grey-100 active:bg-grey-200 text-grey-800 font-font-Body-semibold text-[14px] flex items-center justify-center gap-1.5 transition-colors shadow-sm border border-grey-200/50" id="btnRecenter" type="button">
+<span class="material-symbols-outlined text-[18px] text-grey-700">my_location</span>
+<span>回到目前進度</span>
+</button>
+<!-- Right: 結束 (Soft light red background, red icon/text) -->
+<button class="w-24 h-11 rounded-xl bg-error-container/50 hover:bg-error-container/70 active:bg-error-container text-error font-font-Body-semibold text-[14px] flex items-center justify-center gap-1 transition-colors" id="btnEndNav" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+<span>結束</span>
+</button>
+</div>
+</div>
+</main>
+<script>
+  (function() {
+    const stepsData = [
+      {
+        arrow: 'straight',
+        title: '直走 300 公尺',
+        subtitle: '進入斜坡道',
+        badge: '坡度 2.1%',
+        badgeIcon: 'accessible',
+        metrics: '預估 4 分鐘 ・ 剩餘 350 公尺'
+      },
+      {
+        arrow: 'turn_slight_right',
+        title: '微靠右進入坡道',
+        subtitle: '天母棒球場南側引道',
+        badge: '設有扶手',
+        badgeIcon: 'accessible',
+        metrics: '預估 3 分鐘 ・ 剩餘 220 公尺'
+      },
+      {
+        arrow: 'straight',
+        title: '順行步道 120 公尺',
+        subtitle: '體育館側邊景觀廊道',
+        badge: '平整無台階',
+        badgeIcon: 'check_circle',
+        metrics: '預估 2 分鐘 ・ 剩餘 150 公尺'
+      },
+      {
+        arrow: 'turn_left',
+        title: '左轉抵達前庭',
+        subtitle: '1 號無障礙出入口',
+        badge: '感應自動門',
+        badgeIcon: 'door_front',
+        metrics: '預估 1 分鐘 ・ 剩餘 40 公尺'
+      },
+      {
+        arrow: 'location_on',
+        title: '抵達目的地',
+        subtitle: '天母體育館 售票大廳前',
+        badge: '終點已到達',
+        badgeIcon: 'sports_score',
+        metrics: '行程結束 ・ 完成無障礙導航'
+      }
+    ];
+
+    let currentStepIndex = 0;
+    const dots = document.querySelectorAll('.step-dot');
+    const stepArrow = document.getElementById('stepArrow');
+    const stepTitle = document.getElementById('stepTitle');
+    const stepSubtitle = document.getElementById('stepSubtitle');
+    const stepBadge = document.getElementById('stepBadge');
+    const stepMetrics = document.getElementById('stepMetrics');
+    const btnRecenter = document.getElementById('btnRecenter');
+    const btnVoiceToggle = document.getElementById('btnVoiceToggle');
+    const voiceIcon = document.getElementById('voiceIcon');
+    const btnNorthReset = document.getElementById('btnNorthReset');
+    const compassIcon = document.getElementById('compassIcon');
+    const stepContent = document.getElementById('stepContent');
+
+    function updateStep(index) {
+      currentStepIndex = index;
+      const data = stepsData[index];
+
+      stepArrow.textContent = data.arrow;
+      stepTitle.textContent = data.title;
+      stepSubtitle.textContent = data.subtitle;
+      stepBadge.innerHTML = `<span class="material-symbols-outlined text-[13px]">${data.badgeIcon}</span> ${data.badge}`;
+      stepMetrics.innerHTML = `<span class="font-medium text-primary-700">${data.metrics.split('・')[0]}</span>・<span>${data.metrics.split('・')[1]}</span>`;
+
+      dots.forEach((dot, i) => {
+        if (i === index) {
+          dot.className = 'step-dot w-5 h-1.5 rounded-full bg-primary-500 transition-all duration-200';
+        } else {
+          dot.className = 'step-dot w-1.5 h-1.5 rounded-full bg-grey-200 transition-all duration-200';
+        }
+      });
+    }
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', (e) => {
+        const step = parseInt(e.currentTarget.getAttribute('data-step'), 10);
+        updateStep(step);
+      });
+    });
+
+    // Touch swipe support on step card
+    let touchStartX = 0;
+    let touchEndX = 0;
+    stepContent.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    stepContent.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 35 && currentStepIndex < stepsData.length - 1) {
+        updateStep(currentStepIndex + 1);
+      } else if (touchEndX > touchStartX + 35 && currentStepIndex > 0) {
+        updateStep(currentStepIndex - 1);
+      }
+    }, { passive: true });
+
+    btnRecenter.addEventListener('click', () => {
+      updateStep(0);
+    });
+
+    let compassRot = 0;
+    btnNorthReset.addEventListener('click', () => {
+      compassRot += 360;
+      compassIcon.style.transition = 'transform 0.45s ease-out';
+      compassIcon.style.transform = `rotate(${compassRot}deg)`;
+    });
+
+    let isVoiceActive = true;
+    btnVoiceToggle.addEventListener('click', () => {
+      isVoiceActive = !isVoiceActive;
+      if (isVoiceActive) {
+        voiceIcon.textContent = 'volume_up';
+        btnVoiceToggle.classList.remove('text-grey-400');
+        btnVoiceToggle.classList.add('text-primary');
+      } else {
+        voiceIcon.textContent = 'volume_off';
+        btnVoiceToggle.classList.remove('text-primary');
+        btnVoiceToggle.classList.add('text-grey-400');
+      }
+    });
+  })();
+</script>
+</body></html>

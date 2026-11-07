@@ -1,0 +1,144 @@
+/*
+ * Styles for the EMBEDDED indoor UI (IndoorNav.vue inside the HowGo Nuxt app). Everything is scoped
+ * under .tpnav so nothing leaks into the host page; the standalone pages (main.ts, admin) keep using
+ * the global style.css. Host tokens (HowGo main.css: --radius-*, --shadow-floating, --safe-*,
+ * --text-primary) are picked up when present, with Town Pass fallbacks.
+ */
+.tpnav {
+  --tp-primary50: #edf8fa;
+  --tp-primary100: #dbf1f5;
+  --tp-primary200: #b4e2ea;
+  --tp-primary500: #5ab4c5;
+  --tp-primary600: #468d9b;
+  --tp-primary700: #356c77;
+  --tp-secondary100: #fcf2df;
+  --tp-secondary200: #f8e3bc;
+  --tp-secondary300: #f4d69e;
+  --tp-secondary500: #f5ba4b;
+  --tp-grayscale50: #f1f3f4;
+  --tp-grayscale100: #e3e7e9;
+  --tp-grayscale200: #cad1d5;
+  --tp-grayscale300: #adb8be;
+  --tp-grayscale500: #738995;
+  --tp-grayscale700: #475259;
+  /* HowGo uses Grey/800 for primary text */
+  --tp-grayscale900: var(--text-primary, #30383d);
+  --tp-red500: #d45251;
+  --tp-red600: #c2332f;
+  --tp-orange500: #fd853a;
+  --tp-white: #ffffff;
+
+  /* HowGo shape language (main.css) */
+  --tpnav-radius-control: var(--radius-control, 16px);
+  --tpnav-radius-card: var(--radius-card, 20px);
+  --tpnav-radius-small: 12px;
+  --tpnav-shadow-floating: var(--shadow-floating, 0 8px 24px -4px #22474e1f, 0 2px 6px -1px #22474e0f);
+  --tpnav-sheet-shadow: 0 -8px 30px #22474e1f;
+  --tp-card-shadow: var(--shadow-card, 0 0 12px rgba(0, 0, 0, 0.04));
+  --tp-sheet-shadow: var(--tpnav-sheet-shadow);
+  --float-shadow: var(--tpnav-shadow-floating);
+  /* the host zeroes --safe-top inside the Town Pass WebView ([data-embedded]); never redefine it here */
+  --tpnav-safe-top: var(--safe-top, env(safe-area-inset-top, 0px));
+  --tpnav-safe-bottom: var(--safe-bottom, env(safe-area-inset-bottom, 0px));
+
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: var(--tp-grayscale50);
+  color-scheme: light;
+  font-family: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', Roboto, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--tp-grayscale900);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.tpnav,
+.tpnav *,
+.tpnav *::before,
+.tpnav *::after {
+  box-sizing: border-box;
+}
+
+.tpnav :where(button, input) {
+  font: inherit;
+  color: inherit;
+}
+.tpnav :where(button) {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.tpnav :where(b, strong, h1, h2, h3) {
+  font-weight: 600;
+}
+.tpnav :focus-visible {
+  outline: 3px solid var(--tp-primary700);
+  outline-offset: 2px;
+}
+
+.tpnav .tp-card {
+  background: var(--tp-white);
+  border-radius: var(--tpnav-radius-card);
+  box-shadow: var(--tp-card-shadow);
+}
+
+/*
+ * Buttons follow HowGo's control shape (radius 16, ≥ 52 px tall for primary actions in the sheet).
+ * Contrast: filled buttons keep primary700 with white text (5.9:1); HowGo's --action (primary600,
+ * ~3.8:1) is below AA for 16 px text, so it is not used for text-bearing fills here.
+ */
+.tpnav .btn {
+  min-height: 48px;
+  padding: 8px 16px;
+  border-radius: var(--tpnav-radius-control);
+  border: 1px solid var(--tp-primary500);
+  background: var(--tp-white);
+  color: var(--tp-primary700);
+  font-size: 16px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.tpnav .btn:active {
+  background: var(--tp-primary50);
+}
+.tpnav .btn.primary {
+  background: var(--tp-primary700);
+  border-color: var(--tp-primary700);
+  color: var(--tp-white);
+}
+.tpnav .btn.primary:active {
+  background: var(--tp-primary600);
+  border-color: var(--tp-primary600);
+}
+.tpnav .btn.danger {
+  background: var(--tp-red500);
+  border-color: var(--tp-red500);
+  color: var(--tp-white);
+}
+.tpnav .btn.text {
+  border-color: transparent;
+  background: transparent;
+}
+.tpnav .btn:disabled {
+  background: var(--tp-grayscale100);
+  border-color: var(--tp-grayscale100);
+  color: var(--tp-grayscale500);
+  cursor: default;
+}
+.tpnav .mut {
+  color: var(--tp-grayscale700);
+}
+.tpnav .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

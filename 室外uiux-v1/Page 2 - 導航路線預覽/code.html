@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="zh-TW"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>室外無障礙地圖 - 路線預覽 (Page 2)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#EDF8FA',
+              100: '#DBF1F5',
+              200: '#B4E2EA',
+              300: '#93D4DF',
+              400: '#71C5D5',
+              500: '#5AB4C5',
+              600: '#468D9B',
+              700: '#356C77',
+              800: '#22474E',
+              900: '#112629',
+            },
+            secondary: {
+              500: '#F5BA4B',
+              600: '#E7A43C',
+            },
+            grey: {
+              50: '#F1F3F4',
+              100: '#E3E7E9',
+              200: '#CAD1D5',
+              300: '#ADB8BE',
+              400: '#91A0A8',
+              500: '#738995',
+              600: '#5E6D76',
+              700: '#475259',
+              800: '#30383D',
+              900: '#171B1D',
+            },
+            accentOrange: '#FD853A',
+            accentGreen: '#76A732',
+            alarmRed: '#D45251'
+          },
+          fontFamily: {
+            sans: ['PingFang TC', 'Roboto', 'Noto Sans TC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    body {
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    /* Pulse effect for GPS dot */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 0.3; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+    .gps-pulse {
+      animation: pulse-ring 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#e8ecef] flex items-center justify-center min-h-screen p-0 sm:p-4 font-sans text-grey-800">
+<!-- Mobile Device Frame (390 x 844) -->
+<div class="relative w-[390px] h-[844px] bg-white rounded-[44px] overflow-hidden shadow-2xl flex flex-col border-[8px] border-slate-900">
+<!-- Top Status Bar -->
+<div class="absolute top-0 left-0 right-0 z-30 h-11 px-7 pt-3 flex justify-between items-center text-xs font-semibold text-grey-900 pointer-events-none">
+<span class="">09:41</span>
+<div class="w-24 h-5 bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2"></div>
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+<span class="material-symbols-outlined text-[18px]">battery_full</span>
+</div>
+</div>
+<!-- Map Canvas (Background) -->
+<div class="absolute inset-0 z-0 bg-[#F5F3ED] overflow-hidden">
+<!-- Geographic SVG Map Layer representing Tianmu area (OpenStreetMap style) -->
+<svg class="w-full h-full" fill="none" viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Pattern for green space/parks -->
+<pattern height="20" id="parkPattern" patternUnits="userSpaceOnUse" width="20">
+<rect fill="#E2F1DF" height="20" width="20"></rect>
+<circle cx="10" cy="10" fill="#C5E3C0" r="1.5"></circle>
+</pattern>
+</defs>
+<!-- Base Background Map Canvas -->
+<rect fill="#F4F2EC" height="844" width="390"></rect>
+<!-- Land blocks / Parcels -->
+<!-- Tianmu Baseball / Stadium Area -->
+<rect fill="#EAE7DD" height="200" rx="14" stroke="#DED9CE" stroke-width="1.5" width="170" x="200" y="380"></rect>
+<text fill="#91A0A8" font-size="13" font-weight="600" text-anchor="middle" x="285" y="490">天母體育館園區</text>
+<!-- Shinkong Mitsukoshi Block -->
+<rect fill="#ECE9DF" height="130" rx="10" stroke="#DED9CE" stroke-width="1.5" width="110" x="18" y="240"></rect>
+<text fill="#91A0A8" font-size="11" font-weight="500" text-anchor="middle" x="73" y="310">新光三越天母店</text>
+<!-- Taipei School for the Visually Impaired -->
+<rect fill="#ECE9DF" height="100" rx="10" stroke="#DED9CE" stroke-width="1.5" width="125" x="210" y="235"></rect>
+<text fill="#91A0A8" font-size="11" font-weight="500" text-anchor="middle" x="272" y="290">台北啟明學校</text>
+<!-- Sanyu Elementary School -->
+<rect fill="#E2F1DF" height="90" rx="8" stroke="#CBE5C5" stroke-width="1" width="110" x="290" y="110"></rect>
+<text fill="#76A732" font-size="11" font-weight="500" text-anchor="middle" x="345" y="155">三玉國小</text>
+<!-- Tianmu Park green area -->
+<path d="M 0 60 C 80 80, 140 100, 160 160 L 0 160 Z" fill="#E2F1DF"></path>
+<!-- Street Network -->
+<!-- Tianmu East Road (天母東路) -->
+<path d="M -20 180 L 410 180" stroke="#FFFFFF" stroke-linecap="round" stroke-width="26"></path>
+<path d="M -20 180 L 410 180" opacity="0.6" stroke="#E3E7E9" stroke-dasharray="0" stroke-width="28"></path>
+<path d="M -20 180 L 410 180" stroke="#FFFFFF" stroke-width="22"></path>
+<text fill="#91A0A8" font-size="11" font-weight="600" letter-spacing="1" x="70" y="184">天母東路</text>
+<text fill="#91A0A8" font-size="11" font-weight="600" letter-spacing="1" x="320" y="184">天母東路</text>
+<!-- Zhongcheng Road Sec. 2 (忠誠路二段) Diagonal Main Boulevard -->
+<!-- Boulevard Grass Median & Sidewalks -->
+<path d="M 330 60 L 50 780" stroke="#E5F3E2" stroke-linecap="square" stroke-width="48"></path>
+<!-- Main Car Roadway -->
+<path d="M 330 60 L 50 780" stroke="#FFFFFF" stroke-linecap="square" stroke-width="36"></path>
+<!-- Road Borders -->
+<path d="M 330 60 L 50 780" opacity="0.5" stroke="#CAD1D5" stroke-width="38"></path>
+<path d="M 330 60 L 50 780" stroke="#FFFFFF" stroke-width="34"></path>
+<!-- Center Median Strip (綠園道) -->
+<path d="M 330 60 L 50 780" stroke="#A7D59A" stroke-dasharray="24 12" stroke-width="6"></path>
+<!-- Verified Accessible Sidewalk Overlay (忠誠路二段實體人行道 220cm) -->
+<path d="M 314 60 L 34 780" stroke="#5AB4C5" stroke-dasharray="6 4" stroke-opacity="0.5" stroke-width="4"></path>
+<!-- Zhongcheng Rd label -->
+<g transform="translate(136, 520) rotate(-68.5)">
+<text fill="#738995" font-size="12" font-weight="600" letter-spacing="3" x="0" y="0">忠誠路二段 (無障礙林蔭人行道)</text>
+</g>
+<!-- Alley 207 (忠誠路二段207巷) into Stadium -->
+<path d="M 175 428 L 380 428" stroke="#FFFFFF" stroke-linecap="round" stroke-width="20"></path>
+<path d="M 175 428 L 380 428" opacity="0.4" stroke="#CAD1D5" stroke-width="22"></path>
+<path d="M 175 428 L 380 428" stroke="#FFFFFF" stroke-width="18"></path>
+<text fill="#91A0A8" font-size="10" x="215" y="422">忠誠路二段207巷</text>
+<!-- ================= ROUTE ALTERNATIVES ================= -->
+<!-- Route A (最快, 3 min): Muted dashed grey/amber line, cut through stairs -->
+<path d="M 112 585 L 152 485 L 182 450 L 260 450" opacity="0.85" stroke="#F4B992" stroke-dasharray="4 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Route C (輪椅友善, 7 min): Muted gentle detour via smooth elevator bypass -->
+<path d="M 112 585 L 140 515 L 175 428 L 240 428 L 260 450" opacity="0.7" stroke="#71C5D5" stroke-dasharray="8 5" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Route B (SELECTED DEFAULT: 平衡, 5 min): Bold Town Pass Primary Teal Line -->
+<!-- Soft glow under selected line -->
+<path d="M 112 585 L 138 520 L 150 490 L 195 448 L 260 450" opacity="0.8" stroke="#B4E2EA" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"></path>
+<!-- Main Solid Teal Line -->
+<path d="M 112 585 L 138 520 L 150 490 L 195 448 L 260 450" stroke="#356C77" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"></path>
+<path d="M 112 585 L 138 520 L 150 490 L 195 448 L 260 450" stroke="#5AB4C5" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"></path>
+<!-- Directional Chevrons along Route B -->
+<circle cx="125" cy="552" fill="#FFFFFF" r="2.5"></circle>
+<circle cx="144" cy="505" fill="#FFFFFF" r="2.5"></circle>
+<circle cx="172" cy="469" fill="#FFFFFF" r="2.5"></circle>
+<circle cx="228" cy="449" fill="#FFFFFF" r="2.5"></circle>
+<!-- ================= WAYFINDING & ACCESSIBILITY MARKERS ================= -->
+<!-- Starting Point: Currently on Zhongcheng Rd Sec. 2 (112, 585) -->
+<g transform="translate(112, 585)">
+<circle class="gps-pulse" cx="0" cy="0" fill="#5AB4C5" fill-opacity="0.2" r="16"></circle>
+<circle cx="0" cy="0" fill="#FFFFFF" r="9" stroke="#356C77" stroke-width="2"></circle>
+<circle cx="0" cy="0" fill="#356C77" r="6"></circle>
+</g>
+<!-- Starting point label pill -->
+<g transform="translate(112, 608)">
+<rect fill="#30383D" fill-opacity="0.9" height="20" rx="10" width="64" x="-32" y="0"></rect>
+<text fill="#FFFFFF" font-size="10" font-weight="600" text-anchor="middle" x="0" y="14">起點・目前位置</text>
+</g>
+<!-- Facility Marker 1: Ramp / 緩坡道 (at 150, 490) -->
+<g transform="translate(150, 490)">
+<!-- Line connecting to path -->
+<line stroke="#356C77" stroke-dasharray="2 2" stroke-width="1.5" x1="0" x2="-22" y1="0" y2="-28"></line>
+<!-- Marker Pin -->
+<g transform="translate(-22, -28)">
+<rect fill="#FFFFFF" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.12))" height="24" rx="12" stroke="#76A732" stroke-width="1.8" width="84" x="-42" y="-12"></rect>
+<circle cx="-28" cy="0" fill="#E2F1DF" r="7"></circle>
+<!-- Small ramp icon indicator -->
+<path d="M -32 4 L -24 -4 L -24 4 Z" fill="#76A732"></path>
+<text fill="#30383D" font-size="11" font-weight="600" text-anchor="middle" x="4" y="4">坡道 2.1%</text>
+</g>
+</g>
+<!-- Facility Marker 2: Accessible Elevator / 電梯 (at 195, 448) -->
+<g transform="translate(195, 448)">
+<!-- Line connecting to path -->
+<line stroke="#356C77" stroke-dasharray="2 2" stroke-width="1.5" x1="0" x2="30" y1="0" y2="-26"></line>
+<!-- Marker Pin -->
+<g transform="translate(30, -26)">
+<rect fill="#FFFFFF" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.12))" height="24" rx="12" stroke="#5AB4C5" stroke-width="1.8" width="76" x="-10" y="-12"></rect>
+<circle cx="2" cy="0" fill="#EDF8FA" r="7"></circle>
+<!-- Elevator icon -->
+<rect fill="#468D9B" height="8" rx="1" width="6" x="-1" y="-4"></rect>
+<text fill="#30383D" font-size="11" font-weight="600" text-anchor="middle" x="34" y="4">無障礙電梯</text>
+</g>
+</g>
+<!-- Destination Point: Tianmu Gymnasium Entrance (260, 450) -->
+<g transform="translate(260, 450)">
+<!-- Orange Waterdrop Pin (Official Town Pass Destination Marker) -->
+<path d="M 0 0 C -12 -12, -14 -22, -14 -28 C -14 -36, -8 -42, 0 -42 C 8 -42, 14 -36, 14 -28 C 14 -22, 12 -12, 0 0 Z" fill="#FD853A" filter="drop-shadow(0 3px 6px rgba(253, 133, 58, 0.4))"></path>
+<circle cx="0" cy="-28" fill="#FFFFFF" r="8"></circle>
+<circle cx="0" cy="-28" fill="#FD853A" r="4.5"></circle>
+<!-- Ground shadow dot -->
+<ellipse cx="0" cy="2" fill="#30383D" opacity="0.25" rx="4" ry="2"></ellipse>
+</g>
+<!-- Destination label pill -->
+<g transform="translate(260, 396)">
+<rect fill="#FD853A" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.15))" height="22" rx="11" width="130" x="-65" y="0"></rect>
+<text fill="#FFFFFF" font-size="11" font-weight="600" text-anchor="middle" x="0" y="15">終點・天母體育館 1F</text>
+</g>
+</svg>
+</div>
+<!-- Floating Top Bar: Starting Point and Destination Card (Wireframe Top Area) -->
+<div class="relative z-20 pt-12 px-4">
+<div class="bg-white rounded-2xl shadow-lg border border-grey-100 p-3 flex items-center justify-between">
+<!-- Origin & Destination Fields -->
+<div class="flex-1 space-y-2">
+<!-- Starting Point Field (起點) -->
+<div class="flex items-center space-x-2.5">
+<div class="w-3.5 h-3.5 rounded-full border-2 border-primary-600 bg-white flex items-center justify-center flex-shrink-0">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-600"></div>
+</div>
+<div class="flex items-baseline space-x-2 flex-1 overflow-hidden">
+<span class="text-xs font-medium text-grey-500 flex-shrink-0">起點</span>
+<span class="text-sm font-semibold text-grey-900 truncate">目前位置 (忠誠路二段)</span>
+</div>
+</div>
+<!-- Connecting Dotted Line -->
+<div class="pl-1.5 py-0">
+<div class="w-0.5 h-2 bg-grey-200 ml-[5px]"></div>
+</div>
+<!-- Destination Field (終點) -->
+<div class="flex items-center space-x-2.5">
+<div class="w-3.5 h-3.5 rounded-full border-2 border-accentOrange bg-white flex items-center justify-center flex-shrink-0">
+<div class="w-1.5 h-1.5 rounded-full bg-accentOrange"></div>
+</div>
+<div class="flex items-baseline space-x-2 flex-1 overflow-hidden">
+<span class="text-xs font-medium text-grey-500 flex-shrink-0">終點</span>
+<span class="text-sm font-semibold text-grey-900 truncate">天母體育館</span>
+<span class="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-medium flex-shrink-0">支援室內導航</span>
+</div>
+</div>
+</div>
+<!-- Swap Origin/Destination Button (Wireframe: right side small swap icon) -->
+<button class="w-10 h-10 ml-2 rounded-xl bg-primary-500 hover:bg-primary-600 active:scale-95 transition flex items-center justify-center text-white shadow-md flex-shrink-0" title="對調起迄點"><span class="material-symbols-outlined text-[20px]">swap_vert</span></button>
+</div>
+</div>
+<!-- Right Side Map Control FABs (Re-center & Layers) -->
+
+<!-- Spacer to push Bottom Panel to bottom -->
+<div class="flex-1"></div>
+<!-- Bottom Route Comparison Panel (Page 2 Wireframe Bottom Sheet) -->
+<div class="relative z-30 bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] border-t border-grey-100 px-5 pt-3 pb-6 flex flex-col"><div class="w-12 h-1.5 bg-grey-300 rounded-full mx-auto mb-3"></div><div class="flex items-center justify-between border-b border-grey-100 pb-0 mb-3 px-1"><div class="flex items-center space-x-1.5 pb-2 text-grey-500 cursor-pointer flex-1 justify-center"><span class="material-symbols-outlined text-[18px]">bolt</span><span class="text-sm font-semibold">最快 3分</span></div><div class="flex flex-col items-center flex-1 cursor-pointer"><div class="flex items-center space-x-1.5 pb-2 text-primary-600 font-bold"><span class="material-symbols-outlined text-[18px] text-primary-600">balance</span><span class="text-sm font-bold text-primary-600">平衡 5分</span></div><div class="w-16 h-1 bg-primary-500 rounded-full"></div></div><div class="flex items-center space-x-1.5 pb-2 text-grey-500 cursor-pointer flex-1 justify-center"><span class="material-symbols-outlined text-[18px]">accessible</span><span class="text-sm font-semibold">輪椅 7分</span></div></div><div class="flex items-center justify-between mb-2 px-1"><div class="flex items-center space-x-2"><h2 class="text-xl font-bold text-grey-900 tracking-tight">平衡路線</h2><span class="text-[11px] bg-primary-50 text-primary-700 border border-primary-200 font-semibold px-2 py-0.5 rounded-full">推薦路線</span></div></div><div class="space-y-1 mb-3 px-1"><div class="flex items-baseline space-x-2"><span class="text-2xl font-bold text-primary-700 tracking-tight">5 分鐘</span><span class="text-sm text-grey-500 font-medium">(350 公尺・預計抵達 09:46)</span></div><p class="text-xs text-grey-600 font-normal leading-relaxed">多為平坦無障礙人行道・少量階梯已提供緩坡旁通</p></div><div class="flex flex-wrap gap-x-2 gap-y-1.5 mb-4 px-1"><div class="flex items-center space-x-1 bg-grey-50 border border-grey-200 text-grey-700 text-xs px-2.5 py-1 rounded-lg"><span class="material-symbols-outlined text-[14px] text-primary-600">straighten</span><span class="text-[11px] font-medium">淨寬度 ≥ 180cm</span></div><div class="flex items-center space-x-1 bg-[#F1F8EE] border border-[#CBE5C5] text-green-500 text-xs px-2.5 py-1 rounded-lg"><span class="material-symbols-outlined text-[14px]">trending_up</span><span class="text-[11px] font-medium text-grey-800">最大坡度 2.1%</span></div><div class="flex items-center space-x-1 bg-primary-50 border border-primary-200 text-primary-700 text-xs px-2.5 py-1 rounded-lg"><span class="material-symbols-outlined text-[14px]">elevator</span><span class="text-[11px] font-medium">備有無障礙電梯</span></div></div><button class="w-full py-3.5 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-bold rounded-2xl shadow-lg shadow-primary-500/30 flex items-center justify-center space-x-2 text-base transition duration-150"><span class="material-symbols-outlined text-[20px]">navigation</span><span class="">開始導航</span></button><div class="w-32 h-1 bg-grey-900/20 rounded-full mx-auto mt-3"></div></div>
+</div>
+
+
+</body></html>

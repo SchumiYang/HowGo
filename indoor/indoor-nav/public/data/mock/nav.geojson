@@ -1,0 +1,5642 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c-sw",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c-se",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c-ne",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c-nw",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     10.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST1-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-A101",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-A101-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-A102",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-A102-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c3",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     49.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST3",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST3-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c4",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     10.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST2-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c5",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-B101",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-B101-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c6",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-B102",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-B102-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c7",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     49.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST4",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-ST4-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c8",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-M1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-M1-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c9",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-A1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-A1-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c10",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EV1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EV1-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c11",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-LOBBY",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-LOBBY-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c12",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-F1",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-F1-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c13",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-MED",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-MED-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c14",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EXIT-E",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     67,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EXIT-E-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-F2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-F2-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c15",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-A2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-A2-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c16",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EV2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-EV2-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c17",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-M2",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-WC-M2-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c18",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-OFF",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-OFF-door",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c19",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     0.6
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-entrance",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     79.4,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-exit-e",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     30
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-COURT",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     15
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-COURT-door-s",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     45
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-COURT-door-n",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-c20",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c-sw",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c-se",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c-ne",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c-nw",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     15.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST1-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-C201",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-C201-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-C202",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-C202-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c3",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     44.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST3",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     10,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST3-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c4",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     15.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST2-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     13
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c5",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-D201",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-D201-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     23.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c6",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-D202",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-D202-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     36.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c7",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     44.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST4",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     70,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-ST4-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     47
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c8",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-M1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-M1-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c9",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-A1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-A1-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c10",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-EV1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-EV1-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c11",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-REST",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-REST-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c12",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-F1",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-F1-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c13",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     69,
+     4.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-OFF",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     9
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-OFF-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     12
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c14",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-F2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-F2-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c15",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-A2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-A2-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c16",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-EV2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-EV2-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c17",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-M2",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-WC-M2-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c18",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     55.5
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-E201",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     51
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-E201-door",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c19",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     18
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-s",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21,
+     18
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-sw",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21,
+     42
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-nw",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     42
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-n",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     59,
+     42
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-ne",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     59,
+     18
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-se",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     15
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-door-s",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     45
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-SEAT-door-n",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     48
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "2F-c20",
+    "level": "2F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      13
+     ],
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c1",
+    "to": "1F-ST1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      13
+     ],
+     [
+      5,
+      10.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST1-door",
+    "to": "1F-ST1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      23.5
+     ],
+     [
+      10,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c2",
+    "to": "1F-A101-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      23.5
+     ],
+     [
+      5,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-A101-door",
+    "to": "1F-A101",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      36.5
+     ],
+     [
+      10,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c3",
+    "to": "1F-A102-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      36.5
+     ],
+     [
+      5,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-A102-door",
+    "to": "1F-A102",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      47
+     ],
+     [
+      10,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c4",
+    "to": "1F-ST3-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      47
+     ],
+     [
+      5,
+      49.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST3-door",
+    "to": "1F-ST3",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      13
+     ],
+     [
+      70,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c5",
+    "to": "1F-ST2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      13
+     ],
+     [
+      75,
+      10.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST2-door",
+    "to": "1F-ST2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      23.5
+     ],
+     [
+      70,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c6",
+    "to": "1F-B101-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      23.5
+     ],
+     [
+      75,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-B101-door",
+    "to": "1F-B101",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      36.5
+     ],
+     [
+      70,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c7",
+    "to": "1F-B102-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      36.5
+     ],
+     [
+      75,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-B102-door",
+    "to": "1F-B102",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      47
+     ],
+     [
+      70,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c8",
+    "to": "1F-ST4-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      47
+     ],
+     [
+      75,
+      49.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST4-door",
+    "to": "1F-ST4",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      12
+     ],
+     [
+      15,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c9",
+    "to": "1F-WC-M1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      9
+     ],
+     [
+      15,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-M1-door",
+    "to": "1F-WC-M1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      12
+     ],
+     [
+      23,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c10",
+    "to": "1F-WC-A1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      9
+     ],
+     [
+      23,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-A1-door",
+    "to": "1F-WC-A1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      12
+     ],
+     [
+      29,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c11",
+    "to": "1F-EV1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      9
+     ],
+     [
+      29,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EV1-door",
+    "to": "1F-EV1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      40,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c12",
+    "to": "1F-LOBBY-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      9
+     ],
+     [
+      40,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-LOBBY-door",
+    "to": "1F-LOBBY",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      12
+     ],
+     [
+      53,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c13",
+    "to": "1F-WC-F1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      9
+     ],
+     [
+      53,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-F1-door",
+    "to": "1F-WC-F1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      12
+     ],
+     [
+      62,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c14",
+    "to": "1F-MED-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      9
+     ],
+     [
+      62,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-MED-door",
+    "to": "1F-MED",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      12
+     ],
+     [
+      67,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c-se",
+    "to": "1F-EXIT-E-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3.16
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      67,
+      9
+     ],
+     [
+      73,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EXIT-E-door",
+    "to": "1F-EXIT-E",
+    "type": "door",
+    "accessible": true,
+    "length_m": 7.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      48
+     ],
+     [
+      27,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c15",
+    "to": "1F-WC-F2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      51
+     ],
+     [
+      27,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-F2-door",
+    "to": "1F-WC-F2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      48
+     ],
+     [
+      35,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c16",
+    "to": "1F-WC-A2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      51
+     ],
+     [
+      35,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-A2-door",
+    "to": "1F-WC-A2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      48
+     ],
+     [
+      41,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c17",
+    "to": "1F-EV2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      51
+     ],
+     [
+      41,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EV2-door",
+    "to": "1F-EV2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      48
+     ],
+     [
+      49,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c18",
+    "to": "1F-WC-M2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      51
+     ],
+     [
+      49,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-WC-M2-door",
+    "to": "1F-WC-M2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      48
+     ],
+     [
+      62,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c19",
+    "to": "1F-OFF-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      51
+     ],
+     [
+      62,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-OFF-door",
+    "to": "1F-OFF",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      4.5
+     ],
+     [
+      40,
+      0.6
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-LOBBY",
+    "to": "1F-entrance",
+    "type": "door",
+    "accessible": true,
+    "length_m": 3.9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73,
+      4.5
+     ],
+     [
+      79.4,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EXIT-E",
+    "to": "1F-exit-e",
+    "type": "door",
+    "accessible": true,
+    "length_m": 6.4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      40,
+      15
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c12",
+    "to": "1F-COURT-door-s",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      15
+     ],
+     [
+      40,
+      30
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-COURT-door-s",
+    "to": "1F-COURT",
+    "type": "door",
+    "accessible": true,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      48
+     ],
+     [
+      40,
+      45
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c20",
+    "to": "1F-COURT-door-n",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      45
+     ],
+     [
+      40,
+      30
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-COURT-door-n",
+    "to": "1F-COURT",
+    "type": "door",
+    "accessible": true,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      12
+     ],
+     [
+      15,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c-sw",
+    "to": "1F-c9",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      12
+     ],
+     [
+      23,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c9",
+    "to": "1F-c10",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      12
+     ],
+     [
+      29,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c10",
+    "to": "1F-c11",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      12
+     ],
+     [
+      40,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c11",
+    "to": "1F-c12",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 11
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      53,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c12",
+    "to": "1F-c13",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      12
+     ],
+     [
+      62,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c13",
+    "to": "1F-c14",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      12
+     ],
+     [
+      66,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c14",
+    "to": "1F-c-se",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      12
+     ],
+     [
+      66,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c-se",
+    "to": "1F-c5",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      13
+     ],
+     [
+      66,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c5",
+    "to": "1F-c6",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      23.5
+     ],
+     [
+      66,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c6",
+    "to": "1F-c7",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      36.5
+     ],
+     [
+      66,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c7",
+    "to": "1F-c8",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      47
+     ],
+     [
+      66,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c8",
+    "to": "1F-c-ne",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      48
+     ],
+     [
+      62,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c-ne",
+    "to": "1F-c19",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      48
+     ],
+     [
+      49,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c19",
+    "to": "1F-c18",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      48
+     ],
+     [
+      41,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c18",
+    "to": "1F-c17",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      48
+     ],
+     [
+      40,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c17",
+    "to": "1F-c20",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      48
+     ],
+     [
+      35,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c20",
+    "to": "1F-c16",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      48
+     ],
+     [
+      27,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c16",
+    "to": "1F-c15",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      48
+     ],
+     [
+      14,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c15",
+    "to": "1F-c-nw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      48
+     ],
+     [
+      14,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c-nw",
+    "to": "1F-c4",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      47
+     ],
+     [
+      14,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c4",
+    "to": "1F-c3",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      36.5
+     ],
+     [
+      14,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c3",
+    "to": "1F-c2",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      23.5
+     ],
+     [
+      14,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c2",
+    "to": "1F-c1",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      13
+     ],
+     [
+      14,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-c1",
+    "to": "1F-c-sw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      13
+     ],
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c1",
+    "to": "2F-ST1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      13
+     ],
+     [
+      5,
+      15.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-ST1-door",
+    "to": "2F-ST1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      23.5
+     ],
+     [
+      10,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c2",
+    "to": "2F-C201-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      23.5
+     ],
+     [
+      5,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-C201-door",
+    "to": "2F-C201",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      36.5
+     ],
+     [
+      10,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c3",
+    "to": "2F-C202-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      36.5
+     ],
+     [
+      5,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-C202-door",
+    "to": "2F-C202",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      47
+     ],
+     [
+      10,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c4",
+    "to": "2F-ST3-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      10,
+      47
+     ],
+     [
+      5,
+      44.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-ST3-door",
+    "to": "2F-ST3",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      13
+     ],
+     [
+      70,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c5",
+    "to": "2F-ST2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      13
+     ],
+     [
+      75,
+      15.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-ST2-door",
+    "to": "2F-ST2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      23.5
+     ],
+     [
+      70,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c6",
+    "to": "2F-D201-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      23.5
+     ],
+     [
+      75,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-D201-door",
+    "to": "2F-D201",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      36.5
+     ],
+     [
+      70,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c7",
+    "to": "2F-D202-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      36.5
+     ],
+     [
+      75,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-D202-door",
+    "to": "2F-D202",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      47
+     ],
+     [
+      70,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c8",
+    "to": "2F-ST4-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      70,
+      47
+     ],
+     [
+      75,
+      44.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-ST4-door",
+    "to": "2F-ST4",
+    "type": "door",
+    "accessible": true,
+    "length_m": 5.59
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      12
+     ],
+     [
+      15,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c9",
+    "to": "2F-WC-M1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      9
+     ],
+     [
+      15,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-M1-door",
+    "to": "2F-WC-M1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      12
+     ],
+     [
+      23,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c10",
+    "to": "2F-WC-A1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      9
+     ],
+     [
+      23,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-A1-door",
+    "to": "2F-WC-A1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      12
+     ],
+     [
+      29,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c11",
+    "to": "2F-EV1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      9
+     ],
+     [
+      29,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-EV1-door",
+    "to": "2F-EV1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      40,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c12",
+    "to": "2F-REST-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      9
+     ],
+     [
+      40,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-REST-door",
+    "to": "2F-REST",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      12
+     ],
+     [
+      53,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c13",
+    "to": "2F-WC-F1-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      9
+     ],
+     [
+      53,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-F1-door",
+    "to": "2F-WC-F1",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      12
+     ],
+     [
+      62,
+      9
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c14",
+    "to": "2F-OFF-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      9
+     ],
+     [
+      69,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-OFF-door",
+    "to": "2F-OFF",
+    "type": "door",
+    "accessible": true,
+    "length_m": 8.32
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      48
+     ],
+     [
+      27,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c15",
+    "to": "2F-WC-F2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      51
+     ],
+     [
+      27,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-F2-door",
+    "to": "2F-WC-F2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      48
+     ],
+     [
+      35,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c16",
+    "to": "2F-WC-A2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      51
+     ],
+     [
+      35,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-A2-door",
+    "to": "2F-WC-A2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      48
+     ],
+     [
+      41,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c17",
+    "to": "2F-EV2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      51
+     ],
+     [
+      41,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-EV2-door",
+    "to": "2F-EV2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      48
+     ],
+     [
+      49,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c18",
+    "to": "2F-WC-M2-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      51
+     ],
+     [
+      49,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-WC-M2-door",
+    "to": "2F-WC-M2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      48
+     ],
+     [
+      62,
+      51
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c19",
+    "to": "2F-E201-door",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      51
+     ],
+     [
+      62,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-E201-door",
+    "to": "2F-E201",
+    "type": "door",
+    "accessible": true,
+    "length_m": 4.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      18
+     ],
+     [
+      21,
+      18
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-s",
+    "to": "2F-SEAT-sw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 19
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      21,
+      18
+     ],
+     [
+      21,
+      42
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-sw",
+    "to": "2F-SEAT-nw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 24
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      21,
+      42
+     ],
+     [
+      40,
+      42
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-nw",
+    "to": "2F-SEAT-n",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 19
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      42
+     ],
+     [
+      59,
+      42
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-n",
+    "to": "2F-SEAT-ne",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 19
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      59,
+      42
+     ],
+     [
+      59,
+      18
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-ne",
+    "to": "2F-SEAT-se",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 24
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      59,
+      18
+     ],
+     [
+      40,
+      18
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-se",
+    "to": "2F-SEAT-s",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 19
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      40,
+      15
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c12",
+    "to": "2F-SEAT-door-s",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      15
+     ],
+     [
+      40,
+      18
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-door-s",
+    "to": "2F-SEAT-s",
+    "type": "door",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      48
+     ],
+     [
+      40,
+      45
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c20",
+    "to": "2F-SEAT-door-n",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      45
+     ],
+     [
+      40,
+      42
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-SEAT-door-n",
+    "to": "2F-SEAT-n",
+    "type": "door",
+    "accessible": true,
+    "length_m": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      12
+     ],
+     [
+      15,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c-sw",
+    "to": "2F-c9",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15,
+      12
+     ],
+     [
+      23,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c9",
+    "to": "2F-c10",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      23,
+      12
+     ],
+     [
+      29,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c10",
+    "to": "2F-c11",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      12
+     ],
+     [
+      40,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c11",
+    "to": "2F-c12",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 11
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      12
+     ],
+     [
+      53,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c12",
+    "to": "2F-c13",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      53,
+      12
+     ],
+     [
+      62,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c13",
+    "to": "2F-c14",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 9
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      12
+     ],
+     [
+      66,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c14",
+    "to": "2F-c-se",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      12
+     ],
+     [
+      66,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c-se",
+    "to": "2F-c5",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      13
+     ],
+     [
+      66,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c5",
+    "to": "2F-c6",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      23.5
+     ],
+     [
+      66,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c6",
+    "to": "2F-c7",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      36.5
+     ],
+     [
+      66,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c7",
+    "to": "2F-c8",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      47
+     ],
+     [
+      66,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c8",
+    "to": "2F-c-ne",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      66,
+      48
+     ],
+     [
+      62,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c-ne",
+    "to": "2F-c19",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      62,
+      48
+     ],
+     [
+      49,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c19",
+    "to": "2F-c18",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      49,
+      48
+     ],
+     [
+      41,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c18",
+    "to": "2F-c17",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      48
+     ],
+     [
+      40,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c17",
+    "to": "2F-c20",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      40,
+      48
+     ],
+     [
+      35,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c20",
+    "to": "2F-c16",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      35,
+      48
+     ],
+     [
+      27,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c16",
+    "to": "2F-c15",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 8
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      27,
+      48
+     ],
+     [
+      14,
+      48
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c15",
+    "to": "2F-c-nw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      48
+     ],
+     [
+      14,
+      47
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c-nw",
+    "to": "2F-c4",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      47
+     ],
+     [
+      14,
+      36.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c4",
+    "to": "2F-c3",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      36.5
+     ],
+     [
+      14,
+      23.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c3",
+    "to": "2F-c2",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 13
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      23.5
+     ],
+     [
+      14,
+      13
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c2",
+    "to": "2F-c1",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 10.5
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      14,
+      13
+     ],
+     [
+      14,
+      12
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "2F-c1",
+    "to": "2F-c-sw",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      29,
+      4.5
+     ],
+     [
+      29,
+      4.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EV1",
+    "to": "2F-EV1",
+    "type": "elevator",
+    "accessible": true,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      41,
+      55.5
+     ],
+     [
+      41,
+      55.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-EV2",
+    "to": "2F-EV2",
+    "type": "elevator",
+    "accessible": true,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      5,
+      10.5
+     ],
+     [
+      5,
+      15.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST1",
+    "to": "2F-ST1",
+    "type": "stairs",
+    "accessible": false,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      75,
+      10.5
+     ],
+     [
+      75,
+      15.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST2",
+    "to": "2F-ST2",
+    "type": "stairs",
+    "accessible": false,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      5,
+      49.5
+     ],
+     [
+      5,
+      44.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST3",
+    "to": "2F-ST3",
+    "type": "stairs",
+    "accessible": false,
+    "length_m": 15
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      75,
+      49.5
+     ],
+     [
+      75,
+      44.5
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ST4",
+    "to": "2F-ST4",
+    "type": "stairs",
+    "accessible": false,
+    "length_m": 15
+   }
+  }
+ ]
+}

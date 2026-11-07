@@ -1,0 +1,994 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       9
+      ],
+      [
+       10,
+       9
+      ],
+      [
+       10,
+       17
+      ],
+      [
+       0,
+       17
+      ],
+      [
+       0,
+       9
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST1",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "S1",
+    "name": "樓梯 S1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       17
+      ],
+      [
+       10,
+       17
+      ],
+      [
+       10,
+       30
+      ],
+      [
+       0,
+       30
+      ],
+      [
+       0,
+       17
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A101",
+    "level": "1F",
+    "category": "room",
+    "ref": "A101",
+    "name": "桌球教室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       30
+      ],
+      [
+       10,
+       30
+      ],
+      [
+       10,
+       43
+      ],
+      [
+       0,
+       43
+      ],
+      [
+       0,
+       30
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A102",
+    "level": "1F",
+    "category": "room",
+    "ref": "A102",
+    "name": "韻律教室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       43
+      ],
+      [
+       10,
+       43
+      ],
+      [
+       10,
+       51
+      ],
+      [
+       0,
+       51
+      ],
+      [
+       0,
+       43
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST3",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "S3",
+    "name": "樓梯 S3"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70,
+       9
+      ],
+      [
+       80,
+       9
+      ],
+      [
+       80,
+       17
+      ],
+      [
+       70,
+       17
+      ],
+      [
+       70,
+       9
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST2",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "S2",
+    "name": "樓梯 S2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70,
+       17
+      ],
+      [
+       80,
+       17
+      ],
+      [
+       80,
+       30
+      ],
+      [
+       70,
+       30
+      ],
+      [
+       70,
+       17
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-B101",
+    "level": "1F",
+    "category": "room",
+    "ref": "B101",
+    "name": "重訓室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70,
+       30
+      ],
+      [
+       80,
+       30
+      ],
+      [
+       80,
+       43
+      ],
+      [
+       70,
+       43
+      ],
+      [
+       70,
+       30
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-B102",
+    "level": "1F",
+    "category": "room",
+    "ref": "B102",
+    "name": "會議室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70,
+       43
+      ],
+      [
+       80,
+       43
+      ],
+      [
+       80,
+       51
+      ],
+      [
+       70,
+       51
+      ],
+      [
+       70,
+       43
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST4",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "S4",
+    "name": "樓梯 S4"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       10,
+       0
+      ],
+      [
+       10,
+       9
+      ],
+      [
+       0,
+       9
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-X01",
+    "level": "1F",
+    "category": "nonpublic",
+    "ref": null,
+    "name": "儲藏室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       10,
+       0
+      ],
+      [
+       20,
+       0
+      ],
+      [
+       20,
+       9
+      ],
+      [
+       10,
+       9
+      ],
+      [
+       10,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-M1",
+    "level": "1F",
+    "category": "restroom.male",
+    "ref": null,
+    "name": "男廁"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       20,
+       0
+      ],
+      [
+       26,
+       0
+      ],
+      [
+       26,
+       9
+      ],
+      [
+       20,
+       9
+      ],
+      [
+       20,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-A1",
+    "level": "1F",
+    "category": "restroom.accessible",
+    "ref": null,
+    "name": "無障礙廁所",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       26,
+       0
+      ],
+      [
+       32,
+       0
+      ],
+      [
+       32,
+       9
+      ],
+      [
+       26,
+       9
+      ],
+      [
+       26,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-EV1",
+    "level": "1F",
+    "category": "elevator",
+    "ref": "E1",
+    "name": "電梯 E1",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       32,
+       0
+      ],
+      [
+       48,
+       0
+      ],
+      [
+       48,
+       9
+      ],
+      [
+       32,
+       9
+      ],
+      [
+       32,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-LOBBY",
+    "level": "1F",
+    "category": "lobby",
+    "ref": null,
+    "name": "大廳",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       48,
+       0
+      ],
+      [
+       58,
+       0
+      ],
+      [
+       58,
+       9
+      ],
+      [
+       48,
+       9
+      ],
+      [
+       48,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-F1",
+    "level": "1F",
+    "category": "restroom.female",
+    "ref": null,
+    "name": "女廁"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       58,
+       0
+      ],
+      [
+       66,
+       0
+      ],
+      [
+       66,
+       9
+      ],
+      [
+       58,
+       9
+      ],
+      [
+       58,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-MED",
+    "level": "1F",
+    "category": "first_aid",
+    "ref": null,
+    "name": "醫護室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       66,
+       0
+      ],
+      [
+       80,
+       0
+      ],
+      [
+       80,
+       9
+      ],
+      [
+       66,
+       9
+      ],
+      [
+       66,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-EXIT-E",
+    "level": "1F",
+    "category": "walkway",
+    "ref": null,
+    "name": "東側通道"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       51
+      ],
+      [
+       10,
+       51
+      ],
+      [
+       10,
+       60
+      ],
+      [
+       0,
+       60
+      ],
+      [
+       0,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-X02",
+    "level": "1F",
+    "category": "nonpublic",
+    "ref": null,
+    "name": "機房"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       10,
+       51
+      ],
+      [
+       22,
+       51
+      ],
+      [
+       22,
+       60
+      ],
+      [
+       10,
+       60
+      ],
+      [
+       10,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-X03",
+    "level": "1F",
+    "category": "nonpublic",
+    "ref": null,
+    "name": "器材室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       22,
+       51
+      ],
+      [
+       32,
+       51
+      ],
+      [
+       32,
+       60
+      ],
+      [
+       22,
+       60
+      ],
+      [
+       22,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-F2",
+    "level": "1F",
+    "category": "restroom.female",
+    "ref": null,
+    "name": "女廁"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       32,
+       51
+      ],
+      [
+       38,
+       51
+      ],
+      [
+       38,
+       60
+      ],
+      [
+       32,
+       60
+      ],
+      [
+       32,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-A2",
+    "level": "1F",
+    "category": "restroom.accessible",
+    "ref": null,
+    "name": "無障礙廁所",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       38,
+       51
+      ],
+      [
+       44,
+       51
+      ],
+      [
+       44,
+       60
+      ],
+      [
+       38,
+       60
+      ],
+      [
+       38,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-EV2",
+    "level": "1F",
+    "category": "elevator",
+    "ref": "E2",
+    "name": "電梯 E2",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       44,
+       51
+      ],
+      [
+       54,
+       51
+      ],
+      [
+       54,
+       60
+      ],
+      [
+       44,
+       60
+      ],
+      [
+       44,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-WC-M2",
+    "level": "1F",
+    "category": "restroom.male",
+    "ref": null,
+    "name": "男廁"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       54,
+       51
+      ],
+      [
+       70,
+       51
+      ],
+      [
+       70,
+       60
+      ],
+      [
+       54,
+       60
+      ],
+      [
+       54,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-OFF",
+    "level": "1F",
+    "category": "office",
+    "ref": "101",
+    "name": "管理辦公室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70,
+       51
+      ],
+      [
+       80,
+       51
+      ],
+      [
+       80,
+       60
+      ],
+      [
+       70,
+       60
+      ],
+      [
+       70,
+       51
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-X04",
+    "level": "1F",
+    "category": "nonpublic",
+    "ref": null,
+    "name": "倉庫"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       10,
+       9
+      ],
+      [
+       70,
+       9
+      ],
+      [
+       70,
+       51
+      ],
+      [
+       10,
+       51
+      ],
+      [
+       10,
+       9
+      ]
+     ],
+     [
+      [
+       18,
+       15
+      ],
+      [
+       18,
+       45
+      ],
+      [
+       62,
+       45
+      ],
+      [
+       62,
+       15
+      ],
+      [
+       18,
+       15
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-CORR",
+    "level": "1F",
+    "category": "corridor",
+    "name": "走廊",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       18,
+       15
+      ],
+      [
+       62,
+       15
+      ],
+      [
+       62,
+       45
+      ],
+      [
+       18,
+       45
+      ],
+      [
+       18,
+       15
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-COURT",
+    "level": "1F",
+    "category": "court",
+    "name": "比賽場地",
+    "accessible": true
+   }
+  }
+ ]
+}

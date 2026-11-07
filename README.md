@@ -5,7 +5,7 @@ HowGo 是臺北市的室外步行導航專題，以通用與包容設計為目�
 - **前端**使用 Nuxt、Vue 與 MapLibre GL JS，負責地圖、圖層篩選、行程比較與前景定位。
 - **後端**使用 Python FastAPI、SQLite 與 Shapely，負責本機地點搜尋、設施查詢和候選路線評估。
 - **路由**由 openrouteservice（ORS）依 OSM 路網產生候選，FastAPI 再用本機圖資比對通行條件。
-- 目前範圍是臺北室外步行。室內導航、大眾運輸和城市通 WebView 屬後續整合。
+- 目前範圍是臺北室外步行。天母體育館的室內導航放在 [`indoor/`](indoor/README.md)，尚未與室外導航串接；大眾運輸和城市通 WebView 屬後續整合。
 
 ## 快速啟動
 

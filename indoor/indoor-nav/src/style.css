@@ -1,0 +1,154 @@
+/* Town Pass design tokens (see ../DESIGN.md; from TownPass tp_colors.dart / tp_text_styles.dart) */
+:root {
+  --tp-primary50: #edf8fa;
+  --tp-primary100: #dbf1f5;
+  --tp-primary200: #b4e2ea;
+  --tp-primary500: #5ab4c5;
+  --tp-primary600: #468d9b;
+  --tp-primary700: #356c77;
+  --tp-secondary100: #fcf2df;
+  --tp-secondary200: #f8e3bc;
+  --tp-secondary300: #f4d69e;
+  --tp-secondary500: #f5ba4b;
+  --tp-grayscale50: #f1f3f4;
+  --tp-grayscale100: #e3e7e9;
+  --tp-grayscale200: #cad1d5;
+  --tp-grayscale300: #adb8be;
+  --tp-grayscale500: #738995;
+  --tp-grayscale700: #475259;
+  --tp-grayscale900: #171b1d;
+  --tp-red500: #d45251;
+  --tp-red600: #c2332f;
+  --tp-orange500: #fd853a;
+  --tp-white: #ffffff;
+
+  --tp-card-shadow: 0 0 12px rgba(0, 0, 0, 0.04);
+  --tp-sheet-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+  /* shape language aligned with HowGo main.css (see embed.css for the embedded, scoped variant) */
+  --tpnav-radius-control: 16px;
+  --tpnav-radius-card: 20px;
+  --tpnav-radius-small: 12px;
+  --tpnav-shadow-floating: 0 8px 24px -4px #22474e1f, 0 2px 6px -1px #22474e0f;
+  --tpnav-sheet-shadow: 0 -8px 30px #22474e1f;
+  --float-shadow: var(--tpnav-shadow-floating);
+  --tpnav-safe-top: env(safe-area-inset-top, 0px);
+  --tpnav-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: var(--tpnav-safe-top);
+  --safe-bottom: var(--tpnav-safe-bottom);
+
+  color-scheme: light;
+  font-family: 'PingFang TC', -apple-system, 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #30383d; /* Grey/800, HowGo primary text */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--tp-grayscale50);
+  overscroll-behavior: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Town Pass uses weights 400 / 600 only */
+b,
+strong,
+h1,
+h2,
+h3 {
+  font-weight: 600;
+}
+
+/* card: white, HowGo card radius, soft shadow */
+.tp-card {
+  background: var(--tp-white);
+  border-radius: var(--tpnav-radius-card);
+  box-shadow: var(--tp-card-shadow);
+}
+
+:focus-visible {
+  outline: 3px solid var(--tp-primary700);
+  outline-offset: 2px;
+}
+
+/*
+ * TPButton: radius 10, padding 8x16, >= 48 px target.
+ * Contrast deviation from DESIGN.md: white on primary500 is 2.4:1 (fails WCAG AA), so filled
+ * buttons use primary700 (5.9:1) and outline text uses primary700 (6.4:1 on white);
+ * primary500 stays the accent for borders, fills and the route line.
+ */
+.btn {
+  min-height: 48px;
+  padding: 8px 16px;
+  border-radius: var(--tpnav-radius-control);
+  border: 1px solid var(--tp-primary500);
+  background: var(--tp-white);
+  color: var(--tp-primary700);
+  font-size: 16px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:active {
+  background: var(--tp-primary50);
+}
+.btn.primary {
+  background: var(--tp-primary700);
+  border-color: var(--tp-primary700);
+  color: var(--tp-white);
+}
+.btn.primary:active {
+  background: var(--tp-primary600);
+  border-color: var(--tp-primary600);
+}
+.btn.danger {
+  background: var(--tp-red500);
+  border-color: var(--tp-red500);
+  color: var(--tp-white);
+}
+.btn.text {
+  border-color: transparent;
+  background: transparent;
+}
+.btn:disabled {
+  background: var(--tp-grayscale100);
+  border-color: var(--tp-grayscale100);
+  color: var(--tp-grayscale500);
+  cursor: default;
+}
+
+.mut {
+  color: var(--tp-grayscale700);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

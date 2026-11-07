@@ -6,3 +6,11 @@ frontend/.nuxt/
 frontend/.output/
 .env
 .ors/
+
+# indoor/（室內導航）
+indoor/indoor-nav/node_modules/
+indoor/indoor-nav/dist/
+indoor/indoor-nav/dist-survey/
+indoor/mapdata/build/lowo/
+indoor/mapdata/history/
+backend/.pytest_cache/

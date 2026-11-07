@@ -1,0 +1,379 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     10.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-ST1",
+    "level": "1F",
+    "category": "stairs",
+    "name": "樓梯 S1",
+    "unit_id": "1F-ST1",
+    "nav_node": "1F-ST1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     49.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-ST3",
+    "level": "1F",
+    "category": "stairs",
+    "name": "樓梯 S3",
+    "unit_id": "1F-ST3",
+    "nav_node": "1F-ST3"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     10.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-ST2",
+    "level": "1F",
+    "category": "stairs",
+    "name": "樓梯 S2",
+    "unit_id": "1F-ST2",
+    "nav_node": "1F-ST2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     49.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-ST4",
+    "level": "1F",
+    "category": "stairs",
+    "name": "樓梯 S4",
+    "unit_id": "1F-ST4",
+    "nav_node": "1F-ST4"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-M1",
+    "level": "1F",
+    "category": "toilet.male",
+    "name": "男廁",
+    "unit_id": "1F-WC-M1",
+    "nav_node": "1F-WC-M1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-A1",
+    "level": "1F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所",
+    "unit_id": "1F-WC-A1",
+    "nav_node": "1F-WC-A1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-EV1",
+    "level": "1F",
+    "category": "elevator",
+    "name": "電梯 E1",
+    "unit_id": "1F-EV1",
+    "nav_node": "1F-EV1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-F1",
+    "level": "1F",
+    "category": "toilet.female",
+    "name": "女廁",
+    "unit_id": "1F-WC-F1",
+    "nav_node": "1F-WC-F1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-F2",
+    "level": "1F",
+    "category": "toilet.female",
+    "name": "女廁",
+    "unit_id": "1F-WC-F2",
+    "nav_node": "1F-WC-F2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-A2",
+    "level": "1F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所",
+    "unit_id": "1F-WC-A2",
+    "nav_node": "1F-WC-A2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-EV2",
+    "level": "1F",
+    "category": "elevator",
+    "name": "電梯 E2",
+    "unit_id": "1F-EV2",
+    "nav_node": "1F-EV2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-WC-M2",
+    "level": "1F",
+    "category": "toilet.male",
+    "name": "男廁",
+    "unit_id": "1F-WC-M2",
+    "nav_node": "1F-WC-M2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     40,
+     0.6
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-entrance",
+    "level": "1F",
+    "category": "entrance",
+    "name": "正門入口",
+    "unit_id": "1F-LOBBY",
+    "nav_node": "1F-entrance"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     79.4,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-exit-e",
+    "level": "1F",
+    "category": "exit",
+    "name": "東側門",
+    "unit_id": "1F-EXIT-E",
+    "nav_node": "1F-exit-e"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     62,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-MED",
+    "level": "1F",
+    "category": "first_aid",
+    "name": "醫護室",
+    "unit_id": "1F-MED",
+    "nav_node": "1F-MED"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     34.5,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-aed",
+    "level": "1F",
+    "category": "aed",
+    "name": "AED",
+    "unit_id": "1F-LOBBY",
+    "nav_node": "1F-LOBBY"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     45.5,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-1F-info",
+    "level": "1F",
+    "category": "info",
+    "name": "服務台",
+    "unit_id": "1F-LOBBY",
+    "nav_node": "1F-LOBBY"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     12
+    ]
+   },
+   "properties": {
+    "id": "qr-1F-sw",
+    "level": "1F",
+    "category": "qr_anchor",
+    "name": "定位碼 1F-SW",
+    "nav_node": "1F-c-sw"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     12
+    ]
+   },
+   "properties": {
+    "id": "qr-1F-se",
+    "level": "1F",
+    "category": "qr_anchor",
+    "name": "定位碼 1F-SE",
+    "nav_node": "1F-c-se"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     48
+    ]
+   },
+   "properties": {
+    "id": "qr-1F-ne",
+    "level": "1F",
+    "category": "qr_anchor",
+    "name": "定位碼 1F-NE",
+    "nav_node": "1F-c-ne"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     48
+    ]
+   },
+   "properties": {
+    "id": "qr-1F-nw",
+    "level": "1F",
+    "category": "qr_anchor",
+    "name": "定位碼 1F-NW",
+    "nav_node": "1F-c-nw"
+   }
+  }
+ ]
+}

@@ -10,6 +10,7 @@ from typing import Annotated, Literal
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 from shapely import Point, get_parts, transform, union_all
@@ -20,6 +21,7 @@ from .facilities import (
 )
 from .directions import MAX_GUIDED_POINT_OFFSET, MAX_OFFSET, add_walkway_guidance, guided_point_offset, make_steps
 from .import_facilities import DATASET_URL
+from .indoor import install as install_indoor
 from .maneuvers import guided_ramps, route_maneuvers, sidewalk_spans
 from .osm_crossings import crossing_features
 from .places import search_places
@@ -44,6 +46,8 @@ async def lifespan(app):
 
 
 app = FastAPI(title="HowGo API", lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=8192)  # indoor walls/nav GeoJSON is 0.5 MB+ uncompressed
+install_indoor(app)
 
 
 RouteMode = Literal["fastest", "balanced", "accessible"]

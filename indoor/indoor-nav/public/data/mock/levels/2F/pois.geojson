@@ -1,0 +1,307 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     15.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-ST1",
+    "level": "2F",
+    "category": "stairs",
+    "name": "樓梯 S1",
+    "unit_id": "2F-ST1",
+    "nav_node": "2F-ST1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5,
+     44.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-ST3",
+    "level": "2F",
+    "category": "stairs",
+    "name": "樓梯 S3",
+    "unit_id": "2F-ST3",
+    "nav_node": "2F-ST3"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     15.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-ST2",
+    "level": "2F",
+    "category": "stairs",
+    "name": "樓梯 S2",
+    "unit_id": "2F-ST2",
+    "nav_node": "2F-ST2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     75,
+     44.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-ST4",
+    "level": "2F",
+    "category": "stairs",
+    "name": "樓梯 S4",
+    "unit_id": "2F-ST4",
+    "nav_node": "2F-ST4"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-M1",
+    "level": "2F",
+    "category": "toilet.male",
+    "name": "男廁",
+    "unit_id": "2F-WC-M1",
+    "nav_node": "2F-WC-M1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     23,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-A1",
+    "level": "2F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所",
+    "unit_id": "2F-WC-A1",
+    "nav_node": "2F-WC-A1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     29,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-EV1",
+    "level": "2F",
+    "category": "elevator",
+    "name": "電梯 E1",
+    "unit_id": "2F-EV1",
+    "nav_node": "2F-EV1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     53,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-F1",
+    "level": "2F",
+    "category": "toilet.female",
+    "name": "女廁",
+    "unit_id": "2F-WC-F1",
+    "nav_node": "2F-WC-F1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     27,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-F2",
+    "level": "2F",
+    "category": "toilet.female",
+    "name": "女廁",
+    "unit_id": "2F-WC-F2",
+    "nav_node": "2F-WC-F2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     35,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-A2",
+    "level": "2F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所",
+    "unit_id": "2F-WC-A2",
+    "nav_node": "2F-WC-A2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     41,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-EV2",
+    "level": "2F",
+    "category": "elevator",
+    "name": "電梯 E2",
+    "unit_id": "2F-EV2",
+    "nav_node": "2F-EV2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     49,
+     55.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-WC-M2",
+    "level": "2F",
+    "category": "toilet.male",
+    "name": "男廁",
+    "unit_id": "2F-WC-M2",
+    "nav_node": "2F-WC-M2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     34.5,
+     4.5
+    ]
+   },
+   "properties": {
+    "id": "poi-2F-aed",
+    "level": "2F",
+    "category": "aed",
+    "name": "AED",
+    "unit_id": "2F-REST",
+    "nav_node": "2F-REST"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     12
+    ]
+   },
+   "properties": {
+    "id": "qr-2F-sw",
+    "level": "2F",
+    "category": "qr_anchor",
+    "name": "定位碼 2F-SW",
+    "nav_node": "2F-c-sw"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     12
+    ]
+   },
+   "properties": {
+    "id": "qr-2F-se",
+    "level": "2F",
+    "category": "qr_anchor",
+    "name": "定位碼 2F-SE",
+    "nav_node": "2F-c-se"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     66,
+     48
+    ]
+   },
+   "properties": {
+    "id": "qr-2F-ne",
+    "level": "2F",
+    "category": "qr_anchor",
+    "name": "定位碼 2F-NE",
+    "nav_node": "2F-c-ne"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14,
+     48
+    ]
+   },
+   "properties": {
+    "id": "qr-2F-nw",
+    "level": "2F",
+    "category": "qr_anchor",
+    "name": "定位碼 2F-NW",
+    "nav_node": "2F-c-nw"
+   }
+  }
+ ]
+}

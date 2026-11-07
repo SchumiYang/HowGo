@@ -1,0 +1,25 @@
+{
+ "id": "mock",
+ "name": "模擬體育館 (測試資料)",
+ "name_en": "Mock Gymnasium",
+ "origin": {
+  "lng": 121.5645,
+  "lat": 25.0375
+ },
+ "bearing_deg": 0,
+ "levels": [
+  {
+   "id": "1F",
+   "ordinal": 0,
+   "name": "1F",
+   "elevation_m": 0
+  },
+  {
+   "id": "2F",
+   "ordinal": 1,
+   "name": "2F",
+   "elevation_m": 5
+  }
+ ],
+ "default_level": "1F"
+}
