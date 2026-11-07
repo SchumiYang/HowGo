@@ -6,9 +6,11 @@ defineProps<{
   destLevel?: string
   summary: { meters: number; minutes: number; levels: string[] }
   levelName: (id: string) => string
+  /** optional alternative destination action, e.g. 「改去女廁」 */
+  altLabel?: string
 }>()
 const accessibleOnly = defineModel<boolean>('accessibleOnly', { required: true })
-const emit = defineEmits<{ start: []; close: [] }>()
+const emit = defineEmits<{ start: []; close: []; alt: [] }>()
 </script>
 
 <template>
@@ -28,6 +30,7 @@ const emit = defineEmits<{ start: []; close: [] }>()
     </div>
     <AccessibleToggle v-model="accessibleOnly" />
     <button class="btn primary go" @click="emit('start')">開始導航</button>
+    <button v-if="altLabel" class="btn alt" @click="emit('alt')">{{ altLabel }}</button>
   </section>
 </template>
 
@@ -69,5 +72,10 @@ const emit = defineEmits<{ start: []; close: [] }>()
   min-height: 56px;
   margin-top: 8px;
   font-size: 18px;
+}
+.alt {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
 }
 </style>

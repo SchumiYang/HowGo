@@ -8,7 +8,7 @@ const emit = defineEmits<{ action: [QuickActionId] }>()
 // accessible toilet first and visually primary
 const ITEMS: { id: QuickActionId; icon: string; primary?: boolean }[] = [
   { id: 'accessibleToilet', icon: 'toilet.accessible', primary: true },
-  { id: 'toilet', icon: 'toilet.male' },
+  { id: 'toilet', icon: 'toilet' },
   { id: 'elevator', icon: 'elevator' },
 ]
 </script>

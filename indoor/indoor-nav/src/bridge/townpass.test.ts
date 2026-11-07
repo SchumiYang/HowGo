@@ -50,6 +50,33 @@ describe('TownPass bridge inside the app', () => {
     expect(await p).toEqual({ ok: true, data: 'tpnav:mock:1F-entrance' })
   })
 
+  it('user_gender: sends {name, data:null}, caches a real answer, null when unknown', async () => {
+    const f = fakeFlutter()
+    const { bridge } = await freshBridge(f.obj)
+    const p = bridge.getUserGender()
+    expect(f.sent).toEqual([{ name: 'user_gender', data: null }])
+    f.reply('user_gender', { gender: 'female' })
+    expect(await p).toBe('female')
+    expect(await bridge.getUserGender()).toBe('female')
+    expect(f.sent).toHaveLength(1) // cached
+
+    const f2 = fakeFlutter()
+    const { bridge: b2 } = await freshBridge(f2.obj)
+    const q = b2.getUserGender()
+    f2.reply('user_gender', { gender: null })
+    expect(await q).toBeNull()
+  })
+
+  it('user_gender: null after ~1 s without a reply, and outside the app', async () => {
+    vi.useFakeTimers()
+    const { bridge } = await freshBridge(fakeFlutter().obj)
+    const p = bridge.getUserGender()
+    vi.advanceTimersByTime(1001)
+    expect(await p).toBeNull()
+    vi.useRealTimers()
+    expect(await (await freshBridge(undefined)).bridge.getUserGender()).toBeNull()
+  })
+
   it('times out when the handler never answers', async () => {
     vi.useFakeTimers()
     const f = fakeFlutter()

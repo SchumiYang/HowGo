@@ -19,6 +19,8 @@ export const TP = {
   grayscale900: '#171B1D',
   red500: '#D45251',
   red600: '#C2332F',
+  /** male toilets (white glyph 4.9:1) */
+  blue600: '#2F6FD0',
   orange500: '#FD853A',
   white: '#FFFFFF',
 } as const

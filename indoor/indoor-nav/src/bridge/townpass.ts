@@ -240,6 +240,23 @@ export class TownPassBridge {
     return this.request<DeviceInfoReply>('deviceinfo', null, { timeoutMs })
   }
 
+  private gender: Promise<'male' | 'female' | null> | null = null
+  /**
+   * `user_gender` -> `{ gender: 'male' | 'female' | null }`, derived natively from the ID number (the
+   * ID itself is never sent). Null when unknown, outside TownPass or with no reply in `timeoutMs`.
+   * A real answer is cached for the session; failures are retried on the next call.
+   */
+  getUserGender(timeoutMs = 1000): Promise<'male' | 'female' | null> {
+    if (this.gender) return this.gender
+    const p = this.request<unknown>('user_gender', null, { timeoutMs, accept: isObj }).then((r) => {
+      const g = r.ok && isObj(r.data) ? r.data.gender : null
+      if (!r.ok) this.gender = null
+      return g === 'male' || g === 'female' ? g : null
+    })
+    this.gender = p
+    return p
+  }
+
   /** Opens the native QR scanner; resolves with the scanned string. Long timeout: the user is scanning. */
   async scanQrCode(timeoutMs = 120000): Promise<BridgeResult<string>> {
     const r = await this.request<unknown>('qr_code_scan', null, { timeoutMs })

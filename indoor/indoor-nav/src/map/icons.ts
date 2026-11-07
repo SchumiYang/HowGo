@@ -28,8 +28,17 @@ const WHEELCHAIR: IconPath[] = [
 
 const ICONS: Record<string, IconSpec> = {
   'toilet.accessible': { bg: TP.primary500, paths: WHEELCHAIR },
-  'toilet.male': { bg: TP.primary700, paths: [{ d: HEAD(12, 4.8, 2.2) }, { d: 'M9 8.5h6l1 7h-2.2v6h-3.6v-6H8z' }] },
+  'toilet.male': { bg: TP.blue600, paths: [{ d: HEAD(12, 4.8, 2.2) }, { d: 'M9 8.5h6l1 7h-2.2v6h-3.6v-6H8z' }] },
   'toilet.female': { bg: TP.red600, paths: [{ d: HEAD(12, 4.8, 2.2) }, { d: 'M10 8.5h4l3 8h-3.1v5h-3.8v-5H7z' }] },
+  // either gender (the 廁所 quick action): man | woman restroom sign; not a map POI category
+  toilet: {
+    bg: TP.primary700,
+    paths: [
+      { d: HEAD(6.5, 4.6, 1.9) }, { d: 'M4.2 8h4.6l.9 6.2H8.1v6.3H4.9v-6.3H3.3z' },
+      { d: 'M11.4 3h1.2v18h-1.2z' },
+      { d: HEAD(17.5, 4.6, 1.9) }, { d: 'M15.9 8h3.2l2.7 7.2h-2.4v5.3h-3.8v-5.3h-2.4z' },
+    ],
+  },
   elevator: {
     bg: TP.primary600,
     paths: [{ d: 'M5 3h14v18H5z', mode: 'stroke' }, { d: 'M8.5 10.5L12 6l3.5 4.5z' }, { d: 'M8.5 13.5L12 18l3.5-4.5z' }],

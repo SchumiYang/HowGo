@@ -21,6 +21,10 @@ import { LevelChangeController } from './composables/levelChange'
 import { fetchFloorplan, type FloorplanOverlay } from './map/floorplan'
 import { pageTitle } from './config'
 import type { PlaceEntry, QuickActionId } from './data/catalog'
+import {
+  GENDER_TOILET_LABEL, genderToiletPlaces, loadToiletGender, otherGender, resolveToiletGender, saveToiletGender, type Gender,
+} from './data/toiletGender'
+import { iconDataUrl } from './map/icons'
 import type { MapPick } from './map/IndoorMap'
 
 /**
@@ -105,11 +109,95 @@ onMounted(() => {
     sheetH.value = sheetEl.value?.offsetHeight ?? sheetH.value
     const r = sideEl.value?.getBoundingClientRect()
     if (r) controlsZone.value = { right: window.innerWidth - r.left, bottom: r.bottom }
+    updateSnapCaps()
   })
   if (sheetEl.value) ro.observe(sheetEl.value)
   if (sideEl.value) ro.observe(sideEl.value)
+  if (appEl.value) ro.observe(appEl.value)
 })
 onBeforeUnmount(() => ro?.disconnect())
+
+// ---- bottom sheet: drag the handle / tap / arrow keys between peek, half and full ----
+type Snap = 'peek' | 'half' | 'full'
+const SNAPS: Snap[] = ['peek', 'half', 'full']
+const appEl = useTemplateRef<HTMLElement>('appRoot')
+const snap = ref<Snap>('half')
+/** max-height of each snap (px); the sheet is never taller than its content */
+const snapCaps = ref<Record<Snap, number>>({ peek: 132, half: 460, full: 700 })
+/** max-height while the handle is being dragged */
+const dragH = ref<number | null>(null)
+const sheetMaxH = computed(() => dragH.value ?? snapCaps.value[snap.value])
+let drag: { y0: number; h0: number; moved: boolean; y: number; t: number; v: number } | null = null
+/** a drag ends in a click on the handle (mouse); ignore that one, not a later real tap */
+let swallowClickUntil = 0
+
+function updateSnapCaps() {
+  const app = appEl.value
+  const sheet = sheetEl.value
+  if (!app || !sheet) return
+  const h = app.clientHeight
+  const safeTop = Math.max(0, (sideEl.value?.offsetTop ?? 12) - 12)
+  const safeBottom = Math.max(0, parseFloat(getComputedStyle(sheet).paddingBottom) - 16)
+  // full keeps the top controls (back / level switcher row) in view
+  const caps = { peek: 132 + safeBottom, half: Math.round(h * 0.55), full: h - safeTop - 80 }
+  const c = snapCaps.value
+  if (caps.peek !== c.peek || caps.half !== c.half || caps.full !== c.full) snapCaps.value = caps
+}
+
+/** the height each snap would actually show (content may be shorter than the cap) */
+function snapHeights(): Record<Snap, number> {
+  const content = sheetEl.value?.scrollHeight ?? Infinity
+  const c = snapCaps.value
+  return { peek: Math.min(content, c.peek), half: Math.min(content, c.half), full: Math.min(content, c.full) }
+}
+
+/** next snap up (+1) / down (-1) that visibly changes the height */
+function stepSnap(dir: 1 | -1) {
+  const hs = snapHeights()
+  const cur = hs[snap.value]
+  const order = dir > 0 ? SNAPS : [...SNAPS].reverse()
+  const next = order.slice(order.indexOf(snap.value) + 1).find((s) => dir * (hs[s] - cur) > 8)
+  if (next) snap.value = next
+}
+
+function onGripDown(e: PointerEvent) {
+  if (e.button !== 0 || !sheetEl.value) return
+  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  drag = { y0: e.clientY, h0: sheetEl.value.offsetHeight, moved: false, y: e.clientY, t: e.timeStamp, v: 0 }
+}
+
+function onGripMove(e: PointerEvent) {
+  if (!drag) return
+  const dy = e.clientY - drag.y0
+  if (!drag.moved && Math.abs(dy) < 6) return
+  drag.moved = true
+  const hs = snapHeights()
+  dragH.value = Math.min(hs.full, Math.max(hs.peek, drag.h0 - dy))
+  const dt = e.timeStamp - drag.t
+  if (dt > 0) drag.v = 0.7 * ((e.clientY - drag.y) / dt) + 0.3 * drag.v
+  drag.y = e.clientY
+  drag.t = e.timeStamp
+}
+
+function onGripUp() {
+  const d = drag
+  drag = null
+  if (!d?.moved || dragH.value === null) return
+  swallowClickUntil = performance.now() + 400
+  const h = dragH.value
+  const hs = snapHeights()
+  const nearest = SNAPS.reduce((best, s) => (Math.abs(hs[s] - h) < Math.abs(hs[best] - h) ? s : best), snap.value)
+  // flick: the next snap in the flick direction (v > 0 = downward = smaller); at the end of the range, the nearest
+  const cands = Math.abs(d.v) > 0.5 ? SNAPS.filter((s) => (d.v > 0 ? hs[s] < h - 8 : hs[s] > h + 8)) : []
+  snap.value = cands.length ? (d.v > 0 ? cands[cands.length - 1]! : cands[0]!) : nearest
+  dragH.value = null
+}
+
+/** tap / Enter / Space: collapse, or expand back to half */
+function onGripClick() {
+  if (performance.now() < swallowClickUntil) return
+  snap.value = snap.value === 'peek' ? 'half' : 'peek'
+}
 
 // ---- load ----
 onMounted(async () => {
@@ -142,7 +230,8 @@ watch(route, (r) => {
 
 /** host-provided destination: a quick action key, or a place matched by id / ref / name */
 function routeToDestination(d: string) {
-  if (d === 'accessibleToilet' || d === 'toilet' || d === 'elevator') return nav.navigateQuick(d)
+  if (d === 'toilet') return void navigateToilet()
+  if (d === 'accessibleToilet' || d === 'elevator') return onCategory(d)
   const q = d.trim().toLowerCase()
   const p =
     catalog.value.find((c) => c.id.toLowerCase() === q || c.navNode?.toLowerCase() === q) ??
@@ -176,13 +265,70 @@ function onSearch(p: PlaceEntry) {
 
 function onCategory(id: QuickActionId) {
   selected.value = null
+  askGender.value = false
   if (locator.state === 'estimate') confirmLocate() // choosing a destination accepts the shown position
+  if (id === 'toilet') return void navigateToilet()
+  toiletGender.value = null
   nav.navigateQuick(id)
 }
+
+// ---- 廁所: route to the user's gender (TownPass user_gender, else the remembered choice, else ask) ----
+const askGender = ref(false)
+const genderChoiceEl = useTemplateRef<HTMLElement>('genderChoice')
+/** gender of the active 廁所 route (for the 「改去女廁」 switch); null for any other destination */
+const toiletGender = ref<Gender | null>(null)
+let toiletGenderFromApp = false
+
+async function navigateToilet() {
+  const fromApp = await townpass.getUserGender()
+  const g = resolveToiletGender(fromApp, loadToiletGender())
+  if (!g) {
+    askGender.value = true
+    afterLayout(() => {
+      genderChoiceEl.value?.scrollIntoView({ block: 'nearest' })
+      genderChoiceEl.value?.querySelector('button')?.focus({ preventScroll: true })
+    })
+    return
+  }
+  toiletGenderFromApp = fromApp === g
+  routeToilet(g)
+}
+
+function routeToilet(g: Gender) {
+  askGender.value = false
+  nav.navigateTo(genderToiletPlaces(catalog.value, g), GENDER_TOILET_LABEL[g])
+  toiletGender.value = g
+}
+
+function pickGender(g: Gender) {
+  saveToiletGender(g)
+  toiletGenderFromApp = false
+  routeToilet(g)
+}
+
+function switchToilet() {
+  if (!toiletGender.value) return
+  const g = otherGender(toiletGender.value)
+  // a manual choice that turned out wrong is corrected for next time; the TownPass answer stays authoritative
+  if (!toiletGenderFromApp) saveToiletGender(g)
+  routeToilet(g)
+}
+
+const toiletSwitchLabel = computed(() =>
+  toiletGender.value && nav.destination.value?.label === GENDER_TOILET_LABEL[toiletGender.value]
+    ? `改去${GENDER_TOILET_LABEL[otherGender(toiletGender.value)]}`
+    : undefined,
+)
+
+// new content in the sheet (route, place, choice, error) shouldn't stay hidden in the peek state
+watch([() => !!route.value, navigating, selected, routeError, picking, askGender], () => {
+  if (snap.value === 'peek') snap.value = 'half'
+})
 
 function goTo(p: PlaceEntry) {
   selected.value = null // failures show in the home view's alert
   if (locator.state === 'estimate') confirmLocate()
+  toiletGender.value = null
   nav.navigateTo([p], p.name)
 }
 
@@ -554,7 +700,7 @@ const liveChip = computed(() => {
 </script>
 
 <template>
-  <div class="app" :class="{ embedded }" :style="{ '--sheet-h': sheetH + 'px' }">
+  <div ref="appRoot" class="app" :class="{ embedded }" :style="{ '--sheet-h': sheetH + 'px' }">
     <MapView
       ref="mapView"
       :data="data"
@@ -616,8 +762,31 @@ const liveChip = computed(() => {
       <div v-if="toast" class="toast" role="status">{{ toast }}</div>
     </transition>
 
-    <section ref="sheet" class="sheet" aria-label="導航面板">
-      <div class="grip" aria-hidden="true"></div>
+    <section
+      id="tn-sheet"
+      ref="sheet"
+      class="sheet"
+      :class="{ dragging: dragH !== null }"
+      :data-snap="snap"
+      :style="{ maxHeight: sheetMaxH + 'px' }"
+      aria-label="導航面板"
+    >
+      <button
+        type="button"
+        class="grip-btn"
+        aria-controls="tn-sheet"
+        :aria-expanded="snap !== 'peek'"
+        aria-label="面板高度：點按展開或收合，上下鍵調整，可拖曳"
+        @pointerdown="onGripDown"
+        @pointermove="onGripMove"
+        @pointerup="onGripUp"
+        @pointercancel="onGripUp"
+        @click="onGripClick"
+        @keydown.up.prevent="stepSnap(1)"
+        @keydown.down.prevent="stepSnap(-1)"
+      >
+        <span class="grip" aria-hidden="true"></span>
+      </button>
 
       <div v-if="loadError" class="state" role="alert">
         <b>無法載入場館</b>
@@ -650,8 +819,10 @@ const liveChip = computed(() => {
           :dest-level="routePlace?.level"
           :summary="summary"
           :level-name="levelName"
+          :alt-label="toiletSwitchLabel"
           @start="startNavigation"
           @close="endRoute"
+          @alt="switchToilet"
         />
 
         <div v-else-if="picking" class="picking" role="status">
@@ -690,6 +861,12 @@ const liveChip = computed(() => {
             @correct="picking = true"
           />
           <CategoryButtons v-if="!searchQuery.trim()" :disabled="!canRoute" @action="onCategory" />
+          <div v-if="askGender && !searchQuery.trim()" ref="genderChoice" class="gender-choice" role="group" aria-labelledby="gender-q">
+            <span id="gender-q">要去哪一間廁所？</span>
+            <button v-for="g in (['male', 'female'] as const)" :key="g" class="btn" @click="pickGender(g)">
+              <img :src="iconDataUrl(`toilet.${g}`)" width="28" height="28" alt="" />{{ GENDER_TOILET_LABEL[g] }}
+            </button>
+          </div>
           <p v-if="!canRoute" class="note">此場館尚無導航資料，目前僅顯示平面圖。</p>
           <SearchBox v-model="searchQuery" :catalog="catalog" :level-name="levelName" @select="onSearch" />
         </div>
@@ -829,19 +1006,66 @@ const liveChip = computed(() => {
   /* HowGo .map-sheet: centred, max 560 px, 28 px top radius */
   width: min(100%, 560px);
   margin: 0 auto;
-  max-height: 72vh;
+  /* max-height: inline, per snap (peek / half / full) or while dragging */
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px 20px calc(var(--tpnav-safe-bottom) + 16px);
   background: var(--tp-white);
   border-radius: 28px 28px 0 0;
   box-shadow: var(--tpnav-sheet-shadow);
+  transition: max-height 0.25s ease;
+}
+.sheet.dragging {
+  transition: none;
+}
+/* full-width drag handle, stays on top while the sheet content scrolls */
+.grip-btn {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  display: block;
+  width: calc(100% + 40px);
+  height: 32px;
+  margin: -8px -20px 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 28px 28px 0 0;
+  background: var(--tp-white);
+  cursor: grab;
+  touch-action: none;
+}
+.grip-btn:active {
+  cursor: grabbing;
 }
 .grip {
+  display: block;
   width: 48px;
   height: 5px;
-  margin: 2px auto 12px;
+  margin: 0 auto;
   border-radius: 99px;
-  background: var(--tp-grayscale200);
+  background: var(--tp-grayscale300);
+}
+.gender-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--tpnav-radius-control);
+  background: var(--tp-primary50);
+}
+.gender-choice span {
+  flex-basis: 100%;
+  font-weight: 600;
+}
+.gender-choice .btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  font-size: 17px;
 }
 .state {
   padding: 8px 0;
