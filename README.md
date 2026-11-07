@@ -129,19 +129,27 @@ curl -sS http://127.0.0.1:8000/v1/route-options \
 - **路線高亮**包括路線、實際行經與指引側人行道、沿線引用的無障礙坡道和鄰近坡度點。無障礙坡道設施與坡度量測點分開顯示。
 - **前景導航**使用瀏覽器定位。偏離路線後可用目前位置重查，沿用原模式。iOS Simulator 可用 Safari 開啟 `http://localhost:3000`，在 Simulator 選擇 **Features → Location → Custom Location** 設定臺北座標（緯度 25.041、經度 121.541），並允許網站定位。實機使用 HTTPS。
 
+### 使用中的資料集
+
+| 資料集與連結 | 提供者 | HowGo 的用途 |
+| --- | --- | --- |
+| [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) | 臺北市政府交通局 | 無障礙坡道、停車場無障礙電梯、公園、捷運站與公園出入口、友善店家、身障設施、路邊停車場與停車格、公車站、捷運站。也提供人行道、標線型人行道、行穿線及有值的坡度紀錄，用於圖層與路線評估。無障礙廁所類別已接入，但 2026-11-07 的來源回傳 HTTP 204，該快照沒有點位。 |
+| [臺北市騎樓整平工程完成路段表](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) | 臺北市都發局建管處 | 民國 91 至 105 年的完工路段。用於整平騎樓圖層和沿路側別指引。 |
+| [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) | 臺北市交通局停管處 | 取 SHP 中的身心障礙專用格位（03、04、18），每格保留一個面內代表點，可在地圖上設為起點或終點。 |
+| [OpenStreetMap 臺灣資料（Geofabrik 下載頁）](https://download.geofabrik.de/asia/taiwan.html) | OpenStreetMap 貢獻者，Geofabrik 提供臺灣 PBF | 建立本機地點、道路和地址搜尋索引，以及 ORS 的臺北路網。另從路網擷取穿越道及 `incline` 坡度標記，補充導航指引與坡度圖層。 |
+
+底圖預設由 MapLibre GL JS 讀取 **OpenStreetMap 公共 raster 圖磚**。圖磚是線上底圖服務，路由與搜尋使用上表的本機 OSM 快照。OSM 資料依 ODbL 授權，地圖保留來源署名。 [OSM 署名與授權](https://www.openstreetmap.org/copyright) · [OSM 圖磚政策](https://operations.osmfoundation.org/policies/tiles/) · [MapLibre 授權](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
+
 ### 本機快照與更新
 
-服務查詢時使用已下載的快照。更新快照後在 `backend/` 啟用 venv 並重跑匯入指令。
+設施查詢、地點搜尋與路由使用已下載的資料。更新快照後，在 `backend/` 啟用 venv 並重跑相應的匯入指令。
 
-| 快照 | 來源與用途 |
+| 本機檔案 | 更新方式 |
 | --- | --- |
-| `facility-*.json` | 2026-11-07 市府設施快照。可用 `python -m rollx.import_facilities --source-dir <資料夾>` 匯入另一組本機檔案。當期無障礙廁所來源回傳 HTTP 204，快照保留空陣列。 [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) |
-| `walkways.geojson.gz` | WGS84 通行空間面。人行道、標線型人行道和行穿線取自市府 11、12、13 類，另含民國 91 至 105 年整平騎樓工程紀錄。 [整平騎樓來源](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) |
-| `facility-accessible-parking.json` | 身心障礙專用停車格（代碼 03、04、18），每格保留面內代表點，可設為起點或終點。可用 `python -m rollx.import_accessible_parking <SHP 路徑>` 更新，再匯入設施。匯入環境需有 PyShp、pyproj 與 Shapely。 [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) |
-| `places.json.gz` | 從 Geofabrik 臺灣 OSM 資料擷取的本機地點、道路與地址快照。 |
-| `osm-crossings.json.gz`、`osm-slopes.json.gz` | 從同一份 ORS OSM PBF 擷取穿越道和坡度標記。更換路網後，可在含 PyOsmium 的匯入環境執行 `python -m rollx.osm_crossings ../.ors/taipei.osm.pbf` 與 `python -m rollx.slopes ../.ors/taipei.osm.pbf`。 |
-
-底圖使用 MapLibre GL JS。預設 OSM 公共圖磚供低流量開發使用，正式服務可改用自管或獲授權的圖磚。OSM 資料依 ODbL 授權，地圖保留來源署名。 [MapLibre 授權](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt) · [OSM 署名與授權](https://www.openstreetmap.org/copyright) · [OSM 圖磚政策](https://operations.osmfoundation.org/policies/tiles/)
+| `facility-{類別}.json`、`walkways.geojson.gz` | 設施點和 WGS84 通行空間面。以 `python -m rollx.import_facilities` 重建 SQLite，也可加 `--source-dir <資料夾>` 指定另一組本機快照。 |
+| `facility-accessible-parking.json` | 執行 `python -m rollx.import_accessible_parking <SHP 路徑>` 後重新匯入設施。SHP 匯入環境需有 PyShp、pyproj 與 Shapely。 |
+| `places.json.gz` | 替換地點快照後，執行 `python -m rollx.places` 重建地點索引。 |
+| `.ors/taipei.osm.pbf`、`osm-crossings.json.gz`、`osm-slopes.json.gz` | 更換 ORS 路網後，建議以同一份 PBF 更新穿越道及坡度。使用已安裝 PyOsmium 的環境執行 `python -m rollx.osm_crossings ../.ors/taipei.osm.pbf` 與 `python -m rollx.slopes ../.ors/taipei.osm.pbf`。 |
 
 ## API
 
