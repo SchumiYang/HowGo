@@ -15,7 +15,7 @@ import StartChip from './components/StartChip.vue'
 import SafetyTip from './components/SafetyTip.vue'
 import { LIVE_SOURCE_LABEL, useLivePosition } from './composables/useLivePosition'
 import { useNavigator } from './composables/useNavigator'
-import { RouteTracker } from './routing/progress'
+import { liveStepText, RouteTracker, shouldFollowStart, trimRoute, type RouteSnap } from './routing/progress'
 import { StartLocator } from './composables/startLocator'
 import { LevelChangeController } from './composables/levelChange'
 import { fetchFloorplan, type FloorplanOverlay } from './map/floorplan'
@@ -220,9 +220,13 @@ onMounted(async () => {
 const routePoints = (lv: string) => route.value?.points.filter((p) => p.level === lv).map((p) => p.xy) ?? []
 const afterLayout = (fn: () => void) => requestAnimationFrame(() => requestAnimationFrame(fn))
 
+/** the next route comes from the live position following (keep the camera and floor as they are) */
+let quietRoute = false
 watch(route, (r) => {
+  const quiet = quietRoute
+  quietRoute = false
   // a re-smoothed route (walls loaded) keeps the camera where it is
-  if (!r || navigating.value || nav.routeChange.value === 'refined') return
+  if (!r || quiet || navigating.value || nav.routeChange.value === 'refined') return
   selected.value = null
   level.value = r.points[0].level
   afterLayout(() => mapView.value?.fitPoints(routePoints(level.value)))
@@ -479,7 +483,19 @@ const locateChip = computed(() => {
 function newTracker() {
   tracker = route.value ? new RouteTracker(route.value, steps.value) : null
   tracker?.setStep(activeStep.value)
+  progress.value = null
 }
+
+/** live progress along the route while navigating: snapped position + metres left */
+const progress = shallowRef<{ snap: RouteSnap; stepM: number; totalM: number } | null>(null)
+/** while navigating, the route is drawn from the user onwards */
+const displayRoute = computed(() => (navigating.value && progress.value ? trimRoute(route.value!, progress.value.snap) : route.value))
+const liveText = computed(() => {
+  const s = steps.value[activeStep.value]
+  return s && progress.value ? liveStepText(s, progress.value.stepM) : null
+})
+/** previewing a route with 即時定位 on: last time its start was moved to the live fix */
+let startFollowedAt = 0
 
 async function startNavigation() {
   navigating.value = true
@@ -507,6 +523,12 @@ function reroute() {
 watch(live.last, (u) => {
   if (!u) return
   if (navigating.value && following.value && u.level === level.value) mapView.value?.follow([u.x, u.y])
+  // previewing a route: its start follows the live position (≥ 5 m, at most every 3 s)
+  if (!navigating.value && route.value && live.active.value && !locator.pending && shouldFollowStart(start.value, u, startFollowedAt)) {
+    startFollowedAt = u.t
+    quietRoute = true
+    nav.setStartPlace(u.level, [u.x, u.y], u.source)
+  }
   if (!navigating.value || !tracker) return
   for (const e of tracker.update(u)) {
     if (e.type === 'advance') activeStep.value = e.step
@@ -514,10 +536,15 @@ watch(live.last, (u) => {
       activeStep.value = e.step
       say(`已抵達 ${destLabel.value ?? '目的地'}`)
     } else if (e.type === 'off-route') {
+      // a fix this uncertain can't tell "off the route" from noise; 重新規劃 stays available
+      if (u.accuracy_m > 1.5 * tracker.opts.offRouteM) continue
       say('已偏離路線，已重新規劃')
       reroute()
+      return
     }
   }
+  if (tracker.snap) progress.value = { snap: tracker.snap, stepM: tracker.stepRemainingM, totalM: tracker.totalRemainingM }
+  else if (progress.value) progress.value = null
 })
 
 // a new route while navigating (reroute) restarts progress tracking
@@ -564,6 +591,7 @@ function onStep(i: number) {
   activeStep.value = i
   level.value = s.level
   tracker?.setStep(i)
+  progress.value = null
   // 「已到 2F」: the engine can't detect floors (no barometer on many phones), so re-seed it at
   // the step's start on the new floor (the elevator / stairs exit)
   if (live.active.value && prev && (prev.kind === 'elevator' || prev.kind === 'stairs') && s.level === prev.toLevel) {
@@ -594,6 +622,7 @@ const levelCtl = new LevelChangeController({
     activeStep.value = u.step
     level.value = u.level
     tracker?.setStep(u.step)
+    progress.value = null
     live.seed(u.xy[0], u.xy[1], u.level)
     mapView.value?.flyTo(u.xy, 20)
   },
@@ -709,7 +738,7 @@ const liveChip = computed(() => {
       :me="me"
       :heading="meHeading"
       :animate-me="liveActive"
-      :route="route"
+      :route="displayRoute"
       :dest-label="destLabel"
       :level-name="levelName"
       :insets="insets"
@@ -802,6 +831,8 @@ const liveChip = computed(() => {
           :summary="summary"
           :steps="steps"
           :active-step="activeStep"
+          :live-text="liveText"
+          :remaining-m="progress?.totalM ?? null"
           v-model:course-up="courseUp"
           :level-name="levelName"
           :live="liveChip"

@@ -95,7 +95,7 @@ export const SRC = {
 /** Layers whose features carry `level` and must be filtered to the current level. */
 export const LEVEL_LAYERS = [
   'units-fill', 'units-outline', 'walls-line', 'columns-fill', 'walls-3d', 'seating-3d', 'seating-parapet-3d', 'labels', 'pois', 'pois-acc',
-  'route-casing', 'route-line', 'route-ghost', 'route-pts-circle', 'route-pts-label', 'route-dest', 'me-acc', 'me-acc-line', 'me-cone', 'me-dot',
+  'route-casing', 'route-line', 'route-joint', 'route-ghost', 'route-pts-circle', 'route-pts-label', 'route-dest', 'me-acc', 'me-acc-line', 'me-cone', 'me-dot',
 ] as const
 /** Layers that show what is *not* on the current level (dimmed). */
 export const OFF_LEVEL_LAYERS = ['route-off'] as const
@@ -106,6 +106,7 @@ export const BASE_FILTERS: Partial<Record<string, ExpressionSpecification>> = {
   'me-cone': ['==', ['get', 'kind'], 'cone'],
   'me-dot': ['==', ['get', 'kind'], 'dot'],
   'route-pts-circle': ['==', ['get', 'kind'], 'transfer'],
+  'route-joint': ['==', ['get', 'kind'], 'joint'],
   'route-pts-label': ['all', ['has', 'label'], ['==', ['get', 'kind'], 'transfer']],
   'route-dest': ['==', ['get', 'kind'], 'dest'],
   'seating-3d': ['==', ['get', 'kind'], 'tier'],
@@ -153,6 +154,15 @@ export function baseStyle(): StyleSpecification {
       id: 'route-line', type: 'line', source: SRC.route,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': COLORS.route, 'line-width': z(3.5, 8) },
+    },
+    // route joints: small dots at each bend / doorway node of the current floor's leg
+    {
+      id: 'route-joint', type: 'circle', source: SRC.routePts,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 17, 2.5, 21, 4.5],
+        'circle-color': COLORS.routeCasing, 'circle-stroke-color': TP.white, 'circle-stroke-width': 1.5,
+        'circle-pitch-alignment': 'map',
+      },
     },
     // position marker, ground-plane parts (polygons in metres: perspective + bearing like the floor)
     {

@@ -12,6 +12,10 @@ const props = defineProps<{
   /** live positioning status (null = off) */
   live?: { label: string; low: boolean } | null
   liveStarting?: boolean
+  /** the current step's text with the live distance (「直走 12 公尺後右轉」); null = static text */
+  liveText?: string | null
+  /** live metres left to the destination; null = show the route total */
+  remainingM?: number | null
 }>()
 const emit = defineEmits<{ step: [number]; end: []; reroute: []; live: [] }>()
 /** 隨行方向 (course-up): the map turns so the current leg points up */
@@ -33,15 +37,17 @@ const nextLabel = computed(() => {
 
 <template>
   <section class="nav" aria-label="導航中">
-    <!-- next-step card; aria-live announces each new step (TalkBack / VoiceOver) -->
-    <div class="next" :class="{ arrived }" aria-live="polite" aria-atomic="true">
-      <span class="visually-hidden">{{ current ? spoken(current, activeStep) : '' }}</span>
+    <!-- next-step card; only the hidden sentence is live, so TalkBack / VoiceOver announce each new
+         step but not every metre of the live distance -->
+    <div class="next" :class="{ arrived }">
+      <span class="visually-hidden" aria-live="polite" aria-atomic="true">{{ current ? spoken(current, activeStep) : '' }}</span>
       <div class="ic" aria-hidden="true"><StepIcon v-if="current" :step="current" :size="40" /></div>
       <div class="body" aria-hidden="true">
-        <div class="txt">{{ current?.text }}</div>
+        <div class="txt">{{ liveText ?? current?.text }}</div>
         <div class="sub">
           {{ current ? levelName(current.level) : '' }} · 第 {{ activeStep + 1 }} / {{ steps.length }} 步
-          <template v-if="!arrived"> · 全程 {{ summary.meters }} 公尺</template>
+          <template v-if="!arrived && remainingM != null"> · 剩 {{ Math.max(1, Math.round(remainingM)) }} 公尺</template>
+          <template v-else-if="!arrived"> · 全程 {{ summary.meters }} 公尺</template>
         </div>
       </div>
     </div>

@@ -132,6 +132,14 @@ export function routeSources(route: Route | null, frame: Frame, levelName: (id: 
     } else run.push(p.xy)
   }
   flush()
+  // joints: interior vertices of a floor's leg (bends / doorways; the start, transfers and the
+  // destination have their own markers)
+  for (let i = 1; i < route.points.length - 1; i++) {
+    const [a, p, b] = [route.points[i - 1], route.points[i], route.points[i + 1]]
+    if (a.level === p.level && b.level === p.level) {
+      points.push({ type: 'Feature', geometry: { type: 'Point', coordinates: ll(p.xy) }, properties: { level: p.level, kind: 'joint' } })
+    }
+  }
   const last = route.points[route.points.length - 1]
   points.push({ type: 'Feature', geometry: { type: 'Point', coordinates: ll(last.xy) }, properties: { level: last.level, kind: 'dest', ...(destLabel ? { label: destLabel } : {}) } })
   return { lines: fc(lines), points: fc(points) }
