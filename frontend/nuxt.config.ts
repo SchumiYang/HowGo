@@ -7,8 +7,8 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'zh-Hant' },
-      title: '輪行 X｜Roll X',
-      meta: [{ name: 'description', content: '查看臺北市輪椅步行路線與附近無障礙設施。' }],
+      title: 'HowGo',
+      meta: [{ name: 'description', content: '比較臺北市三種步行路線，查看沿途通行條件與設施。' }],
     },
   },
   runtimeConfig: {

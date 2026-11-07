@@ -48,7 +48,7 @@ def export_parking(shp_path, target):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="將市府路邊停車格 SHP 轉為 Roll X 本機點位快照")
+    parser = argparse.ArgumentParser(description="將市府路邊停車格 SHP 轉為 HowGo 本機點位快照")
     parser.add_argument("shp", type=Path)
     parser.add_argument("--output", type=Path, default=SNAPSHOT)
     args = parser.parse_args()

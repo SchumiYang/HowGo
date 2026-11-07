@@ -264,9 +264,7 @@ footer { margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--line); 
 .point-button .current { background: #087e9a; }
 .point-button .end { background: #b64c28; }
 .origin-action { margin-top: 7px; font-size: .84rem; }
-.preference-heading { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px; }
-.route-preferences { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.route-preferences .filter-chip { font-size: .8rem; padding-inline: 9px; }
+.planning-controls > .primary { margin-top: 12px; }
 
 .results { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .route-key { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 0; margin: 10px 0 0; list-style: none; font-size: .78rem; }
@@ -305,3 +303,37 @@ footer { margin-top: 12px; padding-top: 9px; border-top: 1px solid var(--line); 
   .locate-control { top: 87px; }
 }
 @media (prefers-reduced-motion: reduce) { .map-sheet { transition: none; } }
+
+.mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 16px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.mode-tabs button {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 6px 3px 9px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #4e6b7b;
+  cursor: pointer;
+}
+.mode-tabs button[aria-pressed="true"] {
+  border-bottom-color: #55adbe;
+  background: #e9f5f7;
+  color: #145a69;
+  border-radius: 9px 9px 0 0;
+}
+.mode-tabs small { color: inherit; }
+.route-overview { display: grid; gap: 8px; padding-bottom: 12px; }
+.route-overview p { margin: 0; }
+.overview-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.overview-title h2 { font-size: 1.2rem; margin: 0; }
+.overview-time { display: flex; align-items: baseline; gap: 12px; }
+.overview-time strong { font-size: 1.85rem; color: #145a69; }
+.route-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
+.route-facts li { padding: 4px 9px; border-radius: 9px; background: #e9f5f7; color: #234e5a; font-size: .8rem; }

@@ -12,7 +12,9 @@ type WalkwayKind = typeof walkwayCategories[number]['kind']
 type Walkway = Feature<Polygon | MultiPolygon | LineString, { kind: WalkwayKind; name: string; label: string }>
 type Walkways = FeatureCollection<Walkway['geometry'], Walkway['properties']> & { truncated?: boolean }
 type SlopeFeature = Feature<Point | LineString, { kind: string; name?: string; source: string; slope?: number; incline?: string }>
-type RoutePreference = 'sidewalk' | 'ramp' | 'crossing'
+type RouteMode = 'fastest' | 'balanced' | 'accessible'
+type RouteError = { message: string; endpoint?: Endpoint }
+type RouteOption = { route?: RouteResult; error?: RouteError }
 type DirectionAction = 'left' | 'right' | 'straight' | 'roundabout' | 'uturn' | 'arrive'
 type WalkwayGuidance = { side: 'left' | 'right' | 'along'; reason: string; from_m: number; to_m: number | null }
 type RouteStep = {
@@ -26,7 +28,7 @@ type RouteStep = {
   crossings?: { at_m: number; end_m: number }[]
 }
 type Maneuver = {
-  action: DirectionAction | 'crossing' | 'sidewalk' | 'advice'
+  action: DirectionAction | 'crossing' | 'sidewalk' | 'stairs' | 'advice'
   instruction: string
   note?: string
   at_m: number
@@ -36,6 +38,15 @@ type Maneuver = {
 type Place = { name: string; address: string; coordinates: Coordinate; is_road: boolean }
 type FeatureDetail = { kind: string; title: string; name: string; lines: string[] }
 type RouteResult = {
+  mode: RouteMode
+  assessment: {
+    comfortable_m: number
+    limited_m: number
+    blocked_m: number
+    stairs_m: number | null
+    stair_sections: number | null
+    mapped_slope_sections: number
+  }
   route: Feature<LineString>
   distance_m: number
   duration_s: number
@@ -177,14 +188,35 @@ watch(placeQuery, (query, _, onCleanup) => {
 })
 const endpoints = reactive<Record<Endpoint, Coordinate | null>>({ start: null, end: null })
 const result = shallowRef<RouteResult | null>(null)
+const routeModes = [
+  { key: 'fastest', label: '最短距離', description: '一般步行，以預估時間最少為優先。' },
+  { key: 'balanced', label: '平衡', description: '避開已知不適合通行的人行道，可接受一段短階梯。' },
+  { key: 'accessible', label: '無障礙', description: '避開階梯與已知坡段，優先較寬的人行道。' },
+] as const
+const routeOptions = shallowRef<Partial<Record<RouteMode, RouteOption>>>({})
+const selectedMode = ref<RouteMode>('accessible')
+const modeDetails = computed(() => routeModes.find(item => item.key === selectedMode.value)!)
+const hasOptions = computed(() => Object.keys(routeOptions.value).length > 0)
+const routeFacts = computed(() => {
+  const facts = result.value?.assessment
+  if (!facts) return []
+  return [
+    facts.stair_sections === null ? '階梯資料待確認'
+      : facts.stair_sections > 0 ? `${facts.stair_sections} 段階梯 · 約 ${formatDistance(facts.stairs_m ?? 0)}`
+        : '路網未標示階梯',
+    facts.mapped_slope_sections ? `${facts.mapped_slope_sections} 處已知坡段` : '',
+    facts.comfortable_m ? `可行人行道約 ${formatDistance(facts.comfortable_m)}` : '',
+    facts.limited_m ? `勉強可行人行道約 ${formatDistance(facts.limited_m)}` : '',
+    facts.blocked_m ? `含過窄人行道約 ${formatDistance(facts.blocked_m)}` : '',
+  ].filter(Boolean)
+})
+const minutes = (seconds: number) => Math.max(1, Math.round(seconds / 60))
+const plannedAt = ref(0)
+const arrivalClock = new Intl.DateTimeFormat('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
+const estimatedArrival = computed(() => result.value && plannedAt.value
+  ? arrivalClock.format(plannedAt.value + result.value.duration_s * 1000) : '')
 const selectedStep = ref<number | null>(null)
 const sheetLevel = ref(1)
-const preferences = ref<RoutePreference[]>([])
-const preferenceOptions = [
-  { key: 'sidewalk', label: '實體人行道' },
-  { key: 'ramp', label: '無障礙坡道' },
-  { key: 'crossing', label: '行人穿越道' },
-] as const
 const navState = ref<'idle' | 'waiting' | 'active' | 'offroute' | 'arrived'>('idle')
 const navMessage = ref('')
 const progress = ref<number | null>(null)
@@ -202,8 +234,8 @@ const activeStepIndex = computed(() => {
   return steps.findIndex(step => tracker.value!.cumulative[step.to_index]! > progress.value! + 1)
 })
 const activeStep = computed(() => result.value?.steps?.[activeStepIndex.value])
-const currentCrossing = computed(() => progress.value === null ? undefined : result.value?.maneuvers?.find(
-  row => row.action === 'crossing' && row.at_m - 2 <= progress.value! && row.end_m > progress.value!,
+const currentPassage = computed(() => progress.value === null ? undefined : result.value?.maneuvers?.find(
+  row => (row.action === 'crossing' || row.action === 'stairs') && row.at_m - 2 <= progress.value! && row.end_m > progress.value!,
 ))
 const nextManeuver = computed(() => progress.value === null ? undefined : result.value?.maneuvers?.find(
   row => row.action !== 'straight' && row.action !== 'advice'
@@ -211,7 +243,7 @@ const nextManeuver = computed(() => progress.value === null ? undefined : result
       || (['left', 'right'].includes(row.action) && row.at_m >= progress.value! - 2)),
 ))
 const navigationTitle = computed(() => {
-  if (currentCrossing.value) return currentCrossing.value.instruction
+  if (currentPassage.value) return currentPassage.value.instruction
   const next = nextManeuver.value
   if (!next || progress.value === null) return '接近目的地'
   const remaining = next.at_m - progress.value
@@ -222,7 +254,8 @@ const liveGuidance = computed(() => {
   if (navState.value !== 'active' || !activeStep.value || !tracker.value || progress.value === null) return ''
   const step = activeStep.value
   const offset = progress.value - tracker.value.cumulative[step.from_index]!
-  if (currentCrossing.value) return currentCrossing.value.note ?? '請確認可通行後再通過。'
+  if (currentPassage.value) return currentPassage.value.note
+    ?? (currentPassage.value.action === 'stairs' ? `約 ${formatDistance(currentPassage.value.end_m - progress.value)}` : '請確認可通行後再通過。')
   if (result.value?.unverified_walkways?.some(span => span.at_m <= progress.value! && progress.value! < span.end_m)) {
     return '路網步行通道，輪椅通行條件未確認。'
   }
@@ -252,6 +285,7 @@ const directionIcons: Record<Maneuver['action'], string> = {
   arrive: 'M5 21V4m0 1 13-2v10L5 15',
   crossing: 'M4 20h16M4 15h16M4 10h16M4 5h16',
   sidewalk: 'M6 20V4m0 8h12m-4-4 4 4-4 4',
+  stairs: 'M3 20h5v-5h5v-5h5V5h3',
   advice: 'M12 7h.01M12 11v6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
 }
 const metadata = shallowRef<Metadata | null>(null)
@@ -316,6 +350,7 @@ function invalidateRoute() {
   routeRequest?.abort()
   routeRequest = undefined
   busy.value = false
+  routeOptions.value = {}
   result.value = null
   setSource('route', [])
   setSource('route-access-points', [])
@@ -588,7 +623,7 @@ watch(enabledFacilities, () => {
   void refreshFacilities()
 })
 
-async function searchRoute() {
+async function searchRoute(mode: RouteMode = selectedMode.value) {
   if (!endpoints.start || !endpoints.end) return
   invalidateRoute()
   const controller = new AbortController()
@@ -599,47 +634,16 @@ async function searchRoute() {
   cancelSearch()
   inspectionPopup?.remove()
   try {
-    const data = await $fetch<RouteResult>('/api/v1/routes', {
+    const { options } = await $fetch<{ options: Record<RouteMode, RouteOption> }>('/api/v1/route-options', {
       method: 'POST',
-      body: { start: endpoints.start, end: endpoints.end, preferences: preferences.value },
+      body: { start: endpoints.start, end: endpoints.end },
       signal: controller.signal,
     })
     if (controller.signal.aborted) return
-    result.value = data
+    plannedAt.value = Date.now()
+    routeOptions.value = options
     sheetLevel.value = 1
-    setSource('route', [data.route])
-    setSource('route-access-points', (['start', 'end'] as const).flatMap(endpoint => {
-      const access = data.access_points?.[endpoint]
-      return access ? [{
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: access.coordinates },
-        properties: { kind: 'route-access', label: `${endpointLabel(endpoint)}路網接點`, offset_m: access.offset_m },
-      }] : []
-    }))
-    const routeTracker = tracker.value
-    setSource('unverified-walkways', (data.unverified_walkways ?? []).flatMap((span) => {
-      const coordinates = routeTracker?.slice(span.at_m, span.end_m)
-      return coordinates?.length ? [{
-        type: 'Feature' as const,
-        geometry: { type: 'LineString' as const, coordinates },
-        properties: { kind: 'unverified-walkway', label: '路網步行通道', source: 'OpenStreetMap' },
-      }] : []
-    }))
-    const { LngLatBounds } = await import('maplibre-gl')
-    if (controller.signal.aborted) return
-    const bounds = new LngLatBounds()
-    for (const point of data.route.geometry.coordinates) bounds.extend(point as Coordinate)
-    if (data.access_points?.start && endpoints.start) bounds.extend(endpoints.start)
-    if (data.access_points?.end && endpoints.end) bounds.extend(endpoints.end)
-    const wide = window.innerWidth >= 900
-    const padding = wide
-      ? { top: 128, bottom: 44, left: 455, right: 45 }
-      : { top: 128, bottom: Math.round(window.innerHeight * .52), left: 30, right: 30 }
-    if (window.innerHeight > padding.top + padding.bottom + 32) {
-      map?.fitBounds(bounds, { padding, maxZoom: 17, duration: 0 })
-    } else {
-      map?.fitBounds(bounds, { padding: 36, maxZoom: 17, duration: 0 })
-    }
+    await selectMode(mode)
   } catch (failure) {
     if (controller.signal.aborted) return
     const detail = (failure as { data?: { detail?: { message?: string; endpoint?: Endpoint } } }).data?.detail
@@ -650,6 +654,54 @@ async function searchRoute() {
       busy.value = false
       routeRequest = undefined
     }
+  }
+}
+
+async function selectMode(mode: RouteMode) {
+  selectedMode.value = mode
+  const data = routeOptions.value[mode]?.route ?? null
+  result.value = data
+  selectedStep.value = null
+  setSource('selected-step', [])
+  inspectionPopup?.remove()
+  if (!data) {
+    setSource('route', [])
+    setSource('route-access-points', [])
+    setSource('unverified-walkways', [])
+    return
+  }
+  setSource('route', [data.route])
+  setSource('route-access-points', (['start', 'end'] as const).flatMap(endpoint => {
+    const access = data.access_points?.[endpoint]
+    return access ? [{
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: access.coordinates },
+      properties: { kind: 'route-access', label: `${endpointLabel(endpoint)}路網接點`, offset_m: access.offset_m },
+    }] : []
+  }))
+  const routeTracker = tracker.value
+  setSource('unverified-walkways', (data.unverified_walkways ?? []).flatMap((span) => {
+    const coordinates = routeTracker?.slice(span.at_m, span.end_m)
+    return coordinates?.length ? [{
+      type: 'Feature' as const,
+      geometry: { type: 'LineString' as const, coordinates },
+      properties: { kind: 'unverified-walkway', label: '路網步行通道', source: 'OpenStreetMap' },
+    }] : []
+  }))
+  const { LngLatBounds } = await import('maplibre-gl')
+  if (result.value !== data) return
+  const bounds = new LngLatBounds()
+  for (const point of data.route.geometry.coordinates) bounds.extend(point as Coordinate)
+  if (data.access_points?.start && endpoints.start) bounds.extend(endpoints.start)
+  if (data.access_points?.end && endpoints.end) bounds.extend(endpoints.end)
+  const wide = window.innerWidth >= 900
+  const padding = wide
+    ? { top: 128, bottom: 44, left: 455, right: 45 }
+    : { top: 128, bottom: Math.round(window.innerHeight * .52), left: 30, right: 30 }
+  if (window.innerHeight > padding.top + padding.bottom + 32) {
+    map?.fitBounds(bounds, { padding, maxZoom: 17, duration: 0 })
+  } else {
+    map?.fitBounds(bounds, { padding: 36, maxZoom: 17, duration: 0 })
   }
 }
 
@@ -753,11 +805,9 @@ function startNavigation() {
 async function replan() {
   if (!liveFix.value) return
   setEndpoint('start', liveFix.value, true)
-  await searchRoute()
+  await searchRoute(selectedMode.value)
   if (result.value) startNavigation()
 }
-
-watch(preferences, invalidateRoute)
 
 function showManeuver(maneuver: Maneuver, index: number) {
   if (selectedStep.value === index) {
@@ -1080,7 +1130,7 @@ onBeforeUnmount(() => {
 
       <section v-if="showLayers" id="map-layer-settings" class="toolbar-panel layer-settings" aria-label="圖資設定">
         <div class="panel-heading">
-          <div><h2>圖資設定</h2><small>輪行 X · Roll X</small></div>
+          <div><h2>圖資設定</h2><small>HowGo</small></div>
           <button type="button" class="subtle-button" @click="showLayers = false">完成</button>
         </div>
         <div v-for="(items, index) in [walkwayCategories, categories]" :key="index" class="map-layers"
@@ -1136,12 +1186,12 @@ onBeforeUnmount(() => {
         <button type="button" class="subtle-button" :disabled="!mapReady" @click="planWithPlace(browsePlace, 'start')">設為起點</button>
         <button type="button" class="primary" :disabled="!mapReady" @click="planWithPlace(browsePlace, 'end')">設為終點</button>
       </div>
-      <button v-else type="button" class="primary" :disabled="!mapReady" @click="planWithPlace(browsePlace, 'end')">規劃無障礙路線</button>
+      <button v-else type="button" class="primary" :disabled="!mapReady" @click="planWithPlace(browsePlace, 'end')">規劃步行路線</button>
     </section>
 
     <MapSheet v-if="planning" v-model="sheetLevel">
       <template #summary>
-        <div class="sheet-summary">
+        <div v-if="navigating || !hasOptions" class="sheet-summary">
           <template v-if="navigating">
             <div class="sheet-status" aria-live="polite">
               <strong v-if="navState !== 'active'">{{ navMessage }}</strong>
@@ -1154,27 +1204,27 @@ onBeforeUnmount(() => {
             <button v-if="navState === 'offroute'" class="sheet-action" type="button" @click="replan">重查路線</button>
             <button v-else class="sheet-action" type="button" @click="stopNavigation">結束</button>
           </template>
-          <template v-else>
+          <template v-else-if="!hasOptions">
             <div class="sheet-status">
-              <p class="eyebrow">輪椅步行</p>
-              <strong v-if="result">{{ formatDistance(result.distance_m) }} · 約 {{ Math.max(1, Math.round(result.duration_s / 60)) }} 分鐘</strong>
-              <strong v-else>規劃無障礙行程</strong>
-              <small v-if="result?.access_points?.end">導航至目的地附近 · 距原選點直線約 {{ result.access_points.end.offset_m }} 公尺</small>
-              <small v-else-if="result?.access_points?.start">從附近路網出發 · 距原起點直線約 {{ result.access_points.start.offset_m }} 公尺</small>
-              <small v-else-if="result?.unverified_walkways?.length">含輪椅通行條件未確認路段</small>
-              <small v-else-if="mapPicking && selecting">請在地圖上選擇{{ endpointLabel(selecting) }}</small>
+              <p class="eyebrow">步行導航</p>
+              <strong>規劃步行行程</strong>
+              <small v-if="mapPicking && selecting">請在地圖上選擇{{ endpointLabel(selecting) }}</small>
             </div>
-            <div class="sheet-actions">
-              <button class="subtle-button" type="button" @click="closePlanning">返回</button>
-              <button v-if="result" class="sheet-action" type="button" :disabled="!result.steps?.length"
-                @click="startNavigation">開始導航</button>
-            </div>
+            <button class="subtle-button" type="button" @click="closePlanning">返回</button>
           </template>
+        </div>
+        <div v-if="!navigating && hasOptions" class="mode-tabs" role="group" aria-label="路線方式">
+          <button v-for="mode in routeModes" :key="mode.key" type="button"
+            :aria-pressed="selectedMode === mode.key" @click="selectMode(mode.key)">
+            <strong>{{ mode.label }}</strong>
+            <small>{{ routeOptions[mode.key]?.route
+              ? `${minutes(routeOptions[mode.key]!.route!.duration_s)} 分` : '無可用路線' }}</small>
+          </button>
         </div>
         <p v-if="locationMessage" class="location-message sheet-location-message" role="status">{{ locationMessage }}</p>
       </template>
 
-      <div v-if="!navigating && !result" class="planning-controls">
+      <div v-if="!navigating && !hasOptions" class="planning-controls">
         <div class="point-controls">
           <button v-for="endpoint in (['start', 'end'] as const)" :key="endpoint" type="button"
             class="point-button" :aria-pressed="selecting === endpoint" :disabled="!mapReady"
@@ -1189,21 +1239,31 @@ onBeforeUnmount(() => {
         </div>
         <button v-if="!endpoints.start" type="button" class="subtle-button origin-action"
           :disabled="!mapReady || locating" @click="useCurrentLocation">{{ locating ? '定位中…' : '使用目前位置作為起點' }}</button>
-        <div class="preference-heading"><h3>路線條件</h3><small>可多選</small></div>
-        <div class="route-preferences" role="group" aria-label="路線條件">
-          <label v-for="option in preferenceOptions" :key="option.key" class="filter-chip">
-            <input v-model="preferences" type="checkbox" :value="option.key">優先有{{ option.label }}
-          </label>
-        </div>
         <button class="primary" type="button" :disabled="!mapReady || !endpoints.start || !endpoints.end || busy"
-          @click="searchRoute">{{ busy ? '規劃中…' : '開始規劃路線' }}</button>
+          @click="searchRoute()">{{ busy ? '規劃中…' : '開始規劃路線' }}</button>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <button v-if="failedEndpoint" type="button" class="subtle-button"
           @click="editFailedEndpoint(failedEndpoint)">重選{{ endpointLabel(failedEndpoint) }}</button>
       </div>
 
+      <section v-if="!navigating && hasOptions" class="route-overview" aria-live="polite">
+        <div class="overview-title">
+          <h2>{{ modeDetails.label }}路線</h2>
+          <button type="button" class="subtle-button" @click="invalidateRoute(); sheetLevel = 1">編輯行程</button>
+        </div>
+        <p v-if="result" class="overview-time"><strong>{{ minutes(result.duration_s) }} 分鐘</strong>
+          <span>{{ formatDistance(result.distance_m) }} · 預計 {{ estimatedArrival }} 抵達</span></p>
+        <p>{{ modeDetails.description }}</p>
+        <ul v-if="routeFacts.length" class="route-facts">
+          <li v-for="fact in routeFacts" :key="fact">{{ fact }}</li>
+        </ul>
+        <p v-if="result" class="hint">摘要依沿線可比對圖資，未覆蓋路段的通行條件待確認。</p>
+        <p v-else class="error" role="status">{{ routeOptions[selectedMode]?.error?.message ?? '找不到符合條件的路線。' }}</p>
+        <button v-if="result" class="primary" type="button" :disabled="!result.steps?.length"
+          @click="startNavigation">開始導航</button>
+      </section>
+
         <section v-if="result" class="results" aria-live="polite">
-          <button v-if="!navigating" type="button" class="subtle-button" @click="invalidateRoute(); sheetLevel = 1">編輯行程</button>
           <p v-if="result.access_points?.start" class="hint">起點路網接點距原起點直線約 {{ result.access_points.start.offset_m }} 公尺。</p>
           <p v-if="result.access_points?.end" class="hint">路線到藍色空心圓為止，距原目的地直線約 {{ result.access_points.end.offset_m }} 公尺。接點到目的地的通行條件待確認。</p>
           <p v-if="result.unverified_walkways?.length" class="hint">黃虛線為路網步行通道，輪椅通行條件未確認。</p>
@@ -1226,7 +1286,7 @@ onBeforeUnmount(() => {
                   <path :d="directionIcons[row.action]" />
                 </svg>
                 <span>
-                  <strong>{{ row.instruction }}<template v-if="row.action === 'straight' || row.action === 'crossing'">
+                  <strong>{{ row.instruction }}<template v-if="row.action === 'straight' || row.action === 'crossing' || row.action === 'stairs'">
                     {{ formatDistance(row.end_m - row.at_m) }}</template></strong>
                   <span v-if="row.note" class="step-guidance">{{ row.note }}</span>
                   <span v-if="row.action === 'straight' && result.unverified_walkways?.some(

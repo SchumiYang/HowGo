@@ -1,5 +1,5 @@
 {
-  "name": "rollx-web",
+  "name": "howgo-web",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.20.0",

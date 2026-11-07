@@ -27,6 +27,7 @@ class RouteEvidence:
         self.osm_crossings = list(nearby_crossings(bounds, project))
         self.sidewalks = []
         nearby_sidewalks = []
+        self.sidewalk_widths = []
         crossings = []
         for feature in features:
             polygon = transform(shape(feature["geometry"]), project, interleaved=False)
@@ -34,6 +35,7 @@ class RouteEvidence:
                 continue
             if feature["properties"]["kind"] == "11":
                 nearby_sidewalks.append(polygon)
+                self.sidewalk_widths.append(feature["properties"].get("width"))
                 if polygon.intersects(self.path):
                     self.sidewalks.append(polygon)
             elif polygon.intersects(self.path):

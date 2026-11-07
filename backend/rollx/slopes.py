@@ -51,11 +51,14 @@ def slope_features(conn, bounds):
         }
 
 
-def slope_barriers(conn, coordinates, evidence):
+def slope_barriers(conn, coordinates, evidence, *, minimum_grade=0):
     lons, lats = zip(*coordinates)
     bounds = min(lons) - .00004, min(lats) - .00004, max(lons) + .00004, max(lats) + .00004
     barriers = []
     for item in slope_features(conn, bounds):
+        properties = item["properties"]
+        if minimum_grade and properties.get("slope", 0) < minimum_grade and properties.get("incline") != "steep":
+            continue
         geometry = transform(shape(item["geometry"]), evidence.project, interleaved=False)
         if geometry.geom_type == "Point":
             if evidence.path.distance(geometry) <= POINT_TOLERANCE_M:

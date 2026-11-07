@@ -8,6 +8,9 @@ from shapely.ops import substring
 from .facilities import METERS_PER_DEGREE
 from .walkways import query_walkways
 
+
+MIN_SIDEWALK_WIDTH = 0.9
+
 DIRECTIONS = {
     0: ("left", "左轉"), 1: ("right", "右轉"),
     2: ("left", "向左急轉"), 3: ("right", "向右急轉"),
@@ -53,7 +56,10 @@ def sample_evidence(path, distance, index, kinds):
     dx, dy = after.x - before.x, after.y - before.y
     norm = hypot(dx, dy)
     on_path = set(index.query(center, predicate="intersects"))
-    hits = {("along", best_kind(kinds[i] for i in on_path)): on_path} if on_path else {}
+    hits = {}
+    if on_path:
+        kind = best_kind(kinds[i] for i in on_path)
+        hits["along", kind] = {i for i in on_path if kinds[i] == kind}
     # A sharp bend or reversal does not give a reliable left/right reference.
     if norm < 3.8:
         return hits
@@ -107,7 +113,7 @@ def step_guidance(path, index, kinds):
     return runs
 
 
-def add_walkway_guidance(conn, coordinates, steps):
+def add_walkway_guidance(conn, coordinates, steps, *, exclude_narrow=False):
     if not steps:
         return []
     origin_lon, origin_lat = coordinates[0]
@@ -118,6 +124,10 @@ def add_walkway_guidance(conn, coordinates, steps):
         max(lons) + MAX_OFFSET / lon_scale, max(lats) + MAX_OFFSET / METERS_PER_DEGREE,
     )
     features, _ = query_walkways(conn, bounds, GUIDANCE_KINDS, limit=None)
+    if exclude_narrow:
+        features = [item for item in features if not (
+            item["properties"]["kind"] == "11" and item["properties"].get("width", float("inf")) < MIN_SIDEWALK_WIDTH
+        )]
     if not features:
         return []
 
@@ -144,7 +154,7 @@ def add_walkway_guidance(conn, coordinates, steps):
                 first = run["from_m"]
                 last = path.length if run["to_m"] is None else min(path.length, run["to_m"])
                 guided.append((offsets[start] + first, run["side"], substring(path, first, last),
-                               [index.geometries[i] for i in matches]))
+                               [(index.geometries[i], features[i]["properties"].get("width")) for i in matches]))
         if runs:
             step["guidance_ranges"] = runs
             # Keep the single-range field for existing clients.
@@ -158,7 +168,7 @@ def add_walkway_guidance(conn, coordinates, steps):
 def guided_point_offset(section, side, footprints, point):
     if section.distance(point) > MAX_GUIDED_POINT_OFFSET:
         return None
-    if not any(polygon.distance(point) <= 2 for polygon in footprints):
+    if not any(polygon.distance(point) <= 2 for polygon, _ in footprints):
         return None
     offset = section.project(point)
     a, center, b = (section.interpolate(at) for at in (

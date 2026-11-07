@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import sqlite3
+from asyncio import gather
 from contextlib import asynccontextmanager
 from itertools import accumulate
 from math import cos, dist, hypot, radians
@@ -22,6 +23,7 @@ from .import_facilities import DATASET_URL
 from .maneuvers import guided_ramps, route_maneuvers, sidewalk_spans
 from .osm_crossings import crossing_features
 from .places import search_places
+from .route_modes import MIN_SIDEWALK_WIDTH, SHORT_STAIR_METERS, route_stairs, staircase_barriers, walkway_quality
 from .route_preferences import RouteEvidence, preference_cost
 from .slopes import slope_barriers, slope_features
 from .walkways import WALKWAY_TYPES, query_walkways
@@ -41,12 +43,16 @@ async def lifespan(app):
         yield
 
 
-app = FastAPI(title="Roll X API", lifespan=lifespan)
+app = FastAPI(title="HowGo API", lifespan=lifespan)
+
+
+RouteMode = Literal["fastest", "balanced", "accessible"]
 
 
 class RouteRequest(BaseModel):
     start: Coordinate
     end: Coordinate
+    mode: RouteMode = "accessible"
     preferences: set[Literal["sidewalk", "ramp", "crossing"]] = Field(default_factory=set)
 
 
@@ -54,9 +60,10 @@ class RouteNotFound(Exception):
     pass
 
 
-class SlopedRoutes(Exception):
-    def __init__(self, barriers):
+class RestrictedRoutes(Exception):
+    def __init__(self, barriers, *, retry_without_stairs=False):
         self.barriers = barriers
+        self.retry_without_stairs = retry_without_stairs
 
 
 def fail(status, code, message, **details):
@@ -146,7 +153,7 @@ def route_highlights(conn, coordinates, evidence, nearby, guides, matched_ramps)
     for _, side, section, footprints in guides:
         corridor = section.buffer(MAX_OFFSET + 3, cap_style="flat")
         label = "指引側實體人行道"
-        for footprint in footprints:
+        for footprint, _ in footprints:
             for polygon in get_parts(footprint.intersection(corridor)):
                 if polygon.geom_type != "Polygon":
                     continue
@@ -159,33 +166,65 @@ def route_highlights(conn, coordinates, evidence, nearby, guides, matched_ramps)
     return feature_collection(features)
 
 
-def choose_route(candidates, preferences):
+def choose_route(candidates, preferences, mode):
     shortest = min(item[1] for item in candidates)
     with read_database() as conn:
         choices = []
-        barriers = []
+        rejected = []
+        rejected_stairs = False
         for route, distance, duration, coordinates in candidates:
             evidence = RouteEvidence(conn, coordinates)
-            obstacles = slope_barriers(conn, coordinates, evidence)
-            if obstacles:
-                barriers.extend(obstacles)
+            stairs = route_stairs(route["properties"], evidence)
+            stair_m = sum(end - start for start, end in stairs or ())
+            steps = make_steps(route["properties"], coordinates)
+            guides = add_walkway_guidance(conn, coordinates, steps, exclude_narrow=mode != "fastest")
+            quality, narrow = walkway_quality(evidence, guides)
+            slopes = slope_barriers(conn, coordinates, evidence)
+            if mode == "balanced" and (stairs is None or len(stairs) > 1 or stair_m > SHORT_STAIR_METERS):
+                rejected_stairs = True
                 continue
+            if mode != "fastest":
+                obstacles = list(narrow)
+                if mode == "accessible" and stairs:
+                    obstacles.extend(staircase_barriers(evidence, stairs))
+                obstacles = [transform(item, evidence.unproject, interleaved=False) for item in obstacles]
+                obstacles.extend(slopes if mode == "accessible" else slope_barriers(
+                    conn, coordinates, evidence, minimum_grade=8,
+                ))
+                if obstacles:
+                    rejected.append((duration, obstacles))
+                    continue
+
             nearby = route_facilities(conn, coordinates)
             metrics = evidence.metrics(nearby)
-            score = preference_cost(distance, shortest, metrics, preferences)
-            choices.append((score, distance, duration, coordinates, route, nearby, evidence, metrics))
+            if mode == "fastest":
+                score = duration
+            else:
+                good = quality["comfortable_m"] / max(evidence.path.length, 1)
+                fair = quality["limited_m"] / max(evidence.path.length, 1)
+                if mode == "accessible":
+                    score = preference_cost(distance, shortest, metrics, preferences) - .55 * good - .20 * fair
+                else:
+                    score = distance / shortest - .22 * good - .10 * fair + .015 * stair_m + .04 * len(slopes)
+            assessment = {
+                **quality, "stairs_m": round(stair_m, 1) if stairs is not None else None,
+                "stair_sections": len(stairs) if stairs is not None else None,
+                "mapped_slope_sections": len(slopes),
+            }
+            choices.append((score, distance, duration, coordinates, route, nearby, evidence, metrics,
+                            steps, guides, stairs, assessment))
         if not choices:
-            raise SlopedRoutes(barriers)
-        _, distance, duration, coordinates, route, nearby, evidence, metrics = min(choices, key=lambda item: item[0])
-        steps = make_steps(route["properties"], coordinates)
-        guides = add_walkway_guidance(conn, coordinates, steps)
+            barriers = min(rejected, key=lambda item: item[0])[1] if rejected else []
+            raise RestrictedRoutes(barriers, retry_without_stairs=rejected_stairs)
+        (_, distance, duration, coordinates, route, nearby, evidence, metrics,
+         steps, guides, stairs, assessment) = min(choices, key=lambda item: (item[0], item[2]))
         evidence.add_crossings(steps)
         matched_ramps = list(guided_ramps(evidence, guides, nearby))
-        maneuvers = route_maneuvers(evidence, steps, nearby, matched_ramps)
+        maneuvers = route_maneuvers(evidence, steps, nearby, matched_ramps, stairs or ())
         unverified = unverified_walkways(route["properties"], evidence)
         highlights = route_highlights(conn, coordinates, evidence, nearby, guides, matched_ramps)
         empty_types = conn.execute("SELECT value FROM metadata WHERE key = 'empty_types'").fetchone()
-    return distance, duration, coordinates, nearby, steps, maneuvers, metrics, unverified, highlights, (
+    return distance, duration, coordinates, nearby, steps, maneuvers, metrics, unverified, highlights, assessment, (
         empty_types[0].split(",") if empty_types else []
     )
 
@@ -299,14 +338,48 @@ def route_access_points(start, end, coordinates):
     return access_points
 
 
-@app.post("/v1/routes")
-async def routes(payload: RouteRequest, request: Request):
+def validate_route_endpoints(payload):
     west, south, east, north = COVERAGE
     if any(not (west <= lon <= east and south <= lat <= north) for lon, lat in (payload.start, payload.end)):
         fail(422, "OUTSIDE_COVERAGE", "請在臺北示範範圍內選點。")
     if payload.start == payload.end:
         fail(422, "SAME_POINT", "起點與終點需為不同位置。")
 
+
+@app.post("/v1/routes")
+async def routes(payload: RouteRequest, request: Request):
+    validate_route_endpoints(payload)
+    return await find_route(payload, request, payload.mode)
+
+
+@app.post("/v1/route-options")
+async def route_options(payload: RouteRequest, request: Request):
+    validate_route_endpoints(payload)
+
+    async def option(mode):
+        try:
+            return mode, {"route": await find_route(payload, request, mode)}
+        except HTTPException as exc:
+            return mode, {"error": exc.detail}
+
+    return {"options": dict(await gather(*(option(mode) for mode in ("fastest", "balanced", "accessible"))))}
+
+
+async def shorter_walking_candidate(router, endpoint, options, headers):
+    # ORS can return a shorter and quicker walk under its distance weighting.
+    params = {key: value for key, value in options.items() if key != "alternative_routes"}
+    params["preference"] = "shortest"
+    try:
+        response = await router.post(endpoint, json=params, headers=headers)
+        response.raise_for_status()
+        return [parse_candidate(route) for route in response.json()["features"]]
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, AttributeError):
+        return []
+
+
+async def find_route(payload, request, mode):
+    profile = "wheelchair" if mode == "accessible" else "foot-walking"
+    mode_label = {"fastest": "最短距離", "balanced": "平衡", "accessible": "無障礙"}[mode]
     headers = {}
     api_key = os.environ.get("ORS_API_KEY")
     if api_key:
@@ -318,17 +391,24 @@ async def routes(payload: RouteRequest, request: Request):
             "radiuses": radiuses,
             "instructions": True,
             "extra_info": ["waytype"],
-            "options": {"avoid_features": ["steps"]},
+            "preference": "fastest" if mode == "fastest" else "recommended",
+            "options": {},
         }
-        if payload.preferences:
-            options["alternative_routes"] = {"target_count": 3, "weight_factor": 1.5, "share_factor": 0.75}
+        if mode == "accessible":
+            options["options"] = {
+                "avoid_features": ["steps"],
+                "profile_params": {"restrictions": {"maximum_incline": 4, "minimum_width": MIN_SIDEWALK_WIDTH}},
+            }
+        if mode != "fastest":
+            options["alternative_routes"] = {"target_count": 3, "weight_factor": 1.5, "share_factor": 0.85}
         router = request.app.state.router
         avoided = []
+        endpoint = f"v2/directions/{profile}/geojson"
         while True:
-            response = await router.post("v2/directions/wheelchair/geojson", json=options, headers=headers)
+            response = await router.post(endpoint, json=options, headers=headers)
             error = response.json().get("error", {}) if response.status_code == 404 else {}
-            if avoided and error.get("code") in (2009, 2010):
-                raise SlopedRoutes(avoided)
+            if (avoided or (mode == "balanced" and "avoid_features" in options["options"])) and error.get("code") in (2009, 2010):
+                raise RestrictedRoutes(avoided)
             if error.get("code") == 2010:
                 match = re.search(r"\bcoordinate ([01]):", error.get("message") or "")
                 if match:
@@ -338,7 +418,7 @@ async def routes(payload: RouteRequest, request: Request):
                         continue
                     endpoint, label = ("start", "起點") if index == 0 else ("end", "終點")
                     fail(404, "UNROUTABLE_ENDPOINT",
-                         f"{label}附近找不到可接上的輪椅路線，請改選附近出入口或道路。",
+                         f"{label}附近找不到可接上的步行路網，請改選附近出入口或道路。",
                          endpoint=endpoint)
             if response.status_code in (400, 404) and "alternative_routes" in options:
                 # Some installations or long requests do not support alternatives.
@@ -348,38 +428,47 @@ async def routes(payload: RouteRequest, request: Request):
                 raise RouteNotFound
             response.raise_for_status()
             candidates = [parse_candidate(route) for route in response.json()["features"]]
+            if mode != "accessible":
+                for candidate in await shorter_walking_candidate(router, endpoint, options, headers):
+                    if not any(candidate[3] == current[3] for current in candidates):
+                        candidates.append(candidate)
             if not candidates:
                 if avoided:
-                    raise SlopedRoutes(avoided)
+                    raise RestrictedRoutes(avoided)
                 raise RouteNotFound
             try:
-                selected = await run_in_threadpool(choose_route, candidates, payload.preferences)
+                selected = await run_in_threadpool(choose_route, candidates, payload.preferences, mode)
                 break
-            except SlopedRoutes as exc:
-                if len(avoided) >= 2:
+            except RestrictedRoutes as exc:
+                if mode == "balanced" and exc.retry_without_stairs and "avoid_features" not in options["options"]:
+                    options["options"]["avoid_features"] = ["steps"]
+                    continue
+                if not exc.barriers or len(avoided) >= 2:
                     raise
                 avoided.append(union_all(exc.barriers))
                 options["options"]["avoid_polygons"] = mapping(union_all(avoided))
-    except SlopedRoutes:
-        fail(404, "NO_SLOPE_FREE_ROUTE", "目前找不到能避開已知坡段的輪椅路線。")
+    except RestrictedRoutes:
+        if mode == "accessible":
+            fail(404, "NO_ACCESSIBLE_ROUTE", "目前找不到能避開已知階梯、坡段或過窄人行道的路線。")
+        fail(404, "NO_BALANCED_ROUTE", "目前找不到符合短階梯與通行條件的平衡路線。")
     except sqlite3.Error:
         fail(503, "DATA_UNAVAILABLE", "設施資料尚未載入。")
     except RouteNotFound:
-        fail(404, "NO_ROUTE", "查不到輪椅步行路線，請調整起終點。")
+        fail(404, "NO_ROUTE", f"找不到符合條件的{mode_label}路線，請調整起終點。")
     except httpx.ConnectError:
-        logger.warning("Roll X could not connect to ORS")
+        logger.warning("HowGo could not connect to ORS")
         fail(503, "ROUTER_UNAVAILABLE", "無法連線到路由服務，請確認 openrouteservice 已啟動。")
     except httpx.TimeoutException:
-        logger.warning("Roll X timed out waiting for ORS")
+        logger.warning("HowGo timed out waiting for ORS")
         fail(503, "ROUTER_UNAVAILABLE", "路由服務回應逾時，請稍後再試。")
     except httpx.HTTPStatusError as exc:
         logger.warning("ORS returned HTTP %d", exc.response.status_code)
         fail(503, "ROUTER_UNAVAILABLE", "路由服務暫時無法使用。")
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, AttributeError) as exc:
-        logger.warning("Roll X could not read the ORS response (%s)", type(exc).__name__)
+        logger.warning("HowGo could not read the ORS response (%s)", type(exc).__name__)
         fail(503, "ROUTER_UNAVAILABLE", "路由服務回應異常，請稍後再試。")
 
-    distance, duration, coordinates, nearby, steps, maneuvers, metrics, unverified, highlights, empty_types = selected
+    distance, duration, coordinates, nearby, steps, maneuvers, metrics, unverified, highlights, assessment, empty_types = selected
     access_points = route_access_points(payload.start, payload.end, coordinates)
     if "end" in access_points:
         for step in (*steps, *maneuvers):
@@ -393,7 +482,7 @@ async def routes(payload: RouteRequest, request: Request):
                   "properties": {}},
         "distance_m": distance, "duration_s": duration, "steps": steps, "maneuvers": maneuvers,
         "access_points": access_points, "highlights": highlights,
-        "candidate_count": len(candidates), "evidence": metrics, "unverified_walkways": unverified,
+        "mode": mode, "assessment": assessment, "candidate_count": len(candidates), "evidence": metrics, "unverified_walkways": unverified,
         "radius_m": RADIUS_METERS, "total": len(nearby), "counts": counts,
         "facilities": feature_collection(nearby),
         "empty_types": [kind for kind in empty_types if kind],

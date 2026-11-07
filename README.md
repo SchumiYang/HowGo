@@ -1,107 +1,61 @@
-# 輪行 X｜Roll X
+# HowGo
 
-臺北市室外輪椅路線與通行空間查詢。選起終點後，顯示一條 ORS 輪椅候選路線，以及逐段距離、轉向與道路名稱。市府面圖資沿行進方向有連續且明確的證據時，才補上實體人行道、標線型人行道或整平騎樓的側別提示。側別是相對於行進方向的圖資推估。換邊時請使用可通行的路口。地圖另提供可切換的通行空間與設施點圖層。
+HowGo 是臺北市的室外步行導航專題，以通用與包容設計為目標。使用者可以比較最短距離、平衡和無障礙三種路線，查看預估時間、距離、沿途通行條件與逐步指引，再選擇其中一條開始導航。
 
-## 下一階段優先事項：地圖圖層載入效能
+- **前端**使用 Nuxt、Vue 與 MapLibre GL JS，負責地圖、圖層篩選、行程比較與前景定位。
+- **後端**使用 Python FastAPI、SQLite 與 Shapely，負責本機地點搜尋、設施查詢和候選路線評估。
+- **路由**由 openrouteservice（ORS）依 OSM 路網產生候選，FastAPI 再用本機圖資比對通行條件。
+- 目前範圍是臺北室外步行。室內導航、大眾運輸和城市通 WebView 屬後續整合。
 
-- 優先讓相鄰視窗重用已載入的圖資。小幅平移時沿用快取，移出快取範圍再查詢，減少重複下載和重繪。
-- 目前本機 API 基準為各測五次的中位數。開圖尺度約 zoom 14，兩個圖層合計約 3.5 MiB 未壓縮 JSON，設施點約 298 ms，通行空間約 227 ms。天母街區約 zoom 16，合計約 0.7 MiB，兩者分別約 48 ms 和 56 ms。
-- 下一階段用手機 Safari 實測首次開圖到圖層出現、拖曳後到圖層穩定的時間。記錄改動前後的圖層請求次數和傳輸量，並確認快取不會漏掉原本可見的圖資。
+## 快速啟動
 
-## 起終點與本機搜尋
+分別開三個終端機，從專案根目錄執行以下步驟。專題名稱為 HowGo，Python 模組指令仍使用 `rollx`，既有環境變數名稱也可繼續使用。
 
-地圖平時可點選圖層查看類型。先選「起點」或「終點」，才會進入點地圖或搜尋模式。可搜尋本機 OpenStreetMap 快照收錄的地名、路名與地址。只搜尋道路名稱時，結果定位到該道路上的參考點。
+### 1. 路由服務（ORS）
 
-如果是新 checkout，請在 `backend/` 啟用 venv 後執行 `python -m rollx.places`，從 `data/source/places.json.gz` 重建本機 SQLite 搜尋索引。搜尋時直接讀取索引。地點快照擷取自 Geofabrik 臺灣資料，資料為 OpenStreetMap contributors，依 ODbL 授權。
+本機開發設定使用 ORS 9.10.0 與 Java 21。`.ors/` 是本機執行目錄，未納入 Git。新環境需先準備 ORS、覆蓋臺北的 OSM PBF，以及啟用 `foot-walking` 和 `wheelchair` 的設定。本機設定讀取 `taipei.osm.pbf`，首次啟動會建立 `graphs/`，後續可重用。將下列設定放在 `.ors/ors-config.yml`。
 
-## iOS Simulator 與前景導航
-
-Safari 建議開啟 `http://localhost:3000`。在 Simulator 選擇「Features → Location → Custom Location」，設定臺北測試座標（緯度 25.041、經度 121.541），再回到網頁按「目前位置」。網站定位許可與 Simulator 提供位置是兩個分開的設定。實機請使用 HTTPS 網址。
-
-選起終點並查詢後可按「開始導航」。底部面板可拖曳展開，查看逐段轉向與行穿線提示。導航使用前景定位，偏離路線後可從目前位置重查。路線偏好會比較 ORS 提供的候選路線，並依固定圖資評估人行道覆蓋、沿線斜坡道及行穿線。只有一條候選路線時，沿用該路線。行人穿越道會依路線經過的順序列成獨立動作。直行段同側實體人行道覆蓋超過八成時，省略公尺區間。接上實體人行道時，系統查找接點附近的坡道紀錄。實際通行條件請依現場判斷。
-
-## 坡度圖層與避坡
-
-坡度圖層使用市府快照中有正坡度數值的點位及面資料，並補充本機 OSM 路網的 `incline` 標記。點資料顯示一個坡度圖示，有起訖座標的 OSM 線段則標示兩端。市府快照的 `-1` 表示未填，本機 ORS 路網未啟用高程資料。未標註路段的坡度仍待確認。
-
-Roll X 將已知坡段排除在輪椅候選路線之外。如果首批候選都經過已知坡段，會請本機 ORS 避開比對到的圖資重算。更換本機路網時，可使用已安裝 PyOsmium 的匯入環境重新產生坡段快照。
-
-```sh
-cd backend
-python -m rollx.slopes ../.ors/taipei.osm.pbf
+```yaml
+ors:
+  engine:
+    profile_default:
+      graph_path: ./graphs
+      build:
+        source_file: ./taipei.osm.pbf
+        elevation: false
+    profiles:
+      driving-car:
+        enabled: false
+      foot-walking:
+        enabled: true
+      wheelchair:
+        enabled: true
 ```
-
-## 身心障礙停車格
-
-「身障停車格」圖層取自[臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611)的 SHP，保留汽車、機車與機慢車身心障礙專用格（代碼 03、04、18）。從每筆格位的面內取一點，轉成 WGS84 後儲存在 `data/source/facility-accessible-parking.json`，與其他設施一起匯入 SQLite。地圖上的停車格可直接設為輪椅步行路線的起點或終點。
-
-更新時可在安裝 PyShp、pyproj 和 Shapely 的匯入環境解壓官方下載檔，再執行以下指令。
-
-```sh
-cd backend
-python -m rollx.import_accessible_parking /path/to/parking.shp
-python -m rollx.import_facilities
-```
-
-## 啟動 FastAPI
-
-需要 Python 3.11 以上與支援 R*Tree 的 SQLite。Python 套件安裝在 `backend/.venv`。首次設定請由專案根目錄執行。
-
-```sh
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-已有 SQLite 快照即可啟動。如果缺少 SQLite，先依下方說明從本機 JSON 重建。
-
-```sh
-python -m uvicorn rollx.main:app --reload --port 8000
-```
-
-### 固定設施快照
-
-FastAPI 啟動與查詢時直接讀取 `backend/data/facilities.sqlite`。2026 年 11 月 7 日下載的市府快照放在 `backend/data/source/`，涵蓋輪行臺北列出的 14 類圖資。無障礙廁所端點回傳 HTTP 204，快照以空陣列保存，介面顯示「來源無點位」。匯入時會排除明顯異常的座標。
-
-如果是新 checkout，或需要替換快照，先在 `backend/` 啟用 venv，再執行下列指令。匯入只讀本機 JSON，整個流程都不會呼叫市府資料 API。
-
-```sh
-python -m rollx.import_facilities
-```
-
-也可以用 `--source-dir <資料夾>` 指定另一組已下載的 `facility-{類別}.json`（1、3、4、7、8、9、14、15、16、18、20）及 `walkways.geojson.gz`。新快照驗證完成後才會替換 SQLite。
-
-`walkways.geojson.gz` 是 WGS84 通行空間快照。人行道、標線型人行道及行穿線取自交通局「輪行臺北設施資料」的 11、12、13 類，騎樓取自都發局建管處「臺北市騎樓整平工程完成路段表」的民國 91 至 105 年工程紀錄。騎樓 SHP 以 TWD97 TM2 121 座標轉成 WGS84，並移除無法形成有效面圖資的紀錄。這些圖層可個別切換。市府行穿線以紫色面顯示，`osm-crossings.json.gz` 的 OSM 補充穿越道以紫色虛線顯示。點選圖層可查看名稱及有值的量測欄位。導航會比對兩種行穿道資料。
-
-穿越道線段取自本機 ORS 使用的臺北周邊 OSM 路網，資料為 OpenStreetMap contributors，依 ODbL 授權。更換路網後，如需重建穿越道快照，可在已安裝 PyOsmium 的匯入環境中執行下列指令。服務執行時直接讀取快照。
-
-```sh
-cd backend
-python -m rollx.osm_crossings ../.ors/taipei.osm.pbf
-```
-
-路線查詢需要啟用 `wheelchair` profile 的 ORS，路網須覆蓋選點位置。預設連線位置為 `http://127.0.0.1:8080/ors`，可在啟動 FastAPI 前設定 `ORS_BASE_URL` 指向其他自架實例。若團隊用已授權的 ORS API 測試，可在後端設定 `ORS_BASE_URL=https://api.openrouteservice.org` 與 `ORS_API_KEY`。API 金鑰只放後端。尚未連上 ORS 時，地圖與設施仍可使用，查路線會顯示服務暫時不可用。
-
-### 啟動本機路由服務
-
-目前這台電腦的 `.ors/` 已放入 ORS 9.10.0、可攜式 Java 21 與臺北周邊 OSM 路網。這個目錄是本機執行資料。重新開機後，在專案根目錄另開終端機執行。
 
 ```sh
 cd .ors
 ./java/bin/java -Xmx2g -jar ors.jar --server.address=127.0.0.1 --server.port=8080
 ```
 
-等 ORS 準備完成後，用 `curl http://127.0.0.1:8080/ors/v2/health` 確認回傳 `{"status":"ready"}`。首次啟動會建置路網，後續啟動可沿用 `.ors/graphs/`。
+從另一個終端機執行 `curl http://127.0.0.1:8080/ors/v2/health`，收到 `{"status":"ready"}` 後即可查路線。也可使用已啟用兩種 profile 的其他 ORS 實例。 [ORS 自架說明](https://giscience.github.io/openrouteservice/run-instance/)
 
-- [ORS 自架與路網文件](https://giscience.github.io/openrouteservice/run-instance/)
-- [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7)
+### 2. FastAPI 與本機資料
 
-- [臺北市騎樓整平工程完成路段表](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e)
+使用 Python 3.11 以上及支援 R*Tree 的 SQLite。新環境需先從本機快照重建 SQLite，已有資料庫時可略過兩行匯入指令。
 
-## 啟動 Nuxt
+```sh
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m rollx.import_facilities
+python -m rollx.places
+python -m uvicorn rollx.main:app --reload --port 8000
+```
 
-建議 Node.js 24 LTS（24.11 或更新版本）與 pnpm 10。另開終端機，由專案根目錄執行。
+### 3. Nuxt
+
+本機建議使用 Node.js 24 LTS 與 pnpm 10。
 
 ```sh
 cd frontend
@@ -109,10 +63,98 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-瀏覽 [http://localhost:3000](http://localhost:3000)。Nuxt 將 `/api/*` 轉給 FastAPI，預設目標是 `http://127.0.0.1:8000`。如需更換，於開發啟動或建置前設定 `ROLLX_API_TARGET`。執行 `pnpm typecheck` 檢查型別，`pnpm build` 建置正式版本。
+開啟 [HowGo 本機網站](http://localhost:3000)。前端型別檢查與正式建置分別使用 `pnpm typecheck` 和 `pnpm build`。
 
-底圖預設使用 OSM 公共圖磚，適合低流量開發，畫面保留 OSM 署名。正式環境可用 `NUXT_PUBLIC_TILE_URL` 換成團隊自管或獲授權的 raster 圖磚網址，格式需含 `{z}/{x}/{y}`。
+| 環境變數 | 用途 | 預設 |
+| --- | --- | --- |
+| `ORS_BASE_URL` | FastAPI 連線的 ORS 位址 | `http://127.0.0.1:8080/ors` |
+| `ORS_API_KEY` | 使用需要授權的 ORS 時，在後端提供金鑰 | 空 |
+| `ROLLX_DB_PATH` | 指定設施 SQLite 路徑 | `backend/data/facilities.sqlite` |
+| `ROLLX_API_TARGET` | Nuxt 的 `/api/*` 代理目標，啟動或建置前設定 | `http://127.0.0.1:8000` |
+| `NUXT_PUBLIC_TILE_URL` | MapLibre 的 raster 圖磚 URL，包含 `{z}/{x}/{y}` | OSM 公共圖磚 |
 
-- [MapLibre GL JS 授權](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt)
-- [OSM 歸屬與圖資授權](https://www.openstreetmap.org/copyright)
-- [OSM 公共圖磚政策](https://operations.osmfoundation.org/policies/tiles/)
+## 路線演算法
+
+### 1. 取得候選路線
+
+起終點可由本機搜尋、地圖選點或目前位置取得，送往後端的座標格式為 `[經度, 緯度]`。ORS 起初在每個選點的 50 公尺半徑內尋找路網接點，若某端接不上，該端可擴大到 120 公尺重試。原選點與接點的直線距離超過 50 公尺時，介面會另行標示。距離與時間都以路網接點間的 ORS 結果為準，接點與原選點間的路程未計入。
+
+| 模式 | ORS 候選 | 通行限制 |
+| --- | --- | --- |
+| 最短距離 `fastest` | 一般步行 `foot-walking`，同時比較 `fastest` 與 `shortest` 權重產生的候選 | 一般步行，可經過階梯與坡段 |
+| 平衡 `balanced` | `foot-walking`，以 `recommended` 請求替代路線（`target_count=3`），再補一條 `shortest` 候選 | 排除比對到的過窄人行道、已知坡度達 8% 或標記為 `steep` 的坡段。最多接受一段 8 公尺以內的階梯，階梯資料缺失的候選會被淘汰 |
+| 無障礙 `accessible` | `wheelchair`，以 `recommended` 請求替代路線（`target_count=3`） | ORS 設定避開階梯、最大坡度參數 4%、最小寬度 0.9 公尺。後端另排除比對到的階梯、過窄人行道與已知坡段 |
+
+`shortest` 候選以相同的端點與當輪避讓條件查詢，依路線座標去除重複結果。替代路線數量取決於 ORS，替代請求失敗時會改查單條路線。`waytype=8` 用來識別階梯，連續階梯區間會合併。8 公尺是短階梯的專案判定值，用來近似一層樓梯。
+
+### 2. 比對人行道與坡度
+
+| 市府快照中的人行道寬度 | HowGo 通行分級 |
+| --- | --- |
+| 1.5 公尺以上 | 可行 |
+| 0.9 公尺以上、未滿 1.5 公尺 | 勉強可行 |
+| 未滿 0.9 公尺 | 不可行 |
+| 缺少寬度或比對不到人行道 | 待確認 |
+
+分級以目前人行道快照的寬度數值推估，尚未涵蓋障礙物、施工、路面狀態或現場淨寬。可行與勉強可行的覆蓋長度會合併路線實際經過的人行道與側別指引有證據的路段。同一路段若同時有兩級證據，以可行計算。路線與過窄人行道的單一面重疊至少 3 公尺時，平衡和無障礙會淘汰該候選，側別指引也會排除已知過窄的人行道。
+
+坡度證據來自市府快照的正坡度點位或面，以及本機 OSM 的 `incline` 線段。避讓只採用與路線有幾何證據的坡段，包括 1.5 公尺內的坡度點、方向一致且確實重疊的坡度線，或路線穿入的坡度面。附近出入口的坡度點可以標在地圖上，直行是否經過斜面仍須看實際路線。市府的 `-1` 代表缺值，本機 ORS 未啟用高程建模，4% 是路由設定，未測路段的坡度待確認。
+
+### 3. 評分與重算
+
+分數越低越優先，同分時取 ORS 預估秒數較低者。令 `d` 為候選距離（公尺），`d_min` 為該輪全部候選的最短距離，`G` 和 `F` 分別為可行、勉強可行的覆蓋比例，`S` 為階梯總長度（公尺），`I` 為比對到的已知坡段筆數。
+
+| 模式 | 目前評分 |
+| --- | --- |
+| 最短距離 | `ORS 預估秒數`。介面名稱為最短距離，實際依候選時間排序 |
+| 平衡 | `d / d_min - 0.22 × G - 0.10 × F + 0.015 × S + 0.04 × I` |
+| 無障礙 | `d - 0.55 × G - 0.20 × F`。目前網頁以距離為主，人行道覆蓋最多扣 0.55 分，影響不到 1 公尺的距離分數 |
+
+無障礙的舊 API 呼叫仍可傳 `preferences`。指定時，公式中的 `d` 改為 `d / d_min - 0.45 × 所選品質指標的平均`。品質指標分別是實際人行道覆蓋比例、以每公里 12 處為滿分的近路線坡道密度，以及以每公里 5 處為滿分的行穿道密度。密度計算的分母至少為 150 公尺。網頁端直接使用三種模式。
+
+平衡候選都未通過且有階梯限制問題時，會再查一次全面避開階梯的路線。平衡和無障礙若仍沒有合格候選，會取被淘汰路線中預估最快的一條，把比對到的障礙加入避讓多邊形，最多重算兩輪。無法找到合格結果時，個別模式回傳原因，其他可用模式仍可選。不同模式可以選中同一條路線。時間沿用各 ORS profile 的估算。
+
+**驗證案例。** 目前本機快照以芝山捷運站一號出口到天母棒球場測試，最短距離與平衡同為 2.19 公里、約 26 分鐘，無障礙約 2.35 公里、30 分鐘。三種模式的路網終點都距原選點約 72 公尺。
+
+```sh
+curl -sS http://127.0.0.1:8000/v1/route-options \
+  -H 'Content-Type: application/json' \
+  -d '{"start":[121.52285,25.100628],"end":[121.533413,25.114081]}'
+```
+
+## 地圖、導航與資料
+
+- **地點搜尋**從 OSM 快照建立本機 SQLite 索引。可以查地名、路名和快照收錄的地址，只查道路名稱會定位到路上的參考點。
+- **導航指令**依路線順序列出轉向、直行、行人穿越道與階梯。側別以行進方向為準，由實體人行道、標線型人行道與整平騎樓面圖資推估。人行道覆蓋超過 80%，或覆蓋至少 70% 且未覆蓋部分不超過 15 公尺時，會簡化整段描述。
+- **路線高亮**包括路線、實際行經與指引側人行道、沿線引用的無障礙坡道和鄰近坡度點。無障礙坡道設施與坡度量測點分開顯示。
+- **前景導航**使用瀏覽器定位。偏離路線後可用目前位置重查，沿用原模式。iOS Simulator 可用 Safari 開啟 `http://localhost:3000`，在 Simulator 選擇 **Features → Location → Custom Location** 設定臺北座標（緯度 25.041、經度 121.541），並允許網站定位。實機使用 HTTPS。
+
+### 本機快照與更新
+
+服務查詢時使用已下載的快照。更新快照後在 `backend/` 啟用 venv 並重跑匯入指令。
+
+| 快照 | 來源與用途 |
+| --- | --- |
+| `facility-*.json` | 2026-11-07 市府設施快照。可用 `python -m rollx.import_facilities --source-dir <資料夾>` 匯入另一組本機檔案。當期無障礙廁所來源回傳 HTTP 204，快照保留空陣列。 [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) |
+| `walkways.geojson.gz` | WGS84 通行空間面。人行道、標線型人行道和行穿線取自市府 11、12、13 類，另含民國 91 至 105 年整平騎樓工程紀錄。 [整平騎樓來源](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) |
+| `facility-accessible-parking.json` | 身心障礙專用停車格（代碼 03、04、18），每格保留面內代表點，可設為起點或終點。可用 `python -m rollx.import_accessible_parking <SHP 路徑>` 更新，再匯入設施。匯入環境需有 PyShp、pyproj 與 Shapely。 [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) |
+| `places.json.gz` | 從 Geofabrik 臺灣 OSM 資料擷取的本機地點、道路與地址快照。 |
+| `osm-crossings.json.gz`、`osm-slopes.json.gz` | 從同一份 ORS OSM PBF 擷取穿越道和坡度標記。更換路網後，可在含 PyOsmium 的匯入環境執行 `python -m rollx.osm_crossings ../.ors/taipei.osm.pbf` 與 `python -m rollx.slopes ../.ors/taipei.osm.pbf`。 |
+
+底圖使用 MapLibre GL JS。預設 OSM 公共圖磚供低流量開發使用，正式服務可改用自管或獲授權的圖磚。OSM 資料依 ODbL 授權，地圖保留來源署名。 [MapLibre 授權](https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt) · [OSM 署名與授權](https://www.openstreetmap.org/copyright) · [OSM 圖磚政策](https://operations.osmfoundation.org/policies/tiles/)
+
+## API
+
+FastAPI 啟動後可開啟 [互動式 API 文件](http://127.0.0.1:8000/docs)。網頁端透過 Nuxt 的 `/api` 前綴代理。
+
+| 路徑 | 用途 |
+| --- | --- |
+| `POST /v1/route-options` | 送入 `start`、`end`，回傳三種模式各自的 `route` 或 `error` |
+| `POST /v1/routes` | 查單一模式，`mode` 省略時使用 `accessible` |
+| `GET /v1/places?q=...` | 查詢本機地點索引 |
+| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 按地圖範圍查詢設施、通行空間與坡度 |
+| `GET /v1/meta` | 查詢資料覆蓋、類型與快照資訊 |
+
+## 下一階段優先事項
+
+優先改善首次開圖與平移時的圖層載入效能。相鄰視窗應重用已載入的資料，移出快取範圍再查詢。先前本機五次查詢中位數顯示，zoom 14 的兩個主要圖層合計約 3.5 MiB 未壓縮 JSON，設施點約 298 ms、通行空間約 227 ms。天母街區 zoom 16 合計約 0.7 MiB，分別約 48 ms 和 56 ms。下一輪用手機 Safari 實測首次開圖、拖曳後穩定時間、請求次數和傳輸量，並檢查快取邊界是否漏圖。

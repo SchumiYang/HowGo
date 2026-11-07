@@ -74,7 +74,7 @@ def guided_ramps(evidence, guides, facilities):
                 yield start + offset, side, item
 
 
-def route_maneuvers(evidence, steps, facilities, matched_ramps=()):
+def route_maneuvers(evidence, steps, facilities, matched_ramps=(), stairs=()):
     path = evidence.path
     lengths = [0.0]
     for a, b in zip(evidence.points, evidence.points[1:]):
@@ -104,14 +104,17 @@ def route_maneuvers(evidence, steps, facilities, matched_ramps=()):
             if end > start:
                 guidance_ranges.append((start, end, guidance["side"], guidance["reason"]))
 
+    for start, end in stairs:
+        events.append((start, 1, end, "stairs", "走階梯", ""))
     for start, end in evidence.crossing_positions:
-        events.append((start, 1, end, "crossing", "走行人穿越道", ""))
+        if not any(max(a, start) < min(b, end) for a, b in stairs):
+            events.append((start, 1, end, "crossing", "走行人穿越道", ""))
 
     ramp_points = [Point(evidence.project(*item["geometry"]["coordinates"])) for item in facilities
                    if item["properties"]["kind"] == "1"]
     sidewalks = sidewalk_spans(path, evidence.sidewalks)
     for start, end in sidewalks:
-        if start:
+        if start and not any(a <= start < b for a, b in stairs):
             entry = path.interpolate(start)
             approach = substring(path, start, min(end, start + 8))
             connected = [evidence.sidewalk_index.geometries[index]
