@@ -73,6 +73,8 @@ type Event = { t: number; batch?: SensorBatch; scan?: WifiScan }
 let calib: number[] = []
 /** per engine run of the current method: 1 if it ended on the wrong floor after automatic level changes */
 let switches: number[] = []
+/** per engine run of the current method: [floor of the first update, floor at the end] */
+let floors: [string | null, string][] = []
 function replayEvents(w: Walk): Event[] {
   const lo = w.t_start - 3000
   const hi = w.t_end
@@ -122,7 +124,9 @@ function runEngine(w: Walk, tr: Track, venueData: VenueData, radiomap: Radiomap 
   options: Partial<PositioningOptions>, knownStart: boolean, withHeading = true, seedLevel = tr.level ?? '1F'): number[] {
   const eng = createPositioning({ venueData, radiomap, magmap, options: { ...options, ...EXTRA, mag: { ...options.mag, ...EXTRA.mag } } })
   const errors: number[] = []
+  let firstLevel: string | null = null
   eng.onUpdate((u) => {
+    firstLevel ??= u.level
     if (u.t < w.t_start || u.t > w.t_end) return
     const [x, y] = at(tr, u.t)
     const err = Math.hypot(u.x - x, u.y - y)
@@ -142,6 +146,7 @@ function runEngine(w: Walk, tr: Track, venueData: VenueData, radiomap: Radiomap 
     if (e.scan) eng.pushWifiScan(e.scan)
   }
   switches.push(eng.stats.level === (tr.level ?? '1F') ? 0 : 1)
+  floors.push([firstLevel, eng.stats.level])
   return errors
 }
 
@@ -203,6 +208,7 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     const errs = new Map<string, Map<string, number[]>>()
     const cover = new Map<string, number[]>()
     const falseSwitches = new Map<string, number>()
+    const initFloors = new Map<string, { runs: number; startWrong: number; endWrong: number; oldRuleWrong: number; walks: number }>()
     const areaOf = (tr: Track) => `${tr.level ?? '1F'} ${tr.area}`
     const levelLines: string[] = []
     const perWalk: string[] = []
@@ -220,11 +226,40 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
         errs.set(name, per)
         calib = []
         switches = []
+        floors = []
         const v = run(w, tr, radiomap, magmap)
         const c = cover.get(name) ?? []
         cover.set(name, c)
         c.push(...calib)
         falseSwitches.set(name, (falseSwitches.get(name) ?? 0) + switches.reduce((a, b) => a + b, 0))
+        if (name.startsWith('(d2)')) {
+          const k = areaOf(tr)
+          const f = initFloors.get(k) ?? { runs: 0, startWrong: 0, endWrong: 0, oldRuleWrong: 0, walks: 0 }
+          for (const [a, b] of floors) {
+            f.runs++
+            if (a !== level) f.startWrong++
+            if (b !== level) f.endWrong++
+          }
+          // the previous rule: arg-min WkNN distance level on the first fresh scan
+          if (radiomap) {
+            const lv = [...new Set(radiomap.points.map((p) => p.level ?? '1F'))]
+            for (const sc of w.wifi_scans ?? []) {
+              const scan = { supported: true, status: 'ok', collected_at: sc.collected_at, results: sc.results }
+              let best: [string, number] | null = null
+              for (const l of lv) {
+                const m = new WifiModel(radiomap, l, { ...EXTRA.wifi, adaptOffset: false })
+                const obs = m.observe(scan)
+                const r = obs && m.wknn(obs)
+                if (r && (!best || r.dist < best[1])) best = [l, r.dist]
+              }
+              if (!best) continue
+              f.walks++
+              if (best[0] !== level) f.oldRuleWrong++
+              break
+            }
+          }
+          initFloors.set(k, f)
+        }
         for (const area of [areaOf(tr), 'ALL']) per.set(area, [...(per.get(area) ?? []), ...v])
       }
       if (level !== '1F') {
@@ -297,6 +332,10 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     }
     lines.push('runs ending on the wrong floor (automatic level changes; walks are single-floor): '
       + [...falseSwitches].map(([k, v]) => `${k.split(' ')[0]} ${v}`).join(', '))
+    lines.push('WiFi-only start (d2, no seed), wrong floor: old rule = arg-min level on the first scan; now = entrance prior + initial correction:')
+    for (const [k, f] of [...initFloors].sort()) {
+      lines.push(`  ${k.padEnd(14)} old rule ${f.oldRuleWrong}/${f.walks} walks; now: first fix ${f.startWrong}/${f.runs} runs, at the end ${f.endWrong}/${f.runs} runs`)
+    }
     lines.push('WiFi level classification per fresh scan (held-out maps; margin = other level − own level, dB):')
     for (const [l, n] of vote.n) {
       const m = [...(vote.margins.get(l) ?? [])].sort((a, b) => a - b)

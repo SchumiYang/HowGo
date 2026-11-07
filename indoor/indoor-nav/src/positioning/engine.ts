@@ -73,8 +73,9 @@ export interface PositioningOptions {
   baro: Partial<BaroOptions>
   /** WiFi level vote: another level's best match must beat the current level by marginDb (support for the barometer);
    *  to switch on WiFi alone: by strongMarginDb for `scans` consecutive fresh scans, within connectorRadiusM of a
-   *  level connector, and not while a working barometer says the floor did not change */
-  wifiLevel: { marginDb: number; strongMarginDb: number; scans: number; connectorRadiusM: number }
+   *  level connector, and not while a working barometer says the floor did not change. A WiFi-only start begins on
+   *  the entrance level and may move within its first initialWindowScans fresh scans (same margin, anywhere) */
+  wifiLevel: { marginDb: number; strongMarginDb: number; scans: number; connectorRadiusM: number; initialWindowScans: number }
   pdr: Partial<PdrOptions>
   wifi: Partial<WifiOptions>
   mag: Partial<MagOptions>
@@ -102,7 +103,7 @@ export const DEFAULT_POSITIONING: PositioningOptions = {
   fusedHoldMs: 20000,
   autoLevel: true,
   baro: {},
-  wifiLevel: { marginDb: 2, strongMarginDb: 4, scans: 2, connectorRadiusM: 10 },
+  wifiLevel: { marginDb: 2, strongMarginDb: 4, scans: 2, connectorRadiusM: 10, initialWindowScans: 4 },
   pdr: {},
   wifi: {},
   mag: {},
@@ -193,6 +194,10 @@ class PositioningEngine implements Positioning {
   private lastAbsT = -Infinity
   private stepsSinceInit = 0
   private initSource: PositionSource = 'pdr'
+  /** fresh scans left in which a WiFi-only start may still move to another level (initial correction) */
+  private initialWindow = 0
+  /** the floor was decided (first fix, seed, correction or switch): the entrance prior no longer applies */
+  private levelChosen = false
   /** sensor clock correction (arrival time − newest sample time) applied to live batches, ms; and recent lags */
   private clockLag: number | null = null
   private lagWindow: number[] = []
@@ -361,7 +366,9 @@ class PositioningEngine implements Positioning {
   }
 
   private afterInit(source: PositionSource) {
+    this.levelChosen = true
     this.initSource = source
+    this.initialWindow = source === 'wifi' ? this.o.wifiLevel.initialWindowScans : 0
     this.stepsSinceInit = 0
     this.stats.initialized = true
   }
@@ -543,7 +550,13 @@ class PositioningEngine implements Positioning {
   }
 
   pushWifiScan(scan: WifiScan) {
-    if (!this.pf?.initialized) this.pickLevelFromWifi(scan)
+    // WiFi-only start: begin on the entrance level (users arrive from outdoors). An arg-min level pick on the first
+    // scan put users standing on the 1F arena onto 2F: the 2F walkway overlooks the hall and hears the same APs
+    // (real-data margins ~2 dB). Another level only wins through the initial-correction window below.
+    if (!this.levelChosen && !this.pf?.initialized && this.o.level === null) {
+      const entrance = this.entranceLevel()
+      if (entrance && entrance !== this.level) this.setLevel(entrance)
+    }
     const wifi = this.wifi
     if (!wifi) return
     const obs = wifi.observe(scan)
@@ -551,9 +564,32 @@ class PositioningEngine implements Positioning {
     this.stats.wifiScans++
     const knn = wifi.wknn(obs)
     // level vote first: a scan that matches nothing on this level (knn null) is the clearest sign of another floor
-    const vote = this.pf?.initialized ? this.voteLevel(scan, knn?.dist ?? Infinity) : null
+    const vote = this.voteLevel(scan, knn?.dist ?? Infinity)
     if (vote) this.stats.wifiLevelVote = vote
     const wl = this.o.wifiLevel
+    // initial correction: right after a WiFi-only start, another level that beats the entrance level by
+    // strongMarginDb on `scans` consecutive fresh scans (the first one included) re-initialises the filter there —
+    // anywhere (the user may have started anywhere) and regardless of the barometer (it only sees changes)
+    if (this.pf?.initialized && this.initialWindow > 0) this.initialWindow--
+    if (vote?.candidate && this.o.autoLevel && (!this.pf?.initialized || (this.initSource === 'wifi' && this.initialWindow > 0)) &&
+        vote.streak >= wl.scans && vote.dist[this.level] - vote.dist[vote.candidate] >= wl.strongMarginDb) {
+      const from = this.level
+      this.setLevel(vote.candidate)
+      this.levelChosen = true
+      this.voter.reset()
+      this.initialWindow = 0
+      this.stats.levelChanges++
+      const c: LevelChange = { t: scan.collected_at, from, to: vote.candidate, source: 'wifi', confidence: 0.6, connector: null }
+      for (const cb of this.levelListeners) {
+        try {
+          cb(c)
+        } catch (err) {
+          console.error('[positioning] level listener error', err)
+        }
+      }
+      this.pushWifiScan(scan) // initialise on the new level from this scan
+      return
+    }
     // WiFi alone: also only where this level is surveyed — off its fingerprints the own-level distance is bad anyway
     // and says nothing about another floor (LOWO with the route removed: 3 false switches without this)
     const est = this.pf?.initialized ? this.pf.estimate(this.pdr.yaw) : null
@@ -602,23 +638,15 @@ class PositioningEngine implements Positioning {
   }
 
   /**
-   * Floor for a WiFi-only start (no seed yet): the level whose fingerprints match the scan best (smallest WkNN
-   * distance). After a seed the level only changes through setKnownPosition (navigation's 「已到 2F」).
+   * Level users arrive on: venue.default_level, else the level of an entrance node (nav id containing "ent"), else the
+   * lowest ordinal. The prior for a WiFi-only start.
    */
-  private pickLevelFromWifi(scan: WifiScan) {
-    const rm = this.radiomap
-    if (!rm || !this.o.useWifi) return
-    const levels = [...new Set(rm.points.map((p) => p.level).filter(Boolean))]
-    if (levels.length < 2) return
-    let best: { level: string; dist: number } | null = null
-    for (const level of levels) {
-      if (!this.venueData.levels.some((l) => l.level.id === level)) continue
-      const m = new WifiModel(rm, level, { ...this.o.wifi, adaptOffset: false })
-      const obs = m.observe(scan)
-      const r = obs && m.wknn(obs)
-      if (r && (!best || r.dist < best.dist)) best = { level, dist: r.dist }
-    }
-    if (best && best.level !== this.level) this.setLevel(best.level)
+  private entranceLevel(): string | null {
+    const levels = this.venueData.levels.map((l) => l.level)
+    const known = (id: string | undefined) => (id && levels.some((l) => l.id === id) ? id : null)
+    const ent = this.venueData.nav.find((f) => f.properties.kind === 'node' && /(^|-)ent(-|$)/.test(f.properties.id))
+    return known(this.venueData.venue.default_level) ?? known(ent?.properties.kind === 'node' ? ent.properties.level : undefined)
+      ?? [...levels].sort((x, y) => x.ordinal - y.ordinal)[0]?.id ?? null
   }
 
   private emit(t: number, source: PositionSource) {

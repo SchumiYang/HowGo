@@ -190,6 +190,37 @@ describe('automatic floor changes', () => {
     expect(eng.stats.level).toBe('2F')
   })
 
+  it('a WiFi-only start begins on the entrance level when another level is only slightly better', () => {
+    // a scan hearing both floors' APs, 2F a little stronger (the 1F arena under the 2F walkway)
+    const eng = createPositioning({ venueData, radiomap, options: { seed: 1 } })
+    const changes: LevelChange[] = []
+    eng.onLevelChange((c) => changes.push(c))
+    let ts = 9e9
+    const mixed = (t: number): WifiScan => {
+      ts += 5_000_000
+      return { supported: true, status: 'ok', collected_at: t, results: [
+        ...A.map((bssid, i) => ({ bssid, ssid: 'x', level: -54 - i * 6, frequency: 2437, timestamp: ts })),
+        ...B.map((bssid, i) => ({ bssid, ssid: 'x', level: -51 - i * 6, frequency: 2437, timestamp: ts })),
+      ] }
+    }
+    for (let k = 0; k < 5; k++) eng.pushWifiScan(mixed(T0 + k * 8000))
+    expect(eng.stats.level).toBe('1F')
+    expect(changes).toHaveLength(0)
+  })
+
+  it('a WiFi-only start moves off the entrance level on strong evidence over 2 scans (initial correction)', () => {
+    const eng = createPositioning({ venueData, radiomap, options: { seed: 1 } })
+    const changes: LevelChange[] = []
+    eng.onLevelChange((c) => changes.push(c))
+    // 2F-only APs, the user stands mid-corridor (far from any elevator: the normal WiFi switch could not fire)
+    eng.pushWifiScan(scanOf(B, T0))
+    eng.pushWifiScan(scanOf(B, T0 + 8000))
+    eng.pushWifiScan(scanOf(B, T0 + 16000))
+    expect(eng.stats.level).toBe('2F')
+    expect(changes.map((c) => [c.from, c.to, c.source, c.connector])).toEqual([['1F', '2F', 'wifi', null]])
+    expect(eng.last?.level).toBe('2F')
+  })
+
   it('autoLevel: false keeps the level', () => {
     const eng = createPositioning({ venueData, options: { seed: 1, autoLevel: false } })
     eng.setKnownPosition(3, 1.5, '1F', { t: T0 })
