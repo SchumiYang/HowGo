@@ -1,0 +1,257 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.3,
+     60.1
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-acc",
+    "level": "2F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所（北）",
+    "unit_id": "2F-RT-ACC-N",
+    "nav_node": "2F-rt-acc"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.3,
+     7.5
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-acc-s",
+    "level": "2F",
+    "category": "toilet.accessible",
+    "name": "無障礙廁所（南）",
+    "unit_id": "2F-RT-ACC-S",
+    "nav_node": "2F-rt-acc-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     31.0,
+     61.5
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-m",
+    "level": "2F",
+    "category": "toilet.male",
+    "name": "男廁（北）",
+    "unit_id": "2F-RT-M-N",
+    "nav_node": "2F-rt-m"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     31.0,
+     6.1
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-m-s",
+    "level": "2F",
+    "category": "toilet.male",
+    "name": "男廁（南）",
+    "unit_id": "2F-RT-M-S",
+    "nav_node": "2F-rt-m-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     60.0,
+     61.5
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-f",
+    "level": "2F",
+    "category": "toilet.female",
+    "name": "女廁（北）",
+    "unit_id": "2F-RT-F-N",
+    "nav_node": "2F-rt-f"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     60.0,
+     6.1
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-rt-f-s",
+    "level": "2F",
+    "category": "toilet.female",
+    "name": "女廁（南）",
+    "unit_id": "2F-RT-F-S",
+    "nav_node": "2F-rt-f-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.2,
+     65.3
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-el2",
+    "level": "2F",
+    "category": "elevator",
+    "name": "電梯 2（A梯旁）",
+    "unit_id": "2F-EL-2",
+    "nav_node": "2F-el2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.2,
+     2.3
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-el1",
+    "level": "2F",
+    "category": "elevator",
+    "name": "電梯 1（C梯旁）",
+    "unit_id": "2F-EL-1",
+    "nav_node": "2F-el1"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     4.5,
+     64.3
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stA",
+    "level": "2F",
+    "category": "stairs",
+    "name": "A梯",
+    "unit_id": "2F-ST-A",
+    "nav_node": "2F-stA"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     4.5,
+     3.3
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stC",
+    "level": "2F",
+    "category": "stairs",
+    "name": "C梯",
+    "unit_id": "2F-ST-C",
+    "nav_node": "2F-stC"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     81.0,
+     64.5
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stB",
+    "level": "2F",
+    "category": "stairs",
+    "name": "B梯",
+    "unit_id": "2F-ST-B",
+    "nav_node": "2F-stB"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     81.0,
+     3.1
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stD",
+    "level": "2F",
+    "category": "stairs",
+    "name": "D梯",
+    "unit_id": "2F-ST-D",
+    "nav_node": "2F-stD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.0,
+     57.6
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stOut",
+    "level": "2F",
+    "category": "stairs",
+    "name": "戶外梯（北）",
+    "unit_id": "2F-ST-OUT-N",
+    "nav_node": "2F-stOut"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -6.0,
+     10.0
+    ]
+   },
+   "properties": {
+    "id": "2F-poi-stOut-s",
+    "level": "2F",
+    "category": "stairs",
+    "name": "戶外梯（南）",
+    "unit_id": "2F-ST-OUT-S",
+    "nav_node": "2F-stOut-s"
+   }
+  }
+ ]
+}

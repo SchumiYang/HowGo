@@ -1,0 +1,7 @@
+{
+  "name": "howgo-worker",
+  "private": true,
+  "type": "module",
+  "scripts": { "deploy": "cf deploy --secrets-file ../secrets.env" },
+  "devDependencies": { "cf": "1.0.0-beta.28", "wrangler": "4.158.0" }
+}

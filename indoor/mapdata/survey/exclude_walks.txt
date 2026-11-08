@@ -1,0 +1,5 @@
+# Survey walks left out of the map builds (build_radiomap.py, build_magmap.py read this file).
+# One walk key per line: SESSION|WALK_ID|DIRECTION|N (N = repeat index of that walk + direction in the session,
+# from 0; globs allowed). Everything after '#' is a comment.
+20261107-145200-a71|1F-walk-lobby|forward|0   # 0.53 m/s pass, no gyro corners; |B| RMS 7.3 uT vs 3.4 uT median of other recordings
+20261107-222624-a71|2F-walk-west|forward|0   # 1/2 gyro corners; |B| RMS 11.1 uT vs 5.0 uT median of other 2F recordings

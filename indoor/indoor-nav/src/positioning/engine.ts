@@ -1,0 +1,828 @@
+/**
+ * Positioning facade for the app: consumes the TownPass bridge's sensor_stream and wifi_scan_stream and emits
+ * PositionUpdate (SURVEY_SCHEMA.md §4) after every detected step and every fresh WiFi scan.
+ *
+ * Runs on the main thread: per step it moves 2000 particles (a few cell checks each) and looks up the magnetic
+ * map, well under a millisecond; a WiFi update (every ~30 s on Android) costs a few ms. No worker needed.
+ *
+ * Initialisation: setKnownPosition() (start point chosen in the app / QR anchor) or, on Android, the first fresh
+ * WiFi scan (WkNN). iOS has no WiFi scan: without a known position there is no output.
+ *
+ * Floor changes (autoLevel): a barometric step (levels.ts) switches level anywhere; WiFi level voting confirms it, or
+ * alone switches with a strong margin over consecutive scans near an elevator / stairs. The filter is re-seeded at
+ * the matching connector of the new level (1F-el2 -> 2F-el2). setKnownPosition stays authoritative.
+ */
+import type { SensorBatch, SensorStreamOptions, WifiScan } from '../bridge/townpass'
+import { venueBaseUrl } from '../data/loader'
+import type { VenueData } from '../data/types'
+import { OccupancyGrid, type GridOptions } from './grid'
+import {
+  BaroDetector, type BaroEvent, type BaroOptions, type Connector, DEFAULT_BARO, levelConnectors, levelForHeightChange, nearestConnector,
+  type WifiLevelVote, WifiLevelVoter,
+} from './levels'
+import { DEFAULT_MAG, MagGrid, type MagOptions } from './magnetic'
+import { ParticleFilter, type HeadingPrior, type PfOptions } from './particleFilter'
+import { Pdr, type PdrOptions, type StepEvent } from './pdr'
+import { mulberry32 } from './rng'
+import type { LevelChange, Magmap, PositionSource, PositionUpdate, Radiomap } from './types'
+import { WifiModel, type WknnResult, type WifiOptions } from './wifi'
+
+const DEG = Math.PI / 180
+
+/** The subset of TownPassBridge the engine uses (TownPassBridge satisfies it). */
+export interface PositioningBridge {
+  startSensorStream(opts: SensorStreamOptions): boolean
+  stopSensorStream(): Promise<unknown>
+  onSensorBatch(cb: (batch: SensorBatch) => void): () => void
+  startWifiStream?(interval_ms: number): boolean
+  stopWifiStream?(): Promise<unknown>
+  onWifiScan?(cb: (scan: WifiScan, source: 'single' | 'stream') => void): () => void
+}
+
+export interface PositioningOptions {
+  /** level to track; default radiomap level, else venue default level */
+  level: string | null
+  useWifi: boolean
+  useMagnetic: boolean
+  /** maps built from synthetic-* sessions are ignored unless true (tests / evaluation only) */
+  allowSyntheticMaps: boolean
+  /** PRNG seed for reproducible runs; null = Math.random */
+  seed: number | null
+  /** magnetic declination (deg, east positive); Taipei ≈ −4.5 */
+  declinationDeg: number
+  /** inject particles at the WiFi fix when the filter is this far away (m) and explains the scan poorly */
+  relocalizeM: number
+  /** use a scan only if this share of the particle weight is within 5 m of a fingerprint */
+  wifiMinCoverage: number
+  /** WiFi-only initialisation: number of best fingerprints seeded, and spread around each (m) */
+  wifiInitSeeds: number
+  wifiInitSigmaM: number
+  /** door hops (particleFilter.hop): radius around a door-edge end (m) and probability per step; 0 disables */
+  doorHopRadiusM: number
+  doorHopProb: number
+  /**
+   * accuracy_m = max(floorM, scale · sqrt(spread² + baseM²)), spread = 1σ radial spread of the particle cloud. The
+   * cloud alone is overconfident (correlated errors, unmodelled reference / map error); scale and floor are
+   * calibrated on the leave-one-walk-out replays so that ~68% of errors fall within accuracy_m.
+   */
+  accuracy: { scale: number; floorM: number; baseM: number }
+  /** treat the output as 'fused' for this long after the last WiFi / magnetic update (ms) */
+  fusedHoldMs: number
+  /** detect floor changes (barometer + WiFi) and switch level automatically */
+  autoLevel: boolean
+  baro: Partial<BaroOptions>
+  /** WiFi level vote: another level's best match must beat the current level by marginDb (support for the barometer);
+   *  to switch on WiFi alone: by strongMarginDb for `scans` consecutive fresh scans, within connectorRadiusM of a
+   *  level connector, and not while a working barometer says the floor did not change. A WiFi-only start begins on
+   *  the best-matching level and may move within its first initialWindowScans fresh scans (same margin, anywhere);
+   *  a level is never voted for while the estimate is not on its floor (floorVoid) */
+  wifiLevel: { marginDb: number; strongMarginDb: number; scans: number; connectorRadiusM: number; initialWindowScans: number }
+  /** floor-void rule (2F has no floor over the arena): a level's "floor" is its walkable area dilated by radiusM.
+   *  An estimate off its level's floor, over the level below, moves to the level below (any time); no WiFi vote for a
+   *  level whose floor the estimate is not on. Back up after such a move when `recoverScans` consecutive scans match
+   *  the upper level by >= recoverDb better and its WkNN position is on its floor */
+  floorVoid: { radiusM: number; recoverDb: number; recoverScans: number }
+  pdr: Partial<PdrOptions>
+  wifi: Partial<WifiOptions>
+  mag: Partial<MagOptions>
+  pf: Partial<PfOptions>
+  grid: Partial<GridOptions>
+}
+
+export const DEFAULT_POSITIONING: PositioningOptions = {
+  level: null,
+  useWifi: true,
+  useMagnetic: true,
+  allowSyntheticMaps: false,
+  seed: null,
+  declinationDeg: -4.5,
+  relocalizeM: 12,
+  wifiMinCoverage: 0.6,
+  wifiInitSeeds: 8,
+  wifiInitSigmaM: 2,
+  doorHopRadiusM: 2,
+  doorHopProb: 0.04,
+  // calibrated on the replayed live runs of 2026-11-07 (A71 + Pixel 9a, 16 checkpoints, errors 1–6 m): 69% of
+  // checkpoint errors within accuracy_m (the earlier ±2 m covered 0/8 on the A71). LOWO replays are optimistic
+  // (their reference shares the walk's own steps) and show ~98% with this setting
+  accuracy: { scale: 2, floorM: 3, baseM: 1.5 },
+  fusedHoldMs: 20000,
+  autoLevel: true,
+  baro: {},
+  wifiLevel: { marginDb: 2, strongMarginDb: 4, scans: 2, connectorRadiusM: 10, initialWindowScans: 4 },
+  floorVoid: { radiusM: 1.5, recoverDb: 1, recoverScans: 2 },
+  pdr: {},
+  wifi: {},
+  mag: {},
+  pf: {},
+  grid: {},
+}
+
+export interface PositioningConfig {
+  venueData: VenueData
+  radiomap?: Radiomap | null
+  /** one map per level */
+  magmap?: Magmap | Magmap[] | null
+  options?: Partial<PositioningOptions>
+}
+
+export interface StartOptions {
+  sensorIntervalMs?: number
+  batchMs?: number
+  /** wifi_scan_stream interval; Android allows 4 foreground scans per 2 min, so ~30 s. null = no WiFi */
+  wifiIntervalMs?: number | null
+}
+
+export interface KnownPositionOptions {
+  /** 1σ uncertainty of the given position (m), default 1 */
+  accuracyM?: number
+  /** walking direction if known (deg clockwise from local +y); otherwise the compass is a weak prior */
+  headingDeg?: number | null
+  /** time of the fix (epoch ms), default now (replays pass the recorded time) */
+  t?: number
+}
+
+export interface PositioningStats {
+  initialized: boolean
+  level: string
+  steps: number
+  wifiScans: number
+  wifiUsed: number
+  magSteps: number
+  relocalizations: number
+  lostSteps: number
+  deviceOffsetDb: number
+  /** false when the session's magnetometer is implausible vs the map (magnetic matching + compass off) */
+  magHealthy: boolean
+  magNote: string | null
+  lastWknn: WknnResult | null
+  maps: { wifi: boolean; magnetic: boolean }
+  /** barometer: null until known, false when the phone has none (A71) */
+  baroAvailable: boolean | null
+  /** smoothed pressure − reference of the current level (hPa; negative = higher up) */
+  pressureDeltaHpa: number | null
+  /** last WiFi level vote (best WkNN distance per level, candidate level, consecutive scans) */
+  wifiLevelVote: WifiLevelVote | null
+  levelChanges: number
+  /** consecutive updates with the estimate off this level's floor but on the level below (debug; floor-void rule) */
+  floorVoidStreak: number
+}
+
+export interface Positioning {
+  start(bridge: PositioningBridge, opts?: StartOptions): boolean
+  stop(): Promise<void>
+  setKnownPosition(x: number, y: number, level?: string, opts?: KnownPositionOptions): void
+  onUpdate(cb: (u: PositionUpdate) => void): () => void
+  /** automatic floor changes (autoLevel); a position update on the new level follows */
+  onLevelChange(cb: (c: LevelChange) => void): () => void
+  /** feed data directly (replay, tests); start() wires these to the bridge. receivedAt (epoch ms of arrival)
+   *  enables correction of a sensor clock that is off the wall clock */
+  pushSensorBatch(batch: SensorBatch, receivedAt?: number): void
+  pushWifiScan(scan: WifiScan): void
+  readonly last: PositionUpdate | null
+  readonly stats: PositioningStats
+}
+
+class PositioningEngine implements Positioning {
+  private readonly o: PositioningOptions
+  private readonly venueData: VenueData
+  private readonly radiomap: Radiomap | null
+  private readonly magmaps = new Map<string, Magmap>()
+  private readonly grids = new Map<string, OccupancyGrid>()
+  private readonly portals = new Map<string, number[][]>()
+  private readonly magGrids = new Map<string, MagGrid>()
+  private readonly magOpts: MagOptions
+  private readonly rng: () => number
+  private level: string
+  private pdr: Pdr
+  private wifi: WifiModel | null = null
+  private pf: ParticleFilter | null = null
+  private listeners = new Set<(u: PositionUpdate) => void>()
+  private offs: (() => void)[] = []
+  private bridge: PositioningBridge | null = null
+  private lastAbsT = -Infinity
+  private stepsSinceInit = 0
+  private initSource: PositionSource = 'pdr'
+  /** fresh scans left in which a WiFi-only start may still move to another level (initial correction) */
+  private initialWindow = 0
+  /** the floor was decided (first fix, seed, correction or switch): no more start-level picking */
+  private levelChosen = false
+  private floorVoidStreak = 0
+  /** after a floor-void move: the level the user was moved down from, and qualifying scans so far (recovery) */
+  private voidFallback: { from: string; streak: number } | null = null
+  /** the floor is known from more than WiFi matching (a seed, the barometer, a floor-void recovery): a cloud spread
+   *  along the 2F ring is then only shown at its densest place, never moved down */
+  private floorConfirmed = false
+  /** sensor clock correction (arrival time − newest sample time) applied to live batches, ms; and recent lags */
+  private clockLag: number | null = null
+  private lagWindow: number[] = []
+  /** batch-mean |B| of the last ~30 s, step |B| − map residuals, and the two plausibility verdicts */
+  private magRing: number[] = []
+  private magResid: number[] = []
+  private magGlobalOk = true
+  private magResidOk = true
+  private magNote = ''
+  private readonly magTmp = new Float64Array(2)
+  private readonly baro: BaroDetector
+  private readonly voter = new WifiLevelVoter()
+  /** WiFi models of the other levels (level voting) */
+  private readonly levelModels = new Map<string, WifiModel>()
+  private readonly connectors: Connector[]
+  private levelListeners = new Set<(c: LevelChange) => void>()
+  last: PositionUpdate | null = null
+  readonly stats: PositioningStats
+
+  constructor(cfg: PositioningConfig) {
+    this.o = { ...DEFAULT_POSITIONING, ...cfg.options }
+    this.venueData = cfg.venueData
+    this.rng = this.o.seed === null ? Math.random : mulberry32(this.o.seed)
+    this.magOpts = { ...DEFAULT_MAG, ...this.o.mag }
+    const usable = (m: { synthetic?: boolean } | null | undefined, what: string) => {
+      if (!m) return false
+      if (m.synthetic && !this.o.allowSyntheticMaps) {
+        console.warn(`[positioning] ignoring synthetic ${what} (built from synthetic-* survey data)`)
+        return false
+      }
+      return true
+    }
+    this.radiomap = usable(cfg.radiomap, 'radiomap') ? cfg.radiomap! : null
+    const mags = Array.isArray(cfg.magmap) ? cfg.magmap : cfg.magmap ? [cfg.magmap] : []
+    for (const m of mags) if (usable(m, `magmap ${m.level}`) && m.cells?.length) this.magmaps.set(m.level, m)
+    const venue = cfg.venueData.venue
+    const known = (l: string | undefined) => (l && cfg.venueData.levels.some((d) => d.level.id === l) ? l : undefined)
+    this.level = this.o.level ?? known(this.radiomap?.level) ?? known(venue.default_level) ?? cfg.venueData.levels[0]?.level.id ?? '1F'
+    this.pdr = new Pdr(this.o.pdr)
+    this.baro = new BaroDetector({ stepHpa: storeyStepHpa(cfg.venueData, this.o.baro.hpaPerM ?? DEFAULT_BARO.hpaPerM), ...this.o.baro })
+    this.connectors = levelConnectors(cfg.venueData.nav)
+    this.stats = {
+      initialized: false, level: this.level, steps: 0, wifiScans: 0, wifiUsed: 0, magSteps: 0, relocalizations: 0,
+      lostSteps: 0, deviceOffsetDb: 0, magHealthy: true, magNote: null, lastWknn: null, maps: { wifi: false, magnetic: false },
+      baroAvailable: null, pressureDeltaHpa: null, wifiLevelVote: null, levelChanges: 0, floorVoidStreak: 0,
+    }
+    this.setLevel(this.level)
+  }
+
+  private setLevel(level: string) {
+    this.level = level
+    this.stats.level = level
+    this.wifi = this.radiomap && this.o.useWifi && this.radiomap.points.some((p) => !p.level || p.level === level)
+      ? new WifiModel(this.radiomap, level, this.o.wifi)
+      : null
+    this.stats.maps = { wifi: !!this.wifi, magnetic: this.o.useMagnetic && this.magmaps.has(level) }
+    this.pf = null
+    this.stats.initialized = false
+  }
+
+  private grid(level: string): OccupancyGrid {
+    let g = this.grids.get(level)
+    if (!g) {
+      const ld = this.venueData.levels.find((l) => l.level.id === level)
+      if (!ld) throw new Error(`positioning: unknown level ${level}`)
+      g = OccupancyGrid.build({ level, units: ld.units, walls: ld.walls, nav: this.venueData.nav }, this.o.grid)
+      // walls of non-initial levels load lazily; rebuild once they are there
+      if (ld.wallsLoaded) this.grids.set(level, g)
+    }
+    return g
+  }
+
+  /** both directions of every door edge on the level, as [ax, ay, bx, by] */
+  private doorPortals(level: string): number[][] {
+    let p = this.portals.get(level)
+    if (!p) {
+      const nodes = new Map<string, [number, number]>()
+      for (const f of this.venueData.nav) {
+        if (f.properties.kind === 'node' && f.properties.level === level) nodes.set(f.properties.id, f.geometry.coordinates as [number, number])
+      }
+      p = []
+      for (const f of this.venueData.nav) {
+        const e = f.properties
+        if (e.kind !== 'edge' || e.type !== 'door') continue
+        const a = nodes.get(e.from)
+        const b = nodes.get(e.to)
+        if (a && b) p.push([a[0], a[1], b[0], b[1]], [b[0], b[1], a[0], a[1]])
+      }
+      this.portals.set(level, p)
+    }
+    return p
+  }
+
+  private magGrid(level: string): MagGrid | null {
+    if (!this.o.useMagnetic) return null
+    let g = this.magGrids.get(level)
+    const m = this.magmaps.get(level)
+    if (!g && m) this.magGrids.set(level, (g = new MagGrid(m, this.magOpts.fillRadiusM)))
+    return g ?? null
+  }
+
+  private newFilter(): ParticleFilter {
+    this.pf = new ParticleFilter(this.grid(this.level), this.o.pf, this.rng)
+    return this.pf
+  }
+
+  /** compass (rad CCW from magnetic north) -> math angle in the local frame */
+  private compassPrior(): HeadingPrior {
+    const c = this.stats.magHealthy ? this.pdr.compass : null
+    if (c === null) return { mean: null, sigma: 0, uniformFrac: 1 }
+    const beta = (this.o.declinationDeg - (this.venueData.venue.bearing_deg ?? 0)) * DEG
+    return { mean: Math.PI / 2 - beta + c, sigma: 30 * DEG, uniformFrac: 0.25 }
+  }
+
+  start(bridge: PositioningBridge, opts: StartOptions = {}): boolean {
+    this.detach()
+    this.bridge = bridge
+    this.offs.push(bridge.onSensorBatch((b) => this.pushSensorBatch(b, Date.now())))
+    const ok = bridge.startSensorStream({
+      sensors: ['accelerometer', 'gyroscope', 'magnetometer', 'barometer'],
+      interval_ms: opts.sensorIntervalMs ?? 20,
+      batch_ms: opts.batchMs ?? 200,
+    })
+    const wifiMs = opts.wifiIntervalMs === undefined ? 30000 : opts.wifiIntervalMs
+    if (this.wifi && wifiMs && bridge.onWifiScan && bridge.startWifiStream) {
+      this.offs.push(bridge.onWifiScan((s) => this.pushWifiScan(s)))
+      bridge.startWifiStream(wifiMs)
+    }
+    return ok
+  }
+
+  private detach() {
+    for (const off of this.offs) off()
+    this.offs = []
+  }
+
+  async stop(): Promise<void> {
+    this.detach()
+    const b = this.bridge
+    this.bridge = null
+    if (b) await Promise.allSettled([b.stopSensorStream(), b.stopWifiStream?.()])
+  }
+
+  onUpdate(cb: (u: PositionUpdate) => void): () => void {
+    this.listeners.add(cb)
+    return () => this.listeners.delete(cb)
+  }
+
+  onLevelChange(cb: (c: LevelChange) => void): () => void {
+    this.levelListeners.add(cb)
+    return () => this.levelListeners.delete(cb)
+  }
+
+  setKnownPosition(x: number, y: number, level: string = this.level, opts: KnownPositionOptions = {}) {
+    if (level !== this.level) this.setLevel(level)
+    // the user / navigation is authoritative about the floor: restart the barometer reference and the WiFi vote
+    this.baro.reset()
+    this.voter.reset()
+    this.voidFallback = null
+    const heading: HeadingPrior = opts.headingDeg !== undefined && opts.headingDeg !== null
+      ? { mean: (90 - opts.headingDeg) * DEG, sigma: 15 * DEG, uniformFrac: 0.1 }
+      : this.compassPrior()
+    const pf = this.pf ?? this.newFilter()
+    pf.init([{ x, y, w: 1 }], opts.accuracyM ?? 1, heading, this.pdr.yaw)
+    this.afterInit('pdr')
+    this.floorConfirmed = true
+    this.emit(opts.t ?? Date.now(), 'pdr')
+  }
+
+  private afterInit(source: PositionSource) {
+    this.levelChosen = true
+    this.initSource = source
+    this.initialWindow = source === 'wifi' ? this.o.wifiLevel.initialWindowScans : 0
+    this.stepsSinceInit = 0
+    this.stats.initialized = true
+  }
+
+  pushSensorBatch(batch: SensorBatch, receivedAt?: number) {
+    if (receivedAt !== undefined) {
+      // Sensor timestamps must be on the wall clock (WiFi scans, seeds, output). The iOS bridge was seen 217 s
+      // behind (boot time computed with sleep included): track the newest-sample lag and correct a steady offset.
+      let newest = -Infinity
+      for (const k of ['accelerometer', 'gyroscope', 'magnetometer'] as const) {
+        const a = batch[k]
+        if (a?.length) newest = Math.max(newest, a[a.length - 1][0])
+      }
+      // A real offset is steady: adopt it only when 5 consecutive batches agree within 0.5 s, and change it only if
+      // it moves by > 5 s (delivery jitter and back-to-back test batches must not shift samples around)
+      if (Number.isFinite(newest)) {
+        this.lagWindow.push(receivedAt - newest)
+        if (this.lagWindow.length > 5) this.lagWindow.shift()
+        const w = [...this.lagWindow].sort((a, b) => a - b)
+        if (w.length === 5 && w[4] - w[0] < 500) {
+          const lag = w[2]
+          if (Math.abs(lag) <= 1000) this.clockLag = null
+          else if (this.clockLag === null || Math.abs(lag - this.clockLag) > 5000) this.clockLag = lag
+        }
+      }
+      if (this.clockLag !== null) batch = shiftBatch(batch, this.clockLag)
+    }
+    // iOS reports magnetometer_accuracy per batch (0 = uncalibrated, 1 = medium, 2 = high): drop uncalibrated samples
+    const magAcc = (batch as SensorBatch & { magnetometer_accuracy?: number }).magnetometer_accuracy
+    if (typeof magAcc === 'number' && magAcc < 1 && batch.magnetometer) batch = { ...batch, magnetometer: [] }
+    this.checkMagnetometer(batch)
+    this.checkBarometer(batch)
+    for (const step of this.pdr.push(batch)) this.onStep(step)
+  }
+
+  private checkBarometer(batch: SensorBatch) {
+    if (batch.unavailable?.includes('barometer')) this.stats.baroAvailable = false
+    const b = batch.barometer
+    if (!b?.length) return
+    this.stats.baroAvailable = true
+    for (const [t, hpa] of b) {
+      const ev = this.baro.push(t, hpa)
+      if (ev) this.onBaroEvent(ev)
+    }
+    this.stats.pressureDeltaHpa = this.baro.p === null ? null : Math.round(this.baro.delta * 1000) / 1000
+  }
+
+  private onBaroEvent(ev: BaroEvent) {
+    if (!this.o.autoLevel || !this.pf?.initialized) return
+    const to = levelForHeightChange(this.venueData.levels.map((l) => l.level), this.level, ev.dhM)
+    if (!to) return
+    const both = this.voter.vote.candidate === to
+    this.switchLevel(to, ev.t, both ? 'both' : 'barometer', both ? 0.95 : 0.8, true)
+  }
+
+  /** true while a working barometer reports no floor change (vetoes WiFi-only switches) */
+  private baroSaysSameFloor(): boolean {
+    return this.stats.baroAvailable === true && this.baro.ref !== null && Math.abs(this.baro.delta) < 0.25
+  }
+
+  /**
+   * Switch to `to`: re-seed at the partner of the connector nearest the current estimate (elevator / stairs).
+   * anywhere = false (WiFi alone) requires that connector within connectorRadiusM.
+   */
+  private switchLevel(to: string, t: number, source: LevelChange['source'], confidence: number, anywhere: boolean,
+    at?: { x: number; y: number; acc: number }): boolean {
+    const pf = this.pf
+    if (!pf?.initialized || !this.venueData.levels.some((l) => l.level.id === to)) return false
+    const e = pf.estimate(this.pdr.yaw)
+    const nc = at ? null : nearestConnector(this.connectors, this.level, to, e.x, e.y)
+    if (!at && !anywhere && (!nc || nc.d > this.o.wifiLevel.connectorRadiusM)) return false
+    const from = this.level
+    this.setLevel(to)
+    this.levelChosen = true
+    this.initialWindow = 0
+    this.floorVoidStreak = 0
+    this.voidFallback = null
+    const seed = at ?? (nc ? { x: nc.partner.x, y: nc.partner.y, acc: 3 } : { x: e.x, y: e.y, acc: 8 })
+    // heading is not trusted across a floor change: people turn round in elevators / on stair landings and the steel
+    // cabin bends the compass; the walls of the landing resolve it within a few steps
+    this.newFilter().init([{ x: seed.x, y: seed.y, w: 1 }], seed.acc, { mean: null, sigma: 0, uniformFrac: 1 }, this.pdr.yaw)
+    this.afterInit('pdr')
+    this.floorConfirmed = source !== 'wifi'
+    this.voter.reset()
+    this.magResid = []
+    if (source === 'wifi') this.baro.reset()
+    this.stats.levelChanges++
+    const c: LevelChange = { t, from, to, source, confidence, connector: nc ? nc.partner.id : null }
+    for (const cb of this.levelListeners) {
+      try {
+        cb(c)
+      } catch (err) {
+        console.error('[positioning] level listener error', err)
+      }
+    }
+    this.emit(t, 'pdr')
+    return true
+  }
+
+  /** WiFi level vote for a fresh scan: best WkNN distance per level (current level from its own observation) */
+  private voteLevel(scan: WifiScan, currentDist: number): WifiLevelVote | null {
+    const rm = this.radiomap
+    if (!rm) return null
+    const dist: Record<string, number> = { [this.level]: currentDist }
+    const e = this.pf?.initialized ? this.pf.estimate(this.pdr.yaw) : null
+    for (const level of new Set(rm.points.map((p) => p.level).filter((l): l is string => !!l && l !== this.level))) {
+      if (!this.venueData.levels.some((l) => l.level.id === level)) continue
+      // a level that has no floor where the user is (2F over the arena) gets no vote, however well WiFi matches it
+      if (e && Number.isFinite(e.x) && !this.grid(level).nearFree(e.x, e.y, this.o.floorVoid.radiusM)) continue
+      let m = this.levelModels.get(level)
+      if (!m) this.levelModels.set(level, (m = new WifiModel(rm, level, { ...this.o.wifi, adaptOffset: false })))
+      const obs = m.observe(scan)
+      const r = obs && m.wknn(obs)
+      if (r) dist[level] = r.dist
+    }
+    if (Object.keys(dist).length < 2) return null
+    return this.voter.update(this.level, dist, this.o.wifiLevel.marginDb)
+  }
+
+  /**
+   * Session plausibility of the magnetometer against the map. A phone with an uncompensated hard-iron bias (iPhone
+   * runs of 2026-11-07: |B| 117–143 uT vs map 45 uT, 31–182 uT depending on orientation — a vector bias no scalar
+   * offset can absorb) would hijack the filter; magnetic matching and the compass prior are then off.
+   * Two checks, both must pass:
+   * - early, coarse: median of the last 30 s of batch-mean |B| within max(45 uT, 3.5 std) of the map's mean (the
+   *   iPhones are ~+100 uT off; real anomalies are local — 2F north corridor dips to 7–10 uT, other stretches reach
+   *   ~70 uT — and a tighter global bound switched magnetic off exactly where it is most informative);
+   * - per step, fine: median of the last 15 step |B| minus the map |B| at the current estimate within 35 uT (25 tripped
+   *   on healthy phones in the steep 2F gradients; biased iPhones are 70–100 uT off).
+   */
+  private checkMagnetometer(batch: SensorBatch) {
+    const m = batch.magnetometer
+    if (!m?.length) return
+    let sum = 0
+    for (const v of m) sum += Math.hypot(v[1], v[2], v[3])
+    this.magRing.push(sum / m.length)
+    if (this.magRing.length > 150) this.magRing.shift()
+    const mg = this.magGrid(this.level)
+    if (!mg || this.magRing.length < 25) return
+    const sorted = [...this.magRing].sort((a, b) => a - b)
+    const med = sorted[sorted.length >> 1]
+    this.magGlobalOk = Math.abs(med - mg.stats.meanB) <= Math.max(45, 3.5 * mg.stats.stdB)
+    if (!this.magGlobalOk) this.magNote = `magnetometer |B| median ${med.toFixed(0)} uT vs map ${mg.stats.meanB.toFixed(0)} uT`
+    this.updateMagHealth()
+  }
+
+  /** residual of a step's |B| against the map at the current estimate (fine plausibility check) */
+  private checkMagResidual(magB: number, mg: MagGrid) {
+    const pf = this.pf
+    if (!pf?.initialized) return
+    const e = pf.estimate(this.pdr.yaw)
+    if (!mg.lookup(e.x, e.y, this.magTmp)) return
+    this.magResid.push(magB - this.magTmp[0])
+    if (this.magResid.length > 15) this.magResid.shift()
+    if (this.magResid.length < 15) return
+    const r = [...this.magResid].sort((a, b) => a - b)[7]
+    this.magResidOk = Math.abs(r) <= 35
+    if (!this.magResidOk) this.magNote = `magnetometer |B| ${r > 0 ? '+' : ''}${r.toFixed(0)} uT off the map (median of 15 steps)`
+    this.updateMagHealth()
+  }
+
+  private updateMagHealth() {
+    const ok = this.magGlobalOk && this.magResidOk
+    if (ok !== this.stats.magHealthy) {
+      this.stats.magHealthy = ok
+      this.stats.magNote = ok ? null : `${this.magNote}: magnetic matching off`
+      if (!ok) console.warn(`[positioning] ${this.stats.magNote}`)
+    }
+  }
+
+  private onStep(step: StepEvent) {
+    this.stats.steps++
+    const pf = this.pf
+    if (!pf?.initialized) return
+    pf.predict(step)
+    if (this.o.doorHopProb > 0) pf.hop(this.doorPortals(this.level), this.o.doorHopRadiusM, this.o.doorHopProb)
+    const levelMag = this.magGrid(this.level)
+    if (levelMag && step.magB !== null) this.checkMagResidual(step.magB, levelMag)
+    const mg = this.stats.magHealthy ? levelMag : null
+    if (mg && step.magB !== null && step.magBv !== null && pf.weightMagnetic(step.magB, step.magBv, mg, this.magOpts) > 0) {
+      this.stats.magSteps++
+      this.lastAbsT = step.t
+    }
+    pf.maybeResample()
+    this.stats.lostSteps = pf.lostSteps
+    this.stepsSinceInit++
+    if (this.checkFloorVoid(step.t)) return
+    this.emit(step.t, step.t - this.lastAbsT < this.o.fusedHoldMs ? 'fused' : 'pdr')
+  }
+
+  pushWifiScan(scan: WifiScan) {
+    // WiFi-only start: the best-matching level. Users can start anywhere (not only at the 1F entrance); a 1F-court
+    // user matched to the 2F walkway that overlooks the hall is caught by the floor-void start rule (checkFloorVoid)
+    if (!this.levelChosen && !this.pf?.initialized && this.o.level === null) this.pickLevelFromWifi(scan)
+    const wifi = this.wifi
+    if (!wifi) return
+    const obs = wifi.observe(scan)
+    if (!obs) return
+    this.stats.wifiScans++
+    const knn = wifi.wknn(obs)
+    // level vote first: a scan that matches nothing on this level (knn null) is the clearest sign of another floor
+    const vote = this.voteLevel(scan, knn?.dist ?? Infinity)
+    if (vote) this.stats.wifiLevelVote = vote
+    const wl = this.o.wifiLevel
+    // initial correction: right after a WiFi-only start, another level that beats the entrance level by
+    // strongMarginDb on `scans` consecutive fresh scans (the first one included) re-initialises the filter there —
+    // anywhere (the user may have started anywhere) and regardless of the barometer (it only sees changes)
+    if (this.pf?.initialized && this.initialWindow > 0) this.initialWindow--
+    if (vote?.candidate && this.o.autoLevel && (!this.pf?.initialized || (this.initSource === 'wifi' && this.initialWindow > 0)) &&
+        vote.streak >= wl.scans && vote.dist[this.level] - vote.dist[vote.candidate] >= wl.strongMarginDb) {
+      const from = this.level
+      this.setLevel(vote.candidate)
+      this.levelChosen = true
+      this.voter.reset()
+      this.initialWindow = 0
+      this.stats.levelChanges++
+      const c: LevelChange = { t: scan.collected_at, from, to: vote.candidate, source: 'wifi', confidence: 0.6, connector: null }
+      for (const cb of this.levelListeners) {
+        try {
+          cb(c)
+        } catch (err) {
+          console.error('[positioning] level listener error', err)
+        }
+      }
+      this.pushWifiScan(scan) // initialise on the new level from this scan
+      return
+    }
+    if (this.recoverFromVoid(scan, knn?.dist ?? Infinity, obs.t)) return
+    // WiFi alone: also only where this level is surveyed — off its fingerprints the own-level distance is bad anyway
+    // and says nothing about another floor (LOWO with the route removed: 3 false switches without this)
+    const est = this.pf?.initialized ? this.pf.estimate(this.pdr.yaw) : null
+    if (vote?.candidate && this.o.autoLevel && vote.streak >= wl.scans && !this.baroSaysSameFloor() &&
+        vote.dist[this.level] - vote.dist[vote.candidate] >= wl.strongMarginDb && est && wifi.covered(est.x, est.y) &&
+        this.switchLevel(vote.candidate, obs.t, 'wifi', 0.6, false)) return
+    if (!knn) return
+    this.stats.lastWknn = knn
+    this.stats.wifiUsed++
+    const lik = wifi.fingerprintLikelihood(obs)
+    const pf = this.pf
+    if (!pf?.initialized) {
+      const seeds = Array.from(lik.keys())
+        .sort((a, b) => lik[b] - lik[a])
+        .slice(0, this.o.wifiInitSeeds)
+        .map((j) => ({ x: wifi.fpX[j], y: wifi.fpY[j], w: lik[j] }))
+      ;(pf ?? this.newFilter()).init(seeds, this.o.wifiInitSigmaM, this.compassPrior(), this.pdr.yaw)
+      this.afterInit('wifi')
+      this.floorConfirmed = false
+      this.lastAbsT = obs.t
+      // a broad WiFi start cloud along the 2F ring has its mean over the arena: that is a 1F position (checkFloorVoid)
+      if (this.checkFloorVoid(obs.t)) return
+      this.emit(obs.t, 'wifi')
+      return
+    }
+    // coverage gate: where the cloud is mostly outside the surveyed area, the fingerprints of the nearest surveyed
+    // corridor would only drag it away, so the scan is not used
+    if (pf.weightShare((x, y) => wifi.covered(x, y)) < this.o.wifiMinCoverage) {
+      this.emit(obs.t, this.stepsSinceInit === 0 ? this.initSource : 'pdr')
+      return
+    }
+    const fit = pf.weightAt(obs.tObs, (x, y) => wifi.likelihoodAt(lik, x, y))
+    pf.normalize()
+    const e = pf.estimate(this.pdr.yaw)
+    // Relocalise only a WiFi-initialised filter (it is itself only as good as WiFi) when it disagrees with WiFi and
+    // explains the scan poorly. After a user-given start never: walk-survey WiFi fixes are 10–20 m off in the open
+    // arena, and injecting particles there broke correct tracks (live run 193729-pixel9a: 29 m at the NW door;
+    // LOWO: p90 3.3 -> 11 m with relocalisation after a known start)
+    if (this.initSource === 'wifi' && fit < 0.15 && Math.hypot(e.x - knn.x, e.y - knn.y) > this.o.relocalizeM) {
+      pf.inject(knn.x, knn.y, Math.max(knn.spread, 3), 0.25, this.compassPrior(), this.pdr.yaw)
+      this.stats.relocalizations++
+    }
+    pf.maybeResample()
+    const after = pf.estimate(this.pdr.yaw)
+    if (after.spread < 2.5 && this.stepsSinceInit > 10) wifi.adaptOffsetAt(obs, after.x, after.y)
+    this.stats.deviceOffsetDb = wifi.deviceOffsetDb
+    this.lastAbsT = obs.t
+    if (this.checkFloorVoid(obs.t)) return
+    this.emit(obs.t, this.stepsSinceInit === 0 && this.initSource === 'wifi' ? 'wifi' : 'fused')
+  }
+
+  /** Level for a WiFi-only start (no seed yet): the one whose fingerprints match the scan best. */
+  private pickLevelFromWifi(scan: WifiScan) {
+    const rm = this.radiomap
+    if (!rm || !this.o.useWifi) return
+    const levels = [...new Set(rm.points.map((p) => p.level).filter(Boolean))]
+    if (levels.length < 2) return
+    let best: { level: string; dist: number } | null = null
+    for (const level of levels) {
+      if (!this.venueData.levels.some((l) => l.level.id === level)) continue
+      const m = new WifiModel(rm, level, { ...this.o.wifi, adaptOffset: false })
+      const obs = m.observe(scan)
+      const r = obs && m.wknn(obs)
+      if (r && (!best || r.dist < best.dist)) best = { level, dist: r.dist }
+    }
+    if (best && best.level !== this.level) this.setLevel(best.level)
+  }
+
+  /** the level directly below (next lower ordinal), if any */
+  private levelBelow(level: string): string | null {
+    const cur = this.venueData.levels.find((l) => l.level.id === level)?.level
+    if (!cur) return null
+    const below = this.venueData.levels.map((l) => l.level).filter((l) => l.ordinal < cur.ordinal).sort((x, y) => y.ordinal - x.ordinal)
+    return below[0]?.id ?? null
+  }
+
+  /**
+   * Floor-void rule (the user's: 「二樓中間不會存在空間，所以若在二樓中間，就是在一樓」): an estimate off this level's
+   * floor (walkable area dilated by floorVoid.radiusM) where the level below has floor is a position on the level
+   * below. Checked before every update (WiFi start, scans, steps); moves there, at that position. A broad cloud
+   * spread along the 2F ring (a WiFi start, +-40-50 m) has its mean over the arena: such a start goes to 1F, and
+   * recoverFromVoid brings a genuine 2F user back up once WiFi clearly says 2F. Only while the floor rests on WiFi
+   * alone: after a seed, a barometer change or a recovery a cloud spread along the ring is a 2F cloud (real walks with a
+   * known 2F start: 8 PDR-only and 5 WiFi+PDR runs wrongly moved down otherwise); emit() then shows its densest place.
+   * True if it switched.
+   */
+  private checkFloorVoid(t: number): boolean {
+    const pf = this.pf
+    const below = this.levelBelow(this.level)
+    if (!pf?.initialized || !below) {
+      this.floorVoidStreak = this.stats.floorVoidStreak = 0
+      return false
+    }
+    const e = pf.estimate(this.pdr.yaw)
+    if (!Number.isFinite(e.x)) return false
+    const r = this.o.floorVoid.radiusM
+    const inVoid = !this.grid(this.level).nearFree(e.x, e.y, r) && this.grid(below).nearFree(e.x, e.y, r)
+    this.floorVoidStreak = inVoid ? this.floorVoidStreak + 1 : 0
+    this.stats.floorVoidStreak = this.floorVoidStreak
+    if (!inVoid || !this.o.autoLevel || this.floorConfirmed) return false
+    const from = this.level
+    // reported as source 'wifi' (the position comes from WiFi matching) with confidence 0.9
+    if (!this.switchLevel(below, t, 'wifi', 0.9, true, { x: e.x, y: e.y, acc: Math.max(3, Math.min(e.spread, 12)) })) return false
+    this.voidFallback = { from, streak: 0 }
+    return true
+  }
+
+  /**
+   * Recovery after a floor-void move: the upper level comes back when `recoverScans` consecutive scans match it by at
+   * least recoverDb better than the current level AND its WkNN position lies on its floor (on the ring, not over the
+   * arena); re-seeded there. Ends with a seed, a barometer / WiFi switch or the recovery itself. True if it switched.
+   */
+  private recoverFromVoid(scan: WifiScan, currentDist: number, t: number): boolean {
+    const fb = this.voidFallback
+    const rm = this.radiomap
+    if (!fb || !rm || !this.o.autoLevel) return false
+    let m = this.levelModels.get(fb.from)
+    if (!m) this.levelModels.set(fb.from, (m = new WifiModel(rm, fb.from, { ...this.o.wifi, adaptOffset: false })))
+    const obs = m.observe(scan)
+    const r = obs && m.wknn(obs)
+    const fv = this.o.floorVoid
+    const ok = !!r && currentDist - r.dist >= fv.recoverDb && this.grid(fb.from).nearFree(r.x, r.y, fv.radiusM)
+    fb.streak = ok ? fb.streak + 1 : 0
+    if (!r || fb.streak < fv.recoverScans) return false
+    if (!this.switchLevel(fb.from, t, 'wifi', 0.6, true, { x: r.x, y: r.y, acc: Math.max(3, Math.min(r.spread, 5)) })) return false
+    this.floorConfirmed = true
+    return true
+  }
+
+  private emit(t: number, source: PositionSource) {
+    const pf = this.pf
+    if (!pf?.initialized) return
+    const e = pf.estimate(this.pdr.yaw)
+    if (!Number.isFinite(e.x)) return
+    // the shown / routed point never lies off the floor (2F over the arena): a mean that does (a cloud spread along
+    // the ring, when the floor-void move cannot apply) is replaced by the densest place of the cloud, and that, if
+    // still off (particles seeded off the map stay there), by the nearest walkable cell
+    let { x, y } = e
+    const g = this.grid(this.level)
+    const r = this.o.floorVoid.radiusM
+    if (!g.nearFree(x, y, r)) {
+      const md = pf.mode()
+      if (Number.isFinite(md.x)) ({ x, y } = g.nearFree(md.x, md.y, r) ? md : pf.nearest(md.x, md.y))
+      if (!g.nearFree(x, y, r)) ({ x, y } = g.nearestFree(x, y, 30) ?? { x, y })
+    }
+    const a = this.o.accuracy
+    const accuracy = Math.max(a.floorM, a.scale * Math.hypot(e.spread, a.baseM))
+    const u: PositionUpdate = {
+      t,
+      level: this.level,
+      x,
+      y,
+      accuracy_m: Math.round(accuracy * 10) / 10,
+      heading_deg: e.headingConc > 0.5 && this.stepsSinceInit > 0 ? (((90 - e.heading / DEG) % 360) + 360) % 360 : null,
+      source,
+      confidence: Math.round(Math.exp(-accuracy / 6) * Math.min(1, 0.4 + 0.6 * e.headingConc) * 100) / 100,
+    }
+    this.last = u
+    for (const cb of this.listeners) {
+      try {
+        cb(u)
+      } catch (err) {
+        console.error('[positioning] listener error', err)
+      }
+    }
+  }
+}
+
+/** barometric floor-change threshold: 55% of the venue's smallest storey height (hPa) */
+function storeyStepHpa(venueData: VenueData, hpaPerM: number): number {
+  const el = venueData.levels.map((l) => l.level.elevation_m ?? l.level.ordinal * 5).sort((a, b) => a - b)
+  let gap = Infinity
+  for (let i = 1; i < el.length; i++) if (el[i] - el[i - 1] > 0.5) gap = Math.min(gap, el[i] - el[i - 1])
+  return Number.isFinite(gap) ? Math.max(0.2, Math.min(0.6, 0.55 * gap * hpaPerM)) : DEFAULT_BARO.stepHpa
+}
+
+function shiftBatch(b: SensorBatch, dt: number): SensorBatch {
+  const out: SensorBatch = { ...b }
+  for (const k of ['accelerometer', 'gyroscope', 'magnetometer'] as const) {
+    const a = b[k]
+    if (a) out[k] = a.map((v) => [v[0] + dt, v[1], v[2], v[3]])
+  }
+  if (b.barometer) out.barometer = b.barometer.map((v) => [v[0] + dt, v[1]])
+  return out
+}
+
+export function createPositioning(cfg: PositioningConfig): Positioning {
+  return new PositioningEngine(cfg)
+}
+
+async function fetchJson<T>(url: string): Promise<T | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return JSON.parse(await res.text()) as T
+  } catch {
+    return null
+  }
+}
+
+/** Fetch positioning/wifi_radiomap.json and positioning/magmap_<level>.json (null / skipped when missing). */
+export async function loadPositioningMaps(venueId: string, levelIds: string[]): Promise<{ radiomap: Radiomap | null; magmaps: Magmap[] }> {
+  const base = `${venueBaseUrl(venueId)}positioning/`
+  const [radiomap, ...mags] = await Promise.all([
+    fetchJson<Radiomap>(base + 'wifi_radiomap.json'),
+    ...levelIds.map((l) => fetchJson<Magmap>(`${base}magmap_${encodeURIComponent(l)}.json`)),
+  ])
+  return {
+    radiomap: radiomap && Array.isArray(radiomap.points) && Array.isArray(radiomap.bssids) ? radiomap : null,
+    magmaps: mags.filter((m): m is Magmap => !!m && Array.isArray(m.cells)),
+  }
+}

@@ -1,0 +1,26 @@
+{
+ "id": "tianmu",
+ "name": "臺北市立大學天母體育館",
+ "name_en": "UTaipei Tianmu Gymnasium",
+ "origin": {
+  "lng": 121.5346582,
+  "lat": 25.115694
+ },
+ "bearing_deg": -0.39,
+ "georeferenced": true,
+ "levels": [
+  {
+   "id": "1F",
+   "ordinal": 0,
+   "name": "1F",
+   "elevation_m": 0
+  },
+  {
+   "id": "2F",
+   "ordinal": 1,
+   "name": "2F",
+   "elevation_m": 5.0
+  }
+ ],
+ "default_level": "1F"
+}

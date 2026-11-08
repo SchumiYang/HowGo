@@ -1,0 +1,1486 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       7.6,
+       3.8
+      ],
+      [
+       14.3,
+       3.8
+      ],
+      [
+       14.3,
+       63.8
+      ],
+      [
+       7.6,
+       63.8
+      ],
+      [
+       7.6,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-corridor-west",
+    "level": "1F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       23.6
+      ],
+      [
+       7.6,
+       23.6
+      ],
+      [
+       7.6,
+       44.1
+      ],
+      [
+       0.0,
+       44.1
+      ],
+      [
+       0.0,
+       23.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-lobby-main",
+    "level": "1F",
+    "category": "lobby",
+    "name": "門廳"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       7.6,
+       61.5
+      ],
+      [
+       17.3,
+       61.5
+      ],
+      [
+       17.3,
+       67.5
+      ],
+      [
+       7.6,
+       67.5
+      ],
+      [
+       7.6,
+       61.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-lobby-nw",
+    "level": "1F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       13.2,
+       63.8
+      ],
+      [
+       78.4,
+       63.8
+      ],
+      [
+       78.4,
+       67.5
+      ],
+      [
+       13.2,
+       67.5
+      ],
+      [
+       13.2,
+       63.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-corridor-north",
+    "level": "1F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       72.2,
+       3.8
+      ],
+      [
+       75.3,
+       3.8
+      ],
+      [
+       75.3,
+       63.8
+      ],
+      [
+       72.2,
+       63.8
+      ],
+      [
+       72.2,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-corridor-east",
+    "level": "1F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       7.6,
+       0.4
+      ],
+      [
+       78.4,
+       0.4
+      ],
+      [
+       78.4,
+       3.8
+      ],
+      [
+       7.6,
+       3.8
+      ],
+      [
+       7.6,
+       0.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-corridor-south",
+    "level": "1F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       7.6,
+       0.4
+      ],
+      [
+       14.3,
+       0.4
+      ],
+      [
+       14.3,
+       6.3
+      ],
+      [
+       7.6,
+       6.3
+      ],
+      [
+       7.6,
+       0.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-lobby-sw",
+    "level": "1F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -9.0,
+       24.0
+      ],
+      [
+       0.0,
+       24.0
+      ],
+      [
+       0.0,
+       44.0
+      ],
+      [
+       -9.0,
+       44.0
+      ],
+      [
+       -9.0,
+       24.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-platform-west",
+    "level": "1F",
+    "category": "walkway",
+    "name": "入口平台",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       17.3,
+       13.6
+      ],
+      [
+       69.2,
+       13.6
+      ],
+      [
+       72.2,
+       16.6
+      ],
+      [
+       72.2,
+       50.3
+      ],
+      [
+       69.2,
+       53.3
+      ],
+      [
+       17.3,
+       53.3
+      ],
+      [
+       14.3,
+       50.3
+      ],
+      [
+       14.3,
+       16.6
+      ],
+      [
+       17.3,
+       13.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-arena",
+    "level": "1F",
+    "category": "court",
+    "name": "比賽場",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       22.1,
+       61.4
+      ],
+      [
+       25.2,
+       61.4
+      ],
+      [
+       25.2,
+       63.8
+      ],
+      [
+       22.1,
+       63.8
+      ],
+      [
+       22.1,
+       61.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-RT-ACC",
+    "level": "1F",
+    "category": "restroom.accessible",
+    "name": "無障礙廁所",
+    "accessible": true,
+    "name_en": "Accessible restroom"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       17.3,
+       53.4
+      ],
+      [
+       21.6,
+       53.4
+      ],
+      [
+       21.6,
+       63.8
+      ],
+      [
+       17.3,
+       63.8
+      ],
+      [
+       17.3,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-RT-M",
+    "level": "1F",
+    "category": "restroom.male",
+    "name": "男廁",
+    "name_en": "Men's restroom"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       21.6,
+       53.4
+      ],
+      [
+       26.7,
+       53.4
+      ],
+      [
+       26.7,
+       63.8
+      ],
+      [
+       25.2,
+       63.8
+      ],
+      [
+       25.2,
+       61.4
+      ],
+      [
+       21.6,
+       61.4
+      ],
+      [
+       21.6,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-RT-F",
+    "level": "1F",
+    "category": "restroom.female",
+    "name": "女廁",
+    "name_en": "Women's restroom"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.0,
+       64.4
+      ],
+      [
+       13.2,
+       64.4
+      ],
+      [
+       13.2,
+       66.7
+      ],
+      [
+       11.0,
+       66.7
+      ],
+      [
+       11.0,
+       64.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-EL-2",
+    "level": "1F",
+    "category": "elevator",
+    "ref": "#2",
+    "name": "電梯 2",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.0,
+       0.8
+      ],
+      [
+       13.2,
+       0.8
+      ],
+      [
+       13.2,
+       3.2
+      ],
+      [
+       11.0,
+       3.2
+      ],
+      [
+       11.0,
+       0.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-EL-1",
+    "level": "1F",
+    "category": "elevator",
+    "ref": "#1",
+    "name": "電梯 1",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       61.5
+      ],
+      [
+       7.6,
+       61.5
+      ],
+      [
+       7.6,
+       67.5
+      ],
+      [
+       0.0,
+       67.5
+      ],
+      [
+       0.0,
+       61.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST-A",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "A梯",
+    "name": "A梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       78.4,
+       61.3
+      ],
+      [
+       85.6,
+       61.3
+      ],
+      [
+       85.6,
+       67.6
+      ],
+      [
+       78.4,
+       67.6
+      ],
+      [
+       78.4,
+       61.3
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST-B",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "B梯",
+    "name": "B梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       7.6,
+       0.0
+      ],
+      [
+       7.6,
+       6.3
+      ],
+      [
+       0.0,
+       6.3
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST-C",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "C梯",
+    "name": "C梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       78.4,
+       0.4
+      ],
+      [
+       85.6,
+       0.4
+      ],
+      [
+       85.6,
+       6.3
+      ],
+      [
+       78.4,
+       6.3
+      ],
+      [
+       78.4,
+       0.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-ST-D",
+    "level": "1F",
+    "category": "stairs",
+    "ref": "D梯",
+    "name": "D梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       13.75,
+       27.9
+      ],
+      [
+       13.75,
+       27.9
+      ],
+      [
+       12.48,
+       28.01
+      ],
+      [
+       11.26,
+       28.35
+      ],
+      [
+       10.14,
+       28.89
+      ],
+      [
+       9.15,
+       29.63
+      ],
+      [
+       8.35,
+       30.52
+      ],
+      [
+       7.74,
+       31.54
+      ],
+      [
+       7.37,
+       32.65
+      ],
+      [
+       7.25,
+       33.8
+      ],
+      [
+       7.37,
+       34.95
+      ],
+      [
+       7.74,
+       36.06
+      ],
+      [
+       8.35,
+       37.08
+      ],
+      [
+       9.15,
+       37.97
+      ],
+      [
+       10.14,
+       38.71
+      ],
+      [
+       11.26,
+       39.25
+      ],
+      [
+       12.48,
+       39.59
+      ],
+      [
+       13.75,
+       39.7
+      ],
+      [
+       13.75,
+       27.9
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A101",
+    "level": "1F",
+    "category": "room",
+    "ref": "A101",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       44.1
+      ],
+      [
+       7.6,
+       44.1
+      ],
+      [
+       7.6,
+       50.2
+      ],
+      [
+       0.0,
+       50.2
+      ],
+      [
+       0.0,
+       44.1
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A102",
+    "level": "1F",
+    "category": "room",
+    "ref": "A102",
+    "name": "貴賓室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       54.0
+      ],
+      [
+       7.6,
+       54.0
+      ],
+      [
+       7.6,
+       61.5
+      ],
+      [
+       0.0,
+       61.5
+      ],
+      [
+       0.0,
+       54.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A104",
+    "level": "1F",
+    "category": "room",
+    "ref": "A104",
+    "name": "裁判及紀錄人員室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       33.1,
+       53.4
+      ],
+      [
+       48.1,
+       53.4
+      ],
+      [
+       48.1,
+       63.8
+      ],
+      [
+       33.1,
+       63.8
+      ],
+      [
+       33.1,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A109",
+    "level": "1F",
+    "category": "office",
+    "ref": "A109",
+    "name": "大會辦公室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       55.0,
+       3.8
+      ],
+      [
+       63.6,
+       3.8
+      ],
+      [
+       63.6,
+       13.6
+      ],
+      [
+       55.0,
+       13.6
+      ],
+      [
+       55.0,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A115",
+    "level": "1F",
+    "category": "room",
+    "ref": "A115",
+    "name": "休息室及更衣室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       47.0,
+       3.8
+      ],
+      [
+       55.0,
+       3.8
+      ],
+      [
+       55.0,
+       13.6
+      ],
+      [
+       47.0,
+       13.6
+      ],
+      [
+       47.0,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A116",
+    "level": "1F",
+    "category": "room",
+    "ref": "A116",
+    "name": "休息室及更衣室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       28.5,
+       3.8
+      ],
+      [
+       36.3,
+       3.8
+      ],
+      [
+       36.3,
+       13.6
+      ],
+      [
+       28.5,
+       13.6
+      ],
+      [
+       28.5,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A117",
+    "level": "1F",
+    "category": "room",
+    "ref": "A117",
+    "name": "休息室及更衣室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       21.5,
+       3.8
+      ],
+      [
+       28.5,
+       3.8
+      ],
+      [
+       28.5,
+       13.6
+      ],
+      [
+       21.5,
+       13.6
+      ],
+      [
+       21.5,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A118",
+    "level": "1F",
+    "category": "room",
+    "ref": "A118",
+    "name": "休息室及更衣室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       9.3
+      ],
+      [
+       7.6,
+       9.3
+      ],
+      [
+       7.6,
+       13.8
+      ],
+      [
+       0.0,
+       13.8
+      ],
+      [
+       0.0,
+       9.3
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A119",
+    "level": "1F",
+    "category": "room",
+    "ref": "A119",
+    "name": "報到處及選手等候休息室",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       13.8
+      ],
+      [
+       7.6,
+       13.8
+      ],
+      [
+       7.6,
+       19.8
+      ],
+      [
+       0.0,
+       19.8
+      ],
+      [
+       0.0,
+       13.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-A120",
+    "level": "1F",
+    "category": "first_aid",
+    "ref": "A120",
+    "name": "急救站",
+    "ref_verified": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       19.8
+      ],
+      [
+       7.6,
+       19.8
+      ],
+      [
+       7.6,
+       23.6
+      ],
+      [
+       0.0,
+       23.6
+      ],
+      [
+       0.0,
+       19.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-ticket",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "售票室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       6.3
+      ],
+      [
+       7.6,
+       6.3
+      ],
+      [
+       7.6,
+       9.3
+      ],
+      [
+       0.0,
+       9.3
+      ],
+      [
+       0.0,
+       6.3
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-doping",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "藥檢室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       50.2
+      ],
+      [
+       7.6,
+       50.2
+      ],
+      [
+       7.6,
+       54.0
+      ],
+      [
+       0.0,
+       54.0
+      ],
+      [
+       0.0,
+       50.2
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-wc-staff",
+    "level": "1F",
+    "category": "nonpublic"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       26.7,
+       53.4
+      ],
+      [
+       33.1,
+       53.4
+      ],
+      [
+       33.1,
+       63.8
+      ],
+      [
+       26.7,
+       63.8
+      ],
+      [
+       26.7,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-mgmt",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "管理及資訊室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       48.1,
+       53.4
+      ],
+      [
+       63.5,
+       53.4
+      ],
+      [
+       63.5,
+       63.8
+      ],
+      [
+       48.1,
+       63.8
+      ],
+      [
+       48.1,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-power",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "自設發電室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       63.5,
+       53.4
+      ],
+      [
+       67.2,
+       53.4
+      ],
+      [
+       67.2,
+       63.8
+      ],
+      [
+       63.5,
+       63.8
+      ],
+      [
+       63.5,
+       53.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-telecom",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "電信室"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       17.0,
+       3.8
+      ],
+      [
+       21.5,
+       3.8
+      ],
+      [
+       21.5,
+       13.6
+      ],
+      [
+       17.0,
+       13.6
+      ],
+      [
+       17.0,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-shower-1",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "淋浴間"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       36.3,
+       3.8
+      ],
+      [
+       47.0,
+       3.8
+      ],
+      [
+       47.0,
+       13.6
+      ],
+      [
+       36.3,
+       13.6
+      ],
+      [
+       36.3,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-shower-2",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "淋浴間"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       63.6,
+       3.8
+      ],
+      [
+       68.8,
+       3.8
+      ],
+      [
+       68.8,
+       13.6
+      ],
+      [
+       63.6,
+       13.6
+      ],
+      [
+       63.6,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-shower-3",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "淋浴間"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       75.3,
+       6.3
+      ],
+      [
+       85.6,
+       6.3
+      ],
+      [
+       85.6,
+       61.3
+      ],
+      [
+       75.3,
+       61.3
+      ],
+      [
+       75.3,
+       6.3
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "1F-NP-east",
+    "level": "1F",
+    "category": "nonpublic",
+    "name": "機房"
+   }
+  }
+ ]
+}

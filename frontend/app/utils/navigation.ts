@@ -54,5 +54,5 @@ export function createRouteTracker(coordinates: number[][]) {
     return [pointAt(start), ...between, pointAt(end)]
   }
 
-  return { cumulative, total, match, slice }
+  return { cumulative, total, match, slice, pointAt }
 }

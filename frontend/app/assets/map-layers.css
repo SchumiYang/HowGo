@@ -1,0 +1,28 @@
+/* UI-004 / UI-005 map layer badges. Colours come from the UI-001 tokens in main.css. */
+
+/* Layer panel: the 16 × 16 badge replaces the old colour dot. */
+.layer-settings .chip .layer-icon { width: 16px; height: 16px; }
+
+/* Place card: the SVG's own circular badge, no rounded-square plate; transparent corners show the card. */
+.place-card .place-badge { width: 52px; height: 52px; align-self: flex-start; }
+.place-title-row { display: flex; align-items: flex-start; gap: 4px; }
+.place-title-row h2 { flex: 1; min-width: 0; }
+.icon-button.place-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: -3px -6px 0 0;
+  color: var(--text-hint, var(--grey-400));
+}
+.icon-button.place-close:hover { color: var(--text-secondary, var(--grey-700)); }
+
+/* Route legend: 指引側人行道 shares Green / 500 with 行經人行道, so its swatch mirrors the map style
+   (lighter fill + dashed Primary / 700 outline) instead of relying on colour. */
+.route-key i.guided-sidewalk {
+  box-sizing: border-box;
+  width: 14px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1.5px dashed var(--primary-700);
+  background-image: linear-gradient(color-mix(in srgb, var(--white-50) 45%, transparent) 0 0);
+}

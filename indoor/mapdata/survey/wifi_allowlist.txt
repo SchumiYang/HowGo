@@ -1,0 +1,26 @@
+# WiFi APs the radiomap may use (read by tools/build_radiomap.py; the engine then ignores every other AP).
+# One rule per line: 'prefix <SSID start>', 'regex <SSID pattern>', 'bssid <MAC or MAC prefix>'. '#' = comment.
+# No rules (or no file) = every AP except phone hotspots / randomized MACs.
+# A BSSID with a hidden SSID is kept when it belongs to an allowed radio (only with build_radiomap.py --group).
+#
+# Currently NO rules are active: all APs (335 BSSIDs), no --group. Chosen 2026-11-08 for the CodeFest demo
+# (maximum accuracy on the current data, robustness to APs disappearing after the event not considered).
+#
+# Leave-one-walk-out on the 2026-11-07 survey, 41 walks 1F+2F (survey/exclude_walks.txt honoured), 3 seeds:
+#   config               APs  fusion p90  floor vote (1F/2F)    1F arena vote  WkNN median  WiFi-init median 1F
+#   all, none            335  2.34 m      95.6% (92.1/98.4)     92%            11.0 m       2.0 m   <- current
+#   all, --group         151  2.37 m      88.6% (81.0/95.0)     71%            14.5 m       3.5 m
+#   campus, none         166  2.33 m      93.2% (89.4/97.2)     85%            10.7 m       1.9 m
+#   campus, --group       47  2.35 m      84.0% (78.4/89.8)     62%            11.9 m       3.1 m
+#   CodeFest+campus,none 184  2.48 m      93.4% (88.0/98.0)     87%            12.4 m       2.4 m
+#   CodeFest+campus,grp   62  2.49 m      85.5% (76.4/93.3)     68%            15.1 m       5.5 m
+# (APs = radios with --group. "all minus CodeFest" is the same as all: every CodeFest BSSID is locally administered,
+# so it is dropped anyway. --group is worse everywhere, mostly in the floor vote.)
+# Fusion accuracy is equal; all APs wins on the WiFi floor vote. After the event, campus-only is the robust choice.
+
+# campus infrastructure (several SSIDs per physical radio) - uncomment to use campus APs only
+# regex ^(uTaipei|eduroam|TANetRoaming)
+
+# temporary CodeFest event APs (locally administered BSSIDs) - only together with an allowlist (rules switch off
+# the hotspot / randomized-MAC filter)
+# prefix Taipei CodeFest

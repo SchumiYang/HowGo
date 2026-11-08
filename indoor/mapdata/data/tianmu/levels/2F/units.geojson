@@ -1,0 +1,1244 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       14.0,
+       63.9
+      ],
+      [
+       76.5,
+       63.9
+      ],
+      [
+       76.5,
+       67.5
+      ],
+      [
+       14.0,
+       67.5
+      ],
+      [
+       14.0,
+       63.9
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-corridor-north",
+    "level": "2F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       14.0,
+       0.1
+      ],
+      [
+       76.5,
+       0.1
+      ],
+      [
+       76.5,
+       3.7
+      ],
+      [
+       14.0,
+       3.7
+      ],
+      [
+       14.0,
+       0.1
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-corridor-south",
+    "level": "2F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.0,
+       7.0
+      ],
+      [
+       3.75,
+       7.0
+      ],
+      [
+       3.75,
+       60.6
+      ],
+      [
+       0.0,
+       60.6
+      ],
+      [
+       0.0,
+       7.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-corridor-west",
+    "level": "2F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.75,
+       49.6
+      ],
+      [
+       19.8,
+       49.6
+      ],
+      [
+       19.8,
+       63.9
+      ],
+      [
+       3.75,
+       63.9
+      ],
+      [
+       3.75,
+       49.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-lobby-nw",
+    "level": "2F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.75,
+       3.7
+      ],
+      [
+       19.8,
+       3.7
+      ],
+      [
+       19.8,
+       18.0
+      ],
+      [
+       3.75,
+       18.0
+      ],
+      [
+       3.75,
+       3.7
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-lobby-sw",
+    "level": "2F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       78.8,
+       7.0
+      ],
+      [
+       85.5,
+       7.0
+      ],
+      [
+       85.5,
+       60.6
+      ],
+      [
+       78.8,
+       60.6
+      ],
+      [
+       78.8,
+       7.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-corridor-east",
+    "level": "2F",
+    "category": "corridor",
+    "name": "走廊"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       66.2,
+       49.6
+      ],
+      [
+       78.8,
+       49.6
+      ],
+      [
+       78.8,
+       63.9
+      ],
+      [
+       66.2,
+       63.9
+      ],
+      [
+       66.2,
+       49.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-lobby-ne",
+    "level": "2F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       66.2,
+       3.7
+      ],
+      [
+       78.8,
+       3.7
+      ],
+      [
+       78.8,
+       18.0
+      ],
+      [
+       66.2,
+       18.0
+      ],
+      [
+       66.2,
+       3.7
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-lobby-se",
+    "level": "2F",
+    "category": "corridor"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       19.9,
+       16.8
+      ],
+      [
+       66.1,
+       16.8
+      ],
+      [
+       69.1,
+       19.8
+      ],
+      [
+       69.1,
+       47.9
+      ],
+      [
+       66.1,
+       50.9
+      ],
+      [
+       19.9,
+       50.9
+      ],
+      [
+       16.9,
+       47.9
+      ],
+      [
+       16.9,
+       19.8
+      ],
+      [
+       19.9,
+       16.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-opening",
+    "level": "2F",
+    "category": "opening",
+    "name": "挑空"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       18.5,
+       50.9
+      ],
+      [
+       67.5,
+       50.9
+      ],
+      [
+       67.5,
+       52.4
+      ],
+      [
+       18.5,
+       52.4
+      ],
+      [
+       18.5,
+       50.9
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-walk-front-n",
+    "level": "2F",
+    "category": "walkway",
+    "name": "看台前走道",
+    "section": "north"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       18.5,
+       15.2
+      ],
+      [
+       67.5,
+       15.2
+      ],
+      [
+       67.5,
+       16.7
+      ],
+      [
+       18.5,
+       16.7
+      ],
+      [
+       18.5,
+       15.2
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-walk-front-s",
+    "level": "2F",
+    "category": "walkway",
+    "name": "看台前走道",
+    "section": "south"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15.399999999999999,
+       17.5
+      ],
+      [
+       16.9,
+       17.5
+      ],
+      [
+       16.9,
+       50.1
+      ],
+      [
+       15.399999999999999,
+       50.1
+      ],
+      [
+       15.399999999999999,
+       17.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-walk-front-w",
+    "level": "2F",
+    "category": "walkway",
+    "name": "看台前走道",
+    "section": "west"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       69.1,
+       17.5
+      ],
+      [
+       70.6,
+       17.5
+      ],
+      [
+       70.6,
+       50.1
+      ],
+      [
+       69.1,
+       50.1
+      ],
+      [
+       69.1,
+       17.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-walk-front-e",
+    "level": "2F",
+    "category": "walkway",
+    "name": "看台前走道",
+    "section": "east"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       16.2,
+       53.0
+      ],
+      [
+       19.5,
+       57.4
+      ],
+      [
+       66.6,
+       57.4
+      ],
+      [
+       69.8,
+       53.0
+      ],
+      [
+       67.5,
+       52.4
+      ],
+      [
+       18.5,
+       52.4
+      ],
+      [
+       16.2,
+       53.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-seat-n",
+    "level": "2F",
+    "category": "seating",
+    "name": "北側看台",
+    "section": "north"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       16.2,
+       14.6
+      ],
+      [
+       19.5,
+       10.2
+      ],
+      [
+       66.6,
+       10.2
+      ],
+      [
+       69.8,
+       14.6
+      ],
+      [
+       67.5,
+       15.2
+      ],
+      [
+       18.5,
+       15.2
+      ],
+      [
+       16.2,
+       14.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-seat-s",
+    "level": "2F",
+    "category": "seating",
+    "name": "南側看台",
+    "section": "south"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       10.0,
+       17.5
+      ],
+      [
+       15.399999999999999,
+       17.5
+      ],
+      [
+       15.399999999999999,
+       50.1
+      ],
+      [
+       10.0,
+       50.1
+      ],
+      [
+       10.0,
+       17.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-seat-w",
+    "level": "2F",
+    "category": "seating",
+    "name": "西側看台",
+    "section": "west"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       70.6,
+       17.5
+      ],
+      [
+       73.6,
+       17.5
+      ],
+      [
+       73.6,
+       50.1
+      ],
+      [
+       70.6,
+       50.1
+      ],
+      [
+       70.6,
+       17.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-seat-e",
+    "level": "2F",
+    "category": "seating",
+    "name": "東側看台",
+    "section": "east"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       19.8,
+       58.7
+      ],
+      [
+       23.0,
+       58.7
+      ],
+      [
+       23.0,
+       61.2
+      ],
+      [
+       19.8,
+       61.2
+      ],
+      [
+       19.8,
+       58.7
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-ACC-N",
+    "level": "2F",
+    "category": "restroom.accessible",
+    "name": "無障礙廁所（北）",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       23.0,
+       58.7
+      ],
+      [
+       40.0,
+       58.7
+      ],
+      [
+       40.0,
+       63.8
+      ],
+      [
+       23.0,
+       63.8
+      ],
+      [
+       23.0,
+       58.7
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-M-N",
+    "level": "2F",
+    "category": "restroom.male",
+    "name": "男廁（北）"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       46.0,
+       58.5
+      ],
+      [
+       66.2,
+       58.5
+      ],
+      [
+       66.2,
+       63.9
+      ],
+      [
+       46.0,
+       63.9
+      ],
+      [
+       46.0,
+       58.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-F-N",
+    "level": "2F",
+    "category": "restroom.female",
+    "name": "女廁（北）"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       19.8,
+       6.4
+      ],
+      [
+       23.0,
+       6.4
+      ],
+      [
+       23.0,
+       8.9
+      ],
+      [
+       19.8,
+       8.9
+      ],
+      [
+       19.8,
+       6.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-ACC-S",
+    "level": "2F",
+    "category": "restroom.accessible",
+    "name": "無障礙廁所（南）",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       23.0,
+       3.8
+      ],
+      [
+       40.0,
+       3.8
+      ],
+      [
+       40.0,
+       8.9
+      ],
+      [
+       23.0,
+       8.9
+      ],
+      [
+       23.0,
+       3.8
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-M-S",
+    "level": "2F",
+    "category": "restroom.male",
+    "name": "男廁（南）"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       46.0,
+       3.7
+      ],
+      [
+       66.2,
+       3.7
+      ],
+      [
+       66.2,
+       9.1
+      ],
+      [
+       46.0,
+       9.1
+      ],
+      [
+       46.0,
+       3.7
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-RT-F-S",
+    "level": "2F",
+    "category": "restroom.female",
+    "name": "女廁（南）"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.1,
+       64.4
+      ],
+      [
+       13.4,
+       64.4
+      ],
+      [
+       13.4,
+       66.6
+      ],
+      [
+       11.1,
+       66.6
+      ],
+      [
+       11.1,
+       64.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-EL-2",
+    "level": "2F",
+    "category": "elevator",
+    "ref": "#2",
+    "name": "電梯 2",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.1,
+       1.0
+      ],
+      [
+       13.4,
+       1.0
+      ],
+      [
+       13.4,
+       3.5
+      ],
+      [
+       11.1,
+       3.5
+      ],
+      [
+       11.1,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-EL-1",
+    "level": "2F",
+    "category": "elevator",
+    "ref": "#1",
+    "name": "電梯 1",
+    "accessible": true
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.5,
+       61.0
+      ],
+      [
+       9.0,
+       61.0
+      ],
+      [
+       9.0,
+       67.2
+      ],
+      [
+       0.5,
+       67.2
+      ],
+      [
+       0.5,
+       61.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-A",
+    "level": "2F",
+    "category": "stairs",
+    "ref": "A梯",
+    "name": "A梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       76.5,
+       61.0
+      ],
+      [
+       85.5,
+       61.0
+      ],
+      [
+       85.5,
+       67.2
+      ],
+      [
+       76.5,
+       67.2
+      ],
+      [
+       76.5,
+       61.0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-B",
+    "level": "2F",
+    "category": "stairs",
+    "ref": "B梯",
+    "name": "B梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.5,
+       0.4
+      ],
+      [
+       9.0,
+       0.4
+      ],
+      [
+       9.0,
+       6.6
+      ],
+      [
+       0.5,
+       6.6
+      ],
+      [
+       0.5,
+       0.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-C",
+    "level": "2F",
+    "category": "stairs",
+    "ref": "C梯",
+    "name": "C梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       76.5,
+       0.4
+      ],
+      [
+       85.5,
+       0.4
+      ],
+      [
+       85.5,
+       6.6
+      ],
+      [
+       76.5,
+       6.6
+      ],
+      [
+       76.5,
+       0.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-D",
+    "level": "2F",
+    "category": "stairs",
+    "ref": "D梯",
+    "name": "D梯",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -13.0,
+       54.5
+      ],
+      [
+       0.0,
+       54.5
+      ],
+      [
+       0.0,
+       60.7
+      ],
+      [
+       -13.0,
+       60.7
+      ],
+      [
+       -13.0,
+       54.5
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-OUT-N",
+    "level": "2F",
+    "category": "stairs",
+    "name": "戶外梯（北）",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -13.0,
+       7.3
+      ],
+      [
+       0.0,
+       7.3
+      ],
+      [
+       0.0,
+       13.2
+      ],
+      [
+       -13.0,
+       13.2
+      ],
+      [
+       -13.0,
+       7.3
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-ST-OUT-S",
+    "level": "2F",
+    "category": "stairs",
+    "name": "戶外梯（南）",
+    "accessible": false
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       74.4,
+       19.6
+      ],
+      [
+       78.8,
+       19.6
+      ],
+      [
+       78.8,
+       49.6
+      ],
+      [
+       74.4,
+       49.6
+      ],
+      [
+       74.4,
+       19.6
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-NP-plant",
+    "level": "2F",
+    "category": "nonpublic",
+    "name": "機房"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       3.75,
+       19.4
+      ],
+      [
+       9.4,
+       19.4
+      ],
+      [
+       9.4,
+       49.6
+      ],
+      [
+       3.75,
+       49.6
+      ],
+      [
+       3.75,
+       19.4
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "2F-NP-west",
+    "level": "2F",
+    "category": "nonpublic"
+   }
+  }
+ ]
+}
