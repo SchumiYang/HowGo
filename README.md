@@ -171,6 +171,7 @@ curl -sS http://127.0.0.1:8000/v1/route-options \
 | --- | --- | --- |
 | [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) | 臺北市政府交通局 | 斜坡道、無障礙電梯、公園、出入口、友善店家、廁所、停車與大眾運輸站點，以及人行道、標線型人行道、行穿線和坡度紀錄。2026-11-07 的無障礙廁所快照沒有點位。 |
 | [臺北捷運車站出入口無障礙電梯、無障礙坡道 GPS 座標](https://data.taipei/dataset/detail?id=0a3bb422-9eb5-459b-a9d4-138456516183) | 臺北大眾捷運股份有限公司 | 電梯歸入「身障設施」，坡道歸入「出入口／坡道」。匯入時與輪行臺北快照合併。 |
+| [臺北市公廁點位資訊](https://data.taipei/dataset/detail?id=ca205b54-a06f-4d84-894c-d6ab5079ce79) | 臺北市政府環保局 | 「無障礙廁座數」大於 0 的點位匯入無障礙廁所圖層，快照存於 `backend/data/source/facility-9.json`。 |
 | [臺北市騎樓整平工程完成路段表](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) | 臺北市都發局建管處 | 民國 91 至 105 年完工紀錄，用於整平騎樓圖層和側別指引。 |
 | [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) | 臺北市交通局停管處 | 身心障礙專用格位（03、04、18），可選為路線起點或終點。 |
 | [OpenStreetMap 臺灣資料](https://download.geofabrik.de/asia/taiwan.html) | OpenStreetMap 貢獻者，Geofabrik 提供臺灣 PBF | 本機地點、道路與地址搜尋，ORS 路網，以及 OSM 穿越道與 `incline` 坡度快照。 |
