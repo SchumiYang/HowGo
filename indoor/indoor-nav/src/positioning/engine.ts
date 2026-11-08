@@ -77,10 +77,11 @@ export interface PositioningOptions {
    *  the best-matching level and may move within its first initialWindowScans fresh scans (same margin, anywhere);
    *  a level is never voted for while the estimate is not on its floor (floorVoid) */
   wifiLevel: { marginDb: number; strongMarginDb: number; scans: number; connectorRadiusM: number; initialWindowScans: number }
-  /** floor-void rule (2F has no floor over the arena): a level's "floor" is its walkable area dilated by radiusM; no
-   *  WiFi vote for a level whose floor the estimate is not on. A WiFi start whose cloud mean is at least startDepthM
-   *  off the floor, over the level below, starts on the level below unless WiFi prefers it by marginDb */
-  floorVoid: { radiusM: number; startDepthM: number }
+  /** floor-void rule (2F has no floor over the arena): a level's "floor" is its walkable area dilated by radiusM.
+   *  An estimate off its level's floor, over the level below, moves to the level below (any time); no WiFi vote for a
+   *  level whose floor the estimate is not on. Back up after such a move when `recoverScans` consecutive scans match
+   *  the upper level by >= recoverDb better and its WkNN position is on its floor */
+  floorVoid: { radiusM: number; recoverDb: number; recoverScans: number }
   pdr: Partial<PdrOptions>
   wifi: Partial<WifiOptions>
   mag: Partial<MagOptions>
@@ -109,7 +110,7 @@ export const DEFAULT_POSITIONING: PositioningOptions = {
   autoLevel: true,
   baro: {},
   wifiLevel: { marginDb: 2, strongMarginDb: 4, scans: 2, connectorRadiusM: 10, initialWindowScans: 4 },
-  floorVoid: { radiusM: 1.5, startDepthM: 8 },
+  floorVoid: { radiusM: 1.5, recoverDb: 1, recoverScans: 2 },
   pdr: {},
   wifi: {},
   mag: {},
@@ -207,8 +208,11 @@ class PositioningEngine implements Positioning {
   /** the floor was decided (first fix, seed, correction or switch): no more start-level picking */
   private levelChosen = false
   private floorVoidStreak = 0
-  /** WkNN distance per level of the scan that chose the start level (floor-void start rule) */
-  private startDist: Record<string, number> = {}
+  /** after a floor-void move: the level the user was moved down from, and qualifying scans so far (recovery) */
+  private voidFallback: { from: string; streak: number } | null = null
+  /** the floor is known from more than WiFi matching (a seed, the barometer, a floor-void recovery): a cloud spread
+   *  along the 2F ring is then only shown at its densest place, never moved down */
+  private floorConfirmed = false
   /** sensor clock correction (arrival time − newest sample time) applied to live batches, ms; and recent lags */
   private clockLag: number | null = null
   private lagWindow: number[] = []
@@ -367,12 +371,14 @@ class PositioningEngine implements Positioning {
     // the user / navigation is authoritative about the floor: restart the barometer reference and the WiFi vote
     this.baro.reset()
     this.voter.reset()
+    this.voidFallback = null
     const heading: HeadingPrior = opts.headingDeg !== undefined && opts.headingDeg !== null
       ? { mean: (90 - opts.headingDeg) * DEG, sigma: 15 * DEG, uniformFrac: 0.1 }
       : this.compassPrior()
     const pf = this.pf ?? this.newFilter()
     pf.init([{ x, y, w: 1 }], opts.accuracyM ?? 1, heading, this.pdr.yaw)
     this.afterInit('pdr')
+    this.floorConfirmed = true
     this.emit(opts.t ?? Date.now(), 'pdr')
   }
 
@@ -456,11 +462,13 @@ class PositioningEngine implements Positioning {
     this.levelChosen = true
     this.initialWindow = 0
     this.floorVoidStreak = 0
+    this.voidFallback = null
     const seed = at ?? (nc ? { x: nc.partner.x, y: nc.partner.y, acc: 3 } : { x: e.x, y: e.y, acc: 8 })
     // heading is not trusted across a floor change: people turn round in elevators / on stair landings and the steel
     // cabin bends the compass; the walls of the landing resolve it within a few steps
     this.newFilter().init([{ x: seed.x, y: seed.y, w: 1 }], seed.acc, { mean: null, sigma: 0, uniformFrac: 1 }, this.pdr.yaw)
     this.afterInit('pdr')
+    this.floorConfirmed = source !== 'wifi'
     this.voter.reset()
     this.magResid = []
     if (source === 'wifi') this.baro.reset()
@@ -564,7 +572,7 @@ class PositioningEngine implements Positioning {
     pf.maybeResample()
     this.stats.lostSteps = pf.lostSteps
     this.stepsSinceInit++
-    this.checkFloorVoid(step.t, false)
+    if (this.checkFloorVoid(step.t)) return
     this.emit(step.t, step.t - this.lastAbsT < this.o.fusedHoldMs ? 'fused' : 'pdr')
   }
 
@@ -605,6 +613,7 @@ class PositioningEngine implements Positioning {
       this.pushWifiScan(scan) // initialise on the new level from this scan
       return
     }
+    if (this.recoverFromVoid(scan, knn?.dist ?? Infinity, obs.t)) return
     // WiFi alone: also only where this level is surveyed — off its fingerprints the own-level distance is bad anyway
     // and says nothing about another floor (LOWO with the route removed: 3 false switches without this)
     const est = this.pf?.initialized ? this.pf.estimate(this.pdr.yaw) : null
@@ -623,9 +632,10 @@ class PositioningEngine implements Positioning {
         .map((j) => ({ x: wifi.fpX[j], y: wifi.fpY[j], w: lik[j] }))
       ;(pf ?? this.newFilter()).init(seeds, this.o.wifiInitSigmaM, this.compassPrior(), this.pdr.yaw)
       this.afterInit('wifi')
+      this.floorConfirmed = false
       this.lastAbsT = obs.t
-      // WiFi start whose cloud's mean lies deep where this level has no floor (2F over the arena) -> start below
-      if (this.checkFloorVoid(obs.t, true)) return
+      // a broad WiFi start cloud along the 2F ring has its mean over the arena: that is a 1F position (checkFloorVoid)
+      if (this.checkFloorVoid(obs.t)) return
       this.emit(obs.t, 'wifi')
       return
     }
@@ -651,7 +661,7 @@ class PositioningEngine implements Positioning {
     if (after.spread < 2.5 && this.stepsSinceInit > 10) wifi.adaptOffsetAt(obs, after.x, after.y)
     this.stats.deviceOffsetDb = wifi.deviceOffsetDb
     this.lastAbsT = obs.t
-    this.checkFloorVoid(obs.t, false)
+    if (this.checkFloorVoid(obs.t)) return
     this.emit(obs.t, this.stepsSinceInit === 0 && this.initSource === 'wifi' ? 'wifi' : 'fused')
   }
 
@@ -662,16 +672,13 @@ class PositioningEngine implements Positioning {
     const levels = [...new Set(rm.points.map((p) => p.level).filter(Boolean))]
     if (levels.length < 2) return
     let best: { level: string; dist: number } | null = null
-    const dist: Record<string, number> = {}
     for (const level of levels) {
       if (!this.venueData.levels.some((l) => l.level.id === level)) continue
       const m = new WifiModel(rm, level, { ...this.o.wifi, adaptOffset: false })
       const obs = m.observe(scan)
       const r = obs && m.wknn(obs)
-      if (r) dist[level] = r.dist
       if (r && (!best || r.dist < best.dist)) best = { level, dist: r.dist }
     }
-    this.startDist = dist
     if (best && best.level !== this.level) this.setLevel(best.level)
   }
 
@@ -684,20 +691,16 @@ class PositioningEngine implements Positioning {
   }
 
   /**
-   * Floor-void rule: 2F has no floor over the arena, so a 2F estimate off its floor (walkable area dilated by
-   * floorVoid.radiusM) where the level below has floor is not a 2F position. Switches only at a WiFi start
-   * (doSwitch): a start cloud whose mean lies deep in the void (>= startDepthM from any 2F floor: the middle of the
-   * court) while WiFi prefers this level by less than marginDb means a 1F-court user matched the walkway on several
-   * sides (the live bug) -> start on the level below, at that position.
-   * Why only then, and only deep (real walks, leave-one-walk-out): the first WiFi cloud is broad (accuracy 40–75 m),
-   * so its mean sits off the narrow 2F ring for about half of genuine 2F starts; "any void" moved 24/45 2F starts to
-   * 1F with no way back (2F-vs-1F WiFi margins are ~2 dB here). Applied continuously, WiFi-started 2F walks sat in the
-   * void as long as 1F-court walks forced onto 2F (up to 24 vs 7–30 updates), while a converged 2F cloud never does.
-   * Limits: with the court unsurveyed (evalReal), wrong 2F starts mostly had their mean within 8 m of the ring and
-   * moved onto it within a few scans, so this rule rarely fires there; it only catches a cloud centred in the court.
-   * Keeps stats.floorVoidStreak for the debug panel. True if it switched.
+   * Floor-void rule (the user's: 「二樓中間不會存在空間，所以若在二樓中間，就是在一樓」): an estimate off this level's
+   * floor (walkable area dilated by floorVoid.radiusM) where the level below has floor is a position on the level
+   * below. Checked before every update (WiFi start, scans, steps); moves there, at that position. A broad cloud
+   * spread along the 2F ring (a WiFi start, +-40-50 m) has its mean over the arena: such a start goes to 1F, and
+   * recoverFromVoid brings a genuine 2F user back up once WiFi clearly says 2F. Only while the floor rests on WiFi
+   * alone: after a seed, a barometer change or a recovery a cloud spread along the ring is a 2F cloud (real walks with a
+   * known 2F start: 8 PDR-only and 5 WiFi+PDR runs wrongly moved down otherwise); emit() then shows its densest place.
+   * True if it switched.
    */
-  private checkFloorVoid(t: number, doSwitch: boolean): boolean {
+  private checkFloorVoid(t: number): boolean {
     const pf = this.pf
     const below = this.levelBelow(this.level)
     if (!pf?.initialized || !below) {
@@ -710,14 +713,34 @@ class PositioningEngine implements Positioning {
     const inVoid = !this.grid(this.level).nearFree(e.x, e.y, r) && this.grid(below).nearFree(e.x, e.y, r)
     this.floorVoidStreak = inVoid ? this.floorVoidStreak + 1 : 0
     this.stats.floorVoidStreak = this.floorVoidStreak
-    if (!doSwitch || !inVoid || !this.o.autoLevel) return false
-    // only deep in the void (the middle of the court, not just off the 1.5 m front walkway) and only when WiFi is
-    // undecided between the two levels (margin below marginDb)
-    const d = this.startDist
-    if (this.grid(this.level).nearFree(e.x, e.y, this.o.floorVoid.startDepthM)) return false
-    if (d[below] - d[this.level] >= this.o.wifiLevel.marginDb) return false
+    if (!inVoid || !this.o.autoLevel || this.floorConfirmed) return false
+    const from = this.level
     // reported as source 'wifi' (the position comes from WiFi matching) with confidence 0.9
-    return this.switchLevel(below, t, 'wifi', 0.9, true, { x: e.x, y: e.y, acc: Math.max(3, Math.min(e.spread, 8)) })
+    if (!this.switchLevel(below, t, 'wifi', 0.9, true, { x: e.x, y: e.y, acc: Math.max(3, Math.min(e.spread, 12)) })) return false
+    this.voidFallback = { from, streak: 0 }
+    return true
+  }
+
+  /**
+   * Recovery after a floor-void move: the upper level comes back when `recoverScans` consecutive scans match it by at
+   * least recoverDb better than the current level AND its WkNN position lies on its floor (on the ring, not over the
+   * arena); re-seeded there. Ends with a seed, a barometer / WiFi switch or the recovery itself. True if it switched.
+   */
+  private recoverFromVoid(scan: WifiScan, currentDist: number, t: number): boolean {
+    const fb = this.voidFallback
+    const rm = this.radiomap
+    if (!fb || !rm || !this.o.autoLevel) return false
+    let m = this.levelModels.get(fb.from)
+    if (!m) this.levelModels.set(fb.from, (m = new WifiModel(rm, fb.from, { ...this.o.wifi, adaptOffset: false })))
+    const obs = m.observe(scan)
+    const r = obs && m.wknn(obs)
+    const fv = this.o.floorVoid
+    const ok = !!r && currentDist - r.dist >= fv.recoverDb && this.grid(fb.from).nearFree(r.x, r.y, fv.radiusM)
+    fb.streak = ok ? fb.streak + 1 : 0
+    if (!r || fb.streak < fv.recoverScans) return false
+    if (!this.switchLevel(fb.from, t, 'wifi', 0.6, true, { x: r.x, y: r.y, acc: Math.max(3, Math.min(r.spread, 5)) })) return false
+    this.floorConfirmed = true
+    return true
   }
 
   private emit(t: number, source: PositionSource) {
@@ -725,13 +748,24 @@ class PositioningEngine implements Positioning {
     if (!pf?.initialized) return
     const e = pf.estimate(this.pdr.yaw)
     if (!Number.isFinite(e.x)) return
+    // the shown / routed point never lies off the floor (2F over the arena): a mean that does (a cloud spread along
+    // the ring, when the floor-void move cannot apply) is replaced by the densest place of the cloud, and that, if
+    // still off (particles seeded off the map stay there), by the nearest walkable cell
+    let { x, y } = e
+    const g = this.grid(this.level)
+    const r = this.o.floorVoid.radiusM
+    if (!g.nearFree(x, y, r)) {
+      const md = pf.mode()
+      if (Number.isFinite(md.x)) ({ x, y } = g.nearFree(md.x, md.y, r) ? md : pf.nearest(md.x, md.y))
+      if (!g.nearFree(x, y, r)) ({ x, y } = g.nearestFree(x, y, 30) ?? { x, y })
+    }
     const a = this.o.accuracy
     const accuracy = Math.max(a.floorM, a.scale * Math.hypot(e.spread, a.baseM))
     const u: PositionUpdate = {
       t,
       level: this.level,
-      x: e.x,
-      y: e.y,
+      x,
+      y,
       accuracy_m: Math.round(accuracy * 10) / 10,
       heading_deg: e.headingConc > 0.5 && this.stepsSinceInit > 0 ? (((90 - e.heading / DEG) % 360) + 360) % 360 : null,
       source,

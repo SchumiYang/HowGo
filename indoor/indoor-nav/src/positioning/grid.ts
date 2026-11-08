@@ -209,6 +209,29 @@ export class OccupancyGrid {
     return i >= 0 && j >= 0 && i < this.w && j < this.h && mask[j * this.w + i] === 1
   }
 
+  /** centre of the free cell nearest to (x, y) within maxR metres (growing square rings), or null */
+  nearestFree(x: number, y: number, maxR: number): { x: number; y: number } | null {
+    const ci = Math.floor((x - this.x0) / this.cell)
+    const cj = Math.floor((y - this.y0) / this.cell)
+    const K = Math.ceil(maxR / this.cell)
+    let best: { x: number; y: number } | null = null
+    let bestD = Infinity
+    for (let k = 0; k <= K; k++) {
+      // a ring at Chebyshev distance k: once something was found, one more ring can still hold a closer cell
+      if (best && (k - 1) * this.cell > Math.sqrt(bestD)) break
+      for (let j = cj - k; j <= cj + k; j++) {
+        for (let i = ci - k; i <= ci + k; i++) {
+          if (Math.max(Math.abs(i - ci), Math.abs(j - cj)) !== k) continue
+          if (i < 0 || j < 0 || i >= this.w || j >= this.h || !this.free[j * this.w + i]) continue
+          const px = this.x0 + (i + 0.5) * this.cell, py = this.y0 + (j + 0.5) * this.cell
+          const d = (px - x) ** 2 + (py - y) ** 2
+          if (d < bestD) [bestD, best] = [d, { x: px, y: py }]
+        }
+      }
+    }
+    return best
+  }
+
   /** free cells dilated by k cells (separable square window, sliding counts) */
   private dilate(k: number): Uint8Array {
     const { w, h, free } = this

@@ -340,4 +340,66 @@ describe('floor void (2F has no floor over the 1F court)', () => {
     expect(changes).toHaveLength(0)
     expect(eng.stats.level).toBe('1F')
   })
+
+  // south side of the ring: 4 fingerprints with the hall APs B and the south APs S; north side: 1 with B and N
+  const S = ['00:11:22:00:00:0e', '00:11:22:00:00:1e']
+  const N = ['00:11:22:00:00:0f', '00:11:22:00:00:1f']
+  const ringMap = (north: number[]): Radiomap => ({
+    bssids: [...B, ...C, ...S, ...N],
+    params: { likelihood_temper: 0.25 },
+    points: [
+      ...[5, 15, 25, 35].map((x) => ({ ...fp('1F', x, Object.fromEntries(C.map((b, i) => [b, -70 - i * 5]))), y: 15 })),
+      ...[5, 15, 25, 35].map((x) => ({ ...fp('2F', x, { ...Object.fromEntries(B.map((b, i) => [b, -50 - i * 6])), [S[0]]: -60, [S[1]]: -66 }), id: `2F-s${x}`, y: 1.5 })),
+      ...north.map((x) => ({ ...fp('2F', x, { ...Object.fromEntries(B.map((b, i) => [b, -50 - i * 6])), [N[0]]: -60, [N[1]]: -66 }), id: `2F-n${x}`, y: 28.5 })),
+    ],
+  })
+  const scanWith = (t: number, aps: Record<string, number>): WifiScan => {
+    scanTs += 5_000_000
+    return { supported: true, status: 'ok', collected_at: t, results: Object.entries(aps).map(([bssid, level]) => ({ bssid, ssid: 'x', level, frequency: 2437, timestamp: scanTs })) }
+  }
+  const hallAps = Object.fromEntries(B.map((b, i) => [b, -50 - i * 6]))
+  const onRing = (x: number, y: number) => y <= 4.5 || y >= 25.5 || x <= 4.5 || x >= 35.5
+
+  it('A71 case: a broad (±40–50 m) 2F start cloud whose mean sits over the court near the south stand ends on 1F', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const eng = createPositioning({ venueData: hall, radiomap: ringMap([10, 20, 30]), options: { seed } })
+      const ups: { level: string; x: number; y: number; acc: number }[] = []
+      eng.onUpdate((u) => ups.push({ level: u.level, x: u.x, y: u.y, acc: u.accuracy_m }))
+      // the court user hears the hall APs (B) and faintly the court APs: every 2F fingerprint matches about equally
+      for (let k = 0; k < 4; k++) eng.pushWifiScan(scanWith(T0 + k * 8000, { ...hallAps, [C[0]]: -80, [C[1]]: -85 }))
+      expect(eng.stats.level).toBe('1F')
+      expect(ups.every((u) => u.level !== '2F' || onRing(u.x, u.y))).toBe(true)
+      expect(ups.at(-1)!.level).toBe('1F')
+    }
+  })
+
+  it('a genuine 2F user moved to 1F by a broad start cloud comes back up once WiFi clearly says 2F (on the ring)', () => {
+    const eng = createPositioning({ venueData: hall, radiomap: ringMap([10, 20, 30]), options: { seed: 3 } })
+    const changes: LevelChange[] = []
+    eng.onLevelChange((c) => changes.push(c))
+    eng.pushWifiScan(scanWith(T0, { ...hallAps, [C[0]]: -80 }))
+    expect(eng.stats.level).toBe('1F')
+    // then the south-stand APs: the 2F match is several dB better than 1F and its WkNN position is on the south ring
+    for (let k = 1; k <= 3; k++) eng.pushWifiScan(scanWith(T0 + k * 8000, { ...hallAps, [S[0]]: -60, [S[1]]: -66 }))
+    expect(changes.map((c) => [c.from, c.to])).toEqual([['2F', '1F'], ['1F', '2F']])
+    expect(eng.stats.level).toBe('2F')
+    expect(eng.last!.y).toBeLessThan(4.5)
+  })
+
+  it('property: no shown 2F position ever lies over the court (random scans, seeds, steps of the cloud)', () => {
+    const rng = mulberry32(7)
+    const pool = [...B, ...C, ...S, ...N]
+    for (let run = 0; run < 25; run++) {
+      const eng = createPositioning({ venueData: hall, radiomap: ringMap(run % 2 ? [10, 20, 30] : [20]), options: { seed: run + 1 } })
+      let bad = 0
+      eng.onUpdate((u) => { if (u.level === '2F' && !onRing(u.x, u.y)) bad++ })
+      if (run % 3 === 0) eng.setKnownPosition(20, 1.5, '2F', { t: T0 })
+      for (let k = 0; k < 8; k++) {
+        const aps: Record<string, number> = {}
+        for (const b of pool) if (rng() < 0.6) aps[b] = Math.round(-45 - rng() * 45)
+        eng.pushWifiScan(scanWith(T0 + 1000 + k * 8000, aps))
+      }
+      expect(bad).toBe(0)
+    }
+  })
 })

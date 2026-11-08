@@ -367,6 +367,44 @@ export class ParticleFilter {
     }
   }
 
+  /**
+   * Densest place of the cloud: the weighted mean of the particles in the heaviest cell x cell block and its 8
+   * neighbours. Unlike the mean it lies where particles are (on walkable cells), also for a cloud spread along a ring.
+   */
+  mode(cell = 2): { x: number; y: number } {
+    const bins = new Map<number, number>()
+    const key = (i: number, j: number) => i * 100003 + j
+    for (let k = 0; k < this.n; k++) {
+      const kk = key(Math.floor(this.x[k] / cell), Math.floor(this.y[k] / cell))
+      bins.set(kk, (bins.get(kk) ?? 0) + this.w[k])
+    }
+    let best = -1, bi = 0, bj = 0
+    for (const kk of bins.keys()) {
+      const i = Math.round(kk / 100003), j = kk - i * 100003
+      let v = 0
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) v += bins.get(key(i + di, j + dj)) ?? 0
+      if (v > best) [best, bi, bj] = [v, i, j]
+    }
+    let sw = 0, mx = 0, my = 0
+    for (let k = 0; k < this.n; k++) {
+      if (Math.abs(Math.floor(this.x[k] / cell) - bi) > 1 || Math.abs(Math.floor(this.y[k] / cell) - bj) > 1) continue
+      sw += this.w[k]
+      mx += this.w[k] * this.x[k]
+      my += this.w[k] * this.y[k]
+    }
+    return sw > 0 ? { x: mx / sw, y: my / sw } : { x: NaN, y: NaN }
+  }
+
+  /** position of the particle nearest to (x, y) (particles only ever sit on walkable cells) */
+  nearest(x: number, y: number): { x: number; y: number } {
+    let best = Infinity, k = 0
+    for (let i = 0; i < this.n; i++) {
+      const d = (this.x[i] - x) ** 2 + (this.y[i] - y) ** 2
+      if (d < best) [best, k] = [d, i]
+    }
+    return { x: this.x[k], y: this.y[k] }
+  }
+
   estimate(yaw: number): PfEstimate {
     let sw = 0, mx = 0, my = 0, c = 0, s = 0, s2 = 0
     for (let i = 0; i < this.n; i++) {

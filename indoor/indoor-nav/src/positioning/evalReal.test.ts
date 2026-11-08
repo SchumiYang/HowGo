@@ -75,6 +75,10 @@ let calib: number[] = []
 let switches: number[] = []
 /** per engine run of the current method: [floor of the first update, floor at the end] */
 let floors: [string | null, string][] = []
+/** shown updates on a level but off its walkable area (2F over the arena), over all runs: must stay 0 */
+let offFloor = 0
+let offFloorN = 0
+let floorOf: ((level: string, x: number, y: number) => boolean) | null = null
 function replayEvents(w: Walk): Event[] {
   const lo = w.t_start - 3000
   const hi = w.t_end
@@ -127,6 +131,8 @@ function runEngine(w: Walk, tr: Track, venueData: VenueData, radiomap: Radiomap 
   let firstLevel: string | null = null
   eng.onUpdate((u) => {
     firstLevel ??= u.level
+    offFloorN++
+    if (floorOf && !floorOf(u.level, u.x, u.y)) offFloor++
     if (u.t < w.t_start || u.t > w.t_end) return
     const [x, y] = at(tr, u.t)
     const err = Math.hypot(u.x - x, u.y - y)
@@ -189,6 +195,8 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     const venueData = loadVenue()
     const index = readJson<Entry[]>(join(LOWO, 'index.json'))
     const tracks = readJson<Record<string, Track>>(join(LOWO, 'walk_tracks.json'))
+    const gridEng = createPositioning({ venueData, options: { seed: 1 } }) as unknown as { grid(l: string): { nearFree(x: number, y: number, r: number): boolean } }
+    floorOf = (level, x, y) => gridEng.grid(level).nearFree(x, y, 1.5)
     const methods: [string, (w: Walk, tr: Track, r: Radiomap | null, m: Magmap[]) => number[]][] = [
       ['(a) WiFi only (WkNN per scan)', (w, tr, r) => wifiOnly(w, tr, r)],
       ...([
@@ -268,10 +276,12 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
       if (tr.area === 'arena' || level !== '1F') {
         const [r2, m2] = withoutRoute(w, level, radiomap, magmap)
         const u = unsurveyed.get(areaOf(tr)) ?? { runs: 0, start: 0, end: 0, startNoRule: 0, endNoRule: 0 }
+        const keep = [offFloor, offFloorN]
         for (const seed of SEEDS) {
           floors = []
           runEngine(w, tr, venueData, r2, m2, { seed }, false)
-          runEngine(w, tr, venueData, r2, m2, { seed, floorVoid: { radiusM: 1.5, startDepthM: 1e3 } }, false)
+          // rule off: a 1 km tolerance puts every point "on the floor"
+          runEngine(w, tr, venueData, r2, m2, { seed, floorVoid: { radiusM: 1e3, recoverDb: 1, recoverScans: 2 } }, false)
           u.runs++
           u.start += floors[0][0] !== level ? 1 : 0
           u.end += floors[0][1] !== level ? 1 : 0
@@ -279,6 +289,7 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
           u.endNoRule += floors[1][1] !== level ? 1 : 0
         }
         unsurveyed.set(areaOf(tr), u)
+        ;[offFloor, offFloorN] = keep // the rule-off runs do show points over the arena
       }
       if (level !== '1F') {
         const q = (v: number[], p: number) => [...v].sort((a, b) => a - b)[Math.min(v.length - 1, Math.floor(p * v.length))]
@@ -350,7 +361,7 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     }
     lines.push('runs ending on the wrong floor (automatic level changes; walks are single-floor): '
       + [...falseSwitches].map(([k, v]) => `${k.split(' ')[0]} ${v}`).join(', '))
-    lines.push('WiFi-only start (d2, no seed), wrong floor: old rule = arg-min level on the first scan; now = arg-min + floor-void start rule + initial correction:')
+    lines.push('WiFi-only start (d2, no seed), wrong floor: old rule = arg-min level on the first scan; now = arg-min + floor-void rule (move down, recover up) + initial correction:')
     for (const [k, f] of [...initFloors].sort()) {
       lines.push(`  ${k.padEnd(14)} old rule ${f.oldRuleWrong}/${f.walks} walks; now: first fix ${f.startWrong}/${f.runs} runs, at the end ${f.endWrong}/${f.runs} runs`)
     }
@@ -369,7 +380,10 @@ describe.skipIf(!available)('positioning evaluation on real walks (leave-one-wal
     lines.push('accuracy_m calibration (share of errors within the reported accuracy_m; ~68% is honest):')
     for (const [name, c] of cover) if (c.length) lines.push(`  ${name.padEnd(42)}${((100 * c.reduce((a, b) => a + b, 0)) / c.length).toFixed(0).padStart(4)}%`)
     if (Object.keys(EXTRA).length) lines.push(`options override: ${JSON.stringify(EXTRA)}`)
+    lines.push(`shown updates off the walkable area of their level (2F over the arena): ${offFloor} of ${offFloorN}`)
     console.log(lines.join('\n'))
     expect(errs.size).toBe(methods.length)
+    // the user's rule: nothing shown on 2F over the arena (or anywhere off a level's floor)
+    expect(offFloor).toBe(0)
   })
 })
