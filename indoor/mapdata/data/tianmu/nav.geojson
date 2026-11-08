@@ -381,6 +381,69 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
+     75.4,
+     2.6
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-se-l",
+    "level": "1F"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     61.74
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-d-e-n",
+    "level": "1F",
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     11.76
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-d-e-s",
+    "level": "1F",
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     4.43
+    ]
+   },
+   "properties": {
+    "kind": "node",
+    "id": "1F-d-e-s2",
+    "level": "1F",
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
      60.0,
      2.1
     ]
@@ -712,7 +775,7 @@
     "type": "Point",
     "coordinates": [
      79.6,
-     3.6
+     3.0
     ]
    },
    "properties": {
@@ -772,7 +835,7 @@
     "type": "Point",
     "coordinates": [
      9.5,
-     68.6
+     68.75
     ]
    },
    "properties": {
@@ -2221,6 +2284,155 @@
     "type": "LineString",
     "coordinates": [
      [
+      72.35,
+      2.35
+     ],
+     [
+      75.4,
+      2.6
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-se",
+    "to": "1F-se-l",
+    "type": "corridor",
+    "accessible": true,
+    "length_m": 3.06
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73.7,
+      65.0
+     ],
+     [
+      73.7,
+      61.74
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-ne",
+    "to": "1F-d-e-n",
+    "type": "door",
+    "accessible": true,
+    "length_m": 3.26,
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73.7,
+      61.74
+     ],
+     [
+      73.7,
+      50.0
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-d-e-n",
+    "to": "1F-e-50",
+    "type": "door",
+    "accessible": true,
+    "length_m": 11.74,
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73.7,
+      18.0
+     ],
+     [
+      73.7,
+      11.76
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-e-18",
+    "to": "1F-d-e-s",
+    "type": "door",
+    "accessible": true,
+    "length_m": 6.24,
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73.7,
+      11.76
+     ],
+     [
+      73.7,
+      4.43
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-d-e-s",
+    "to": "1F-d-e-s2",
+    "type": "door",
+    "accessible": true,
+    "length_m": 7.33,
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      73.7,
+      4.43
+     ],
+     [
+      75.4,
+      2.6
+     ]
+    ]
+   },
+   "properties": {
+    "kind": "edge",
+    "from": "1F-d-e-s2",
+    "to": "1F-se-l",
+    "type": "door",
+    "accessible": true,
+    "length_m": 2.5,
+    "door_source": "confirmed on site, not drawn in CAD"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
       60.0,
       2.1
      ],
@@ -2802,7 +3014,7 @@
      ],
      [
       79.6,
-      3.6
+      3.0
      ]
     ]
    },
@@ -2812,7 +3024,7 @@
     "to": "1F-stD",
     "type": "stairs",
     "accessible": false,
-    "length_m": 1.26
+    "length_m": 1.22
    }
   },
   {
@@ -2898,7 +3110,7 @@
      ],
      [
       9.5,
-      68.6
+      68.75
      ]
     ]
    },
@@ -2908,7 +3120,7 @@
     "to": "1F-ent-nw-out",
     "type": "door",
     "accessible": true,
-    "length_m": 1.2
+    "length_m": 1.35
    }
   },
   {
@@ -10838,7 +11050,7 @@
     "coordinates": [
      [
       79.6,
-      3.6
+      3.0
      ],
      [
       76.3,
@@ -10852,7 +11064,7 @@
     "to": "2F-stD",
     "type": "stairs",
     "accessible": false,
-    "length_m": 13.4
+    "length_m": 13.58
    }
   }
  ]

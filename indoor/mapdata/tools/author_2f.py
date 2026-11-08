@@ -209,10 +209,14 @@ def main():
     # guard: no nav edge may run through a wall (positioning carves free space along edges; see nav_wall_check.py)
     import nav_wall_check  # noqa: E402
     bad = nav_wall_check.crossings(os.path.dirname(nav_path))
-    if bad:
-        for c in bad:
-            print(f"  WALL CROSSING {c['edge']} at {c['at']} ({c['layer']} #{c['wall']})")
-        raise SystemExit(f'{len(bad)} nav edge/wall crossing(s): fix the nodes (tools/nav_wall_check.py --png to see them)')
+    nodes_bad = nav_wall_check.node_issues(os.path.dirname(nav_path))
+    for c in bad:
+        print(f"  WALL CROSSING {c['edge']} at {c['at']} ({c['layer']} #{c['wall']})")
+    for n in nodes_bad:
+        print(f"  {n['node']} at {n['at']}: {n['issue']}")
+    if bad or nodes_bad:
+        raise SystemExit(f'{len(bad)} nav edge/wall crossing(s), {len(nodes_bad)} node issue(s): fix the nodes '
+                         '(tools/nav_wall_check.py --png to see them)')
 
 
 if __name__ == '__main__':

@@ -21,7 +21,8 @@ WALKS = [
     ('walk-lobby', '門廳（繞 A101）', ['w-s', 'l-s', 'l-c', 'l-n', 'w-n']),
     ('walk-west-n', '西側走廊（北段）', ['w-n', 'w-54', 'nw']),
     ('walk-north', '北側走廊', ['n-14', 'n-m', 'n-acc', 'n-f', 'n-40', 'n-55', 'n-68', 'ne']),
-    ('walk-east', '東側走廊', ['e-50', 'e-34', 'e-18']),  # closed at both ends (no link to ne / se)
+    # through the end doors confirmed on site (not in the CAD), straight along x=73.7
+    ('walk-east', '東側走廊', ['ne', 'd-e-n', 'e-50', 'e-34', 'e-18', 'd-e-s', 'd-e-s2']),
     ('walk-south', '南側走廊', ['se', 's-60', 's-42', 's-25', 's-15', 'sw']),
 ]
 

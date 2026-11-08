@@ -103,8 +103,13 @@ NODES = {
     'n-55': (55.0, 65.6), 'n-68': (68.0, 65.6), 'ne': (73.7, 65.0),
     # east corridor (x=73.7) and south corridor (y=2.1)
     'e-50': (73.7, 50.0), 'e-34': (73.7, 34.0), 'e-18': (73.7, 18.0),
-    # se: inside the double door from the south corridor into the stair D lobby
-    'se': (72.35, 2.35),
+    # se: inside the double door from the south corridor into the SE lobby (stair D, SE exterior door); se-l its middle
+    'se': (72.35, 2.35), 'se-l': (75.4, 2.6),
+    # East corridor end doors: DOOR CONFIRMED ON SITE, NOT DRAWN IN CAD (user, 2026-11-08: 「有門」, position not
+    # given). The CAD closes both ends with full walls; each door node sits in that wall, centred on the corridor
+    # (x=73.7), and is listed in nav_wall_check.DECLARED_OPENINGS. North: wall under the north corridor (y=61.7).
+    # South: the route crosses two walls - the diagonal end wall (y 10-13) and the SE lobby's north wall (y=4.4).
+    'd-e-n': (73.7, 61.74), 'd-e-s': (73.7, 11.76), 'd-e-s2': (73.7, 4.43),
     's-60': (60.0, 2.1), 's-42': (42.0, 2.1), 's-25': (25.0, 2.1), 's-15': (15.0, 2.1),
     # doors / destinations
     'd-m': (17.9, 63.8), 'rt-m': (19.2, 60.5),
@@ -114,16 +119,21 @@ NODES = {
     'el2': (12.2, 65.4), 'd-el2': (12.2, 64.34), 'el1': (12.2, 2.27), 'd-el1': (12.2, 3.5),
     # stair nodes = the landing just inside the stair door (the line to the old core centre cut the flights' wall)
     'd-stA': (8.6, 62.6), 'stA': (7.2, 63.1), 'd-stC': (9.0, 5.2), 'stC': (7.2, 4.5),
-    'd-stB': (78.4, 64.4), 'stB': (79.6, 63.4), 'd-stD': (78.4, 3.2), 'stD': (79.6, 3.6),
+    'd-stB': (78.4, 64.4), 'stB': (79.6, 63.4), 'd-stD': (78.4, 3.2), 'stD': (79.6, 3.0),
     # main entrance: the step-free door is the swing door north of the two revolving doors (between those runs a
     # mullion); the ramp platform outside is level with it
     'ent-main': (0.13, 36.25), 'ent-main-out': (-4.0, 36.25),
-    # side entrances: door nodes in the facade opening (the outer facade line is drawn across the doorway)
-    'ent-nw': (9.5, 67.4), 'ent-nw-out': (9.5, 68.6), 'ent-sw': (9.5, 0.45), 'ent-sw-out': (9.5, -0.8),
+    # side entrances: door nodes in the facade opening (the outer facade line is drawn across the doorway); the NW
+    # outside node lies between the first two porch outlines (y=68.59 / 68.9), not on one
+    'ent-nw': (9.5, 67.4), 'ent-nw-out': (9.5, 68.75), 'ent-sw': (9.5, 0.45), 'ent-sw-out': (9.5, -0.8),
     'd-fa': (7.6, 18.7), 'fa': (4.0, 16.8),
     # arena doors (from the 1F door layer: NW, SW, SE; there is no NE door); the open floor is a grid, see ARENA_GRID
     'd-ar-nw': (16.0, 51.6), 'd-ar-sw': (16.0, 15.9), 'd-ar-se': (70.0, 15.9),
 }
+
+# doors confirmed on site but missing from the CAD (their nodes and edges get door_source = UNDRAWN_DOOR)
+UNDRAWN_DOOR = 'confirmed on site, not drawn in CAD'
+UNDRAWN_DOORS = {'d-e-n', 'd-e-s', 'd-e-s2'}
 
 # (from, to, type, accessible)
 EDGES = [
@@ -133,10 +143,11 @@ EDGES = [
     ('nw', 'nw-w', 'corridor', True), ('nw', 'nw-e', 'corridor', True), ('nw-e', 'n-14', 'corridor', True),
     ('n-14', 'n-m', 'corridor', True), ('n-m', 'n-acc', 'corridor', True), ('n-acc', 'n-f', 'corridor', True),
     ('n-f', 'n-40', 'corridor', True), ('n-40', 'n-55', 'corridor', True), ('n-55', 'n-68', 'corridor', True),
-    # the east corridor is closed at both ends by full walls (north: y=61.7 under the north corridor; south: the
-    # diagonal wall at y=10-13 and the wall at y=4.4); it is reached through the arena SE door only
     ('n-68', 'ne', 'corridor', True), ('e-50', 'e-34', 'corridor', True),
-    ('e-34', 'e-18', 'corridor', True), ('se', 's-60', 'corridor', True),
+    ('e-34', 'e-18', 'corridor', True), ('se', 's-60', 'corridor', True), ('se', 'se-l', 'corridor', True),
+    # east corridor ends: doors confirmed on site, not drawn in the CAD (see the nodes above)
+    ('ne', 'd-e-n', 'door', True), ('d-e-n', 'e-50', 'door', True),
+    ('e-18', 'd-e-s', 'door', True), ('d-e-s', 'd-e-s2', 'door', True), ('d-e-s2', 'se-l', 'door', True),
     ('s-60', 's-42', 'corridor', True), ('s-42', 's-25', 'corridor', True), ('s-25', 's-15', 'corridor', True),
     ('s-15', 'sw-e', 'corridor', True), ('sw-e', 'sw', 'corridor', True), ('sw', 'sw-w', 'corridor', True),
     # restrooms
@@ -235,13 +246,14 @@ def main():
 
     for a, b, *_ in EDGES:
         assert a in NODES and b in NODES, (a, b)
+    undrawn = lambda n: {'door_source': UNDRAWN_DOOR} if n in UNDRAWN_DOORS else {}
     nav = [{'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': list(p)},
-            'properties': {'kind': 'node', 'id': nid(n), 'level': LEVEL}} for n, p in NODES.items()]
+            'properties': {'kind': 'node', 'id': nid(n), 'level': LEVEL, **undrawn(n)}} for n, p in NODES.items()]
     for a, b, typ, acc in EDGES:
         pa, pb = NODES[a], NODES[b]
         nav.append({'type': 'Feature', 'geometry': {'type': 'LineString', 'coordinates': [list(pa), list(pb)]},
                     'properties': {'kind': 'edge', 'from': nid(a), 'to': nid(b), 'type': typ, 'accessible': acc,
-                                   'length_m': round(math.dist(pa, pb), 2)}})
+                                   'length_m': round(math.dist(pa, pb), 2), **(undrawn(a) or undrawn(b))}})
 
     venue = {
         'id': 'tianmu', 'name': '臺北市立大學天母體育館', 'name_en': 'UTaipei Tianmu Gymnasium',

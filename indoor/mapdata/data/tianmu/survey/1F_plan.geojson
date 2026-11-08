@@ -1254,6 +1254,102 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
+     73.7,
+     61.74
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp100",
+    "level": "1F",
+    "near": "1F-ne~1F-d-e-n"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     57.83
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp101",
+    "level": "1F",
+    "near": "1F-d-e-n~1F-e-50"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     53.91
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp102",
+    "level": "1F",
+    "near": "1F-d-e-n~1F-e-50"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     14.88
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp103",
+    "level": "1F",
+    "near": "1F-e-18~1F-d-e-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     11.76
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp104",
+    "level": "1F",
+    "near": "1F-e-18~1F-d-e-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.7,
+     8.09
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "1F-sp105",
+    "level": "1F",
+    "near": "1F-d-e-s~1F-d-e-s2"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
      19.4,
      58.0
     ]
@@ -1552,6 +1648,14 @@
     "coordinates": [
      [
       73.7,
+      65.0
+     ],
+     [
+      73.7,
+      61.74
+     ],
+     [
+      73.7,
       50.0
      ],
      [
@@ -1561,6 +1665,14 @@
      [
       73.7,
       18.0
+     ],
+     [
+      73.7,
+      11.76
+     ],
+     [
+      73.7,
+      4.43
      ]
     ]
    },
@@ -1569,7 +1681,7 @@
     "id": "1F-walk-east",
     "level": "1F",
     "name": "東側走廊",
-    "length_m": 32.0
+    "length_m": 60.6
    }
   },
   {

@@ -19,6 +19,9 @@ _spec.loader.exec_module(chk)
 def test_tianmu_nav_edges_do_not_cross_walls():
     bad = chk.crossings(str(MAPDATA / "data" / "tianmu"))
     assert bad == [], "\n".join(f"{c['edge']} crosses {c['layer']} #{c['wall']} at {c['at']}" for c in bad)
+    # a node on a wall line would hide a crossing behind the end trim: only declared openings may sit there
+    issues = chk.node_issues(str(MAPDATA / "data" / "tianmu"))
+    assert issues == [], "\n".join(f"{n['node']} at {n['at']}: {n['issue']}" for n in issues)
 
 
 def _venue(tmp_path, edges, walls):
@@ -48,6 +51,9 @@ def test_checker_flags_interior_crossings_only(tmp_path):
     # non-blocking layers (door leaves, fixtures, seat-row 'other') don't count
     d = _venue(tmp_path, [(("a", (0, 0)), ("b", (10, 0)), "corridor")], [([[5, -1], [5, 1]], "door")])
     assert chk.crossings(d) == []
+    # a node placed on the wall hides the crossing behind the end trim: reported unless declared
+    d = _venue(tmp_path, [(("a", (0, 0)), ("w", (5, 0)), "corridor"), (("w", (5, 0)), ("b", (10, 0)), "corridor")], [wall])
+    assert chk.crossings(d) == [] and [n["node"] for n in chk.node_issues(d)] == ["w"]
     # elevator connectors are vertical: not checked
     d = _venue(tmp_path, [(("a", (0, 0)), ("b", (10, 0)), "elevator")], [wall])
     assert chk.crossings(d) == []
