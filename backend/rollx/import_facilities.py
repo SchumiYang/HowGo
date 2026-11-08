@@ -1,4 +1,5 @@
 import argparse
+import csv
 import hashlib
 import json
 import sqlite3
@@ -54,10 +55,48 @@ def clean(kind, records):
     return list(facilities.values())
 
 
+def load_mrt_facilities(path):
+    if not path.exists():
+        return {}
+    try:
+        content = path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        content = path.read_text(encoding="cp950")
+
+    reader = csv.DictReader(content.splitlines())
+    name_field = "出入口電梯/無障礙坡道名稱"
+    required_fields = {name_field, "出入口編號", "經度", "緯度"}
+    if not required_fields.issubset(reader.fieldnames or []):
+        raise ValueError("捷運無障礙設施 CSV 缺少必要欄位")
+
+    facilities = {"1": [], "3": []}
+    for record in reader:
+        name = (record[name_field] or "").strip()
+        exit_number = (record["出入口編號"] or "").strip()
+        if "電梯" in name:
+            kind = "3"
+        elif "坡道" in name:
+            kind = "1"
+        else:
+            continue
+
+        lon, lat = record["經度"], record["緯度"]
+        # The published latitude for this exit is missing its decimal point.
+        if name == "圓山站出口無障礙坡道2" and lat == "250717908":
+            lat = "25.0717908"
+        facilities[kind].append({
+            "kind": kind, "kname": f"{name}-{exit_number}" if exit_number else name,
+            "lon": lon, "lat": lat,
+        })
+
+    return facilities
+
+
 def publish_snapshot(source_dir=DEFAULT_SOURCE_DIR):
     target = db_path()
     target.parent.mkdir(parents=True, exist_ok=True)
     imported_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    mrt_facilities = load_mrt_facilities(source_dir / "mrt-accessibility.csv")
     rows = []
     empty_types = []
     for kind, label in FACILITY_TYPES.items():
@@ -70,6 +109,10 @@ def publish_snapshot(source_dir=DEFAULT_SOURCE_DIR):
             empty_types.append(kind)
             continue
         records = json.loads(source_file.read_text(encoding="utf-8-sig"))
+        supplemental = mrt_facilities.get(kind, [])
+        if supplemental and isinstance(records, list):
+            # Put existing records last so duplicates retain their measurements.
+            records = [*supplemental, *records]
         if records == []:
             if target.exists():
                 with read_database() as conn:

@@ -81,7 +81,7 @@ type Metadata = {
 
 const categories = [
   { kind: '1', label: '斜坡道', color: palette.grey700 },
-  { kind: '3', label: '路外停車場無障礙電梯', color: palette.grey700 },
+  { kind: '3', label: '無障礙電梯', color: palette.orange500 },
   { kind: '4', label: '公園', color: palette.green500 },
   { kind: '7', label: '捷運站及公園無障礙出入口', color: palette.grey700 },
   { kind: '8', label: '友善店家', color: palette.secondary500 },
@@ -115,13 +115,13 @@ const layerGroups = [
   { label: '人行通道', icon: 'pedestrian', kinds: ['11', '12', '13', 'osm-crossing', 'arcade'] },
   { label: '坡度', icon: 'slope', kinds: ['slope'] },
   { label: '身障停車格', icon: 'accessible-parking', kinds: ['accessible-parking'] },
-  { label: '出入口／坡道', icon: 'entrance-ramp', kinds: ['1', '3', '7'] },
+  { label: '出入口／坡道', icon: 'entrance-ramp', kinds: ['1', '7'] },
   { label: '友善店家', icon: 'friendly-store', kinds: ['8'] },
   { label: '無障礙廁所', icon: 'accessible-restroom', kinds: ['9'] },
   { label: '大眾運輸', icon: 'public-transit', kinds: ['18', '20'] },
   { label: '公園', icon: 'park', kinds: ['4'] },
   { label: '停車', icon: 'parking', kinds: ['15', '16'] },
-  { label: '身障設施', icon: 'accessible-facilities', kinds: ['14'] },
+  { label: '身障設施', icon: 'accessible-facilities', kinds: ['3', '14'] },
 ] satisfies { label: string; icon: LayerIconName; kinds: LayerKind[] }[]
 const SLOPE_COLOR = palette.secondary800
 /** Below these zooms the point / walkway layers would cover the whole map, so they are not drawn or fetched. */

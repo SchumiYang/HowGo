@@ -5,7 +5,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 
 FACILITY_TYPES = {
-    "1": "斜坡道", "3": "路外停車場無障礙電梯", "4": "公園",
+    "1": "斜坡道", "3": "無障礙電梯", "4": "公園",
     "7": "捷運站及公園無障礙出入口", "8": "友善店家", "9": "無障礙廁所",
     "14": "身障設施", "15": "路邊停車場", "16": "路邊停車格",
     "18": "公車站", "20": "捷運站", "accessible-parking": "身心障礙停車格",

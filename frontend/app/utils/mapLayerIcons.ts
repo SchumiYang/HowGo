@@ -30,13 +30,13 @@ const kindIcons: Record<string, LayerIconName> = {
   '11': 'pedestrian', '12': 'pedestrian', '13': 'pedestrian', 'osm-crossing': 'pedestrian', arcade: 'pedestrian',
   slope: 'slope',
   'accessible-parking': 'accessible-parking',
-  '1': 'entrance-ramp', '3': 'entrance-ramp', '7': 'entrance-ramp', ramp: 'entrance-ramp',
+  '1': 'entrance-ramp', '7': 'entrance-ramp', ramp: 'entrance-ramp',
   '8': 'friendly-store',
   '9': 'accessible-restroom',
   '18': 'public-transit', '20': 'public-transit',
   '4': 'park',
   '15': 'parking', '16': 'parking',
-  '14': 'accessible-facilities',
+  '3': 'accessible-facilities', '14': 'accessible-facilities',
 }
 
 export function layerIconFor(kind: string | undefined | null): LayerIconName | null {
