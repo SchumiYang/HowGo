@@ -91,23 +91,35 @@ NODES = {
     # west corridor (centreline x=11) and main lobby around A101
     # A101 blocks the west corridor, so the route detours through the lobby on one straight line (x=5.5)
     # to keep turn-by-turn steps simple; the main entrance joins that line at l-c.
-    'sw': (11.0, 4.6), 'w-fa': (11.0, 18.7), 'w-s': (11.0, 23.6), 'l-s': (5.5, 27.0), 'l-c': (5.5, 34.0),
-    'l-n': (5.5, 41.0), 'w-n': (11.0, 44.4), 'w-54': (11.0, 54.0), 'nw': (11.0, 63.0),
+    'w-fa': (11.0, 18.7), 'w-s': (11.0, 23.6), 'l-s': (5.5, 27.0), 'l-c': (5.5, 34.0),
+    'l-n': (5.5, 41.0), 'w-n': (11.0, 44.4), 'w-54': (11.0, 54.0),
+    # NW / SW junctions sit south (north) of the elevator shafts: 'nw'/'sw' east of the diagonal wall stub at the shaft
+    # corner, '-w' west of it (stairs, side entrance), '-e' east of the column at the shaft (into the north / south
+    # corridor); straight links from one hub cut the stub, the shaft corner and the column (nav_wall_check.py)
+    'nw': (11.7, 62.2), 'nw-w': (9.6, 62.2), 'nw-e': (14.9, 62.2),
+    'sw': (11.7, 5.4), 'sw-w': (9.6, 5.4), 'sw-e': (14.9, 5.4),
     # north corridor (y=65.6)
     'n-14': (14.6, 65.6), 'n-m': (17.9, 65.6), 'n-acc': (24.0, 65.6), 'n-f': (26.0, 65.6), 'n-40': (40.6, 65.6),
     'n-55': (55.0, 65.6), 'n-68': (68.0, 65.6), 'ne': (73.7, 65.0),
     # east corridor (x=73.7) and south corridor (y=2.1)
-    'e-50': (73.7, 50.0), 'e-34': (73.7, 34.0), 'e-18': (73.7, 18.0), 'se': (73.7, 2.6),
+    'e-50': (73.7, 50.0), 'e-34': (73.7, 34.0), 'e-18': (73.7, 18.0),
+    # se: inside the double door from the south corridor into the stair D lobby
+    'se': (72.35, 2.35),
     's-60': (60.0, 2.1), 's-42': (42.0, 2.1), 's-25': (25.0, 2.1), 's-15': (15.0, 2.1),
     # doors / destinations
     'd-m': (17.9, 63.8), 'rt-m': (19.2, 60.5),
     'd-acc': (24.0, 63.8), 'rt-acc': (23.6, 62.6),
     'd-f': (26.0, 63.8), 'f-in': (26.0, 61.0), 'rt-f': (24.0, 58.0),
-    'el2': (12.1, 65.5), 'el1': (12.1, 2.1),
-    'd-stA': (8.6, 62.6), 'stA': (4.0, 64.5), 'd-stC': (9.0, 5.2), 'stC': (4.0, 3.0),
-    'd-stB': (78.4, 64.4), 'stB': (82.0, 64.4), 'd-stD': (78.4, 3.2), 'stD': (82.0, 3.2),
-    'ent-main': (0.3, 34.0), 'ent-main-out': (-4.0, 34.0),
-    'ent-nw': (9.5, 67.4), 'ent-nw-out': (9.5, 68.6), 'ent-sw': (9.5, 0.6), 'ent-sw-out': (9.5, -0.8),
+    # elevator door nodes sit on the shaft opening (the CAD draws the door leaf as a wall line), cars at their centre
+    'el2': (12.2, 65.4), 'd-el2': (12.2, 64.34), 'el1': (12.2, 2.27), 'd-el1': (12.2, 3.5),
+    # stair nodes = the landing just inside the stair door (the line to the old core centre cut the flights' wall)
+    'd-stA': (8.6, 62.6), 'stA': (7.2, 63.1), 'd-stC': (9.0, 5.2), 'stC': (7.2, 4.5),
+    'd-stB': (78.4, 64.4), 'stB': (79.6, 63.4), 'd-stD': (78.4, 3.2), 'stD': (79.6, 3.6),
+    # main entrance: the step-free door is the swing door north of the two revolving doors (between those runs a
+    # mullion); the ramp platform outside is level with it
+    'ent-main': (0.13, 36.25), 'ent-main-out': (-4.0, 36.25),
+    # side entrances: door nodes in the facade opening (the outer facade line is drawn across the doorway)
+    'ent-nw': (9.5, 67.4), 'ent-nw-out': (9.5, 68.6), 'ent-sw': (9.5, 0.45), 'ent-sw-out': (9.5, -0.8),
     'd-fa': (7.6, 18.7), 'fa': (4.0, 16.8),
     # arena doors (from the 1F door layer: NW, SW, SE; there is no NE door); the open floor is a grid, see ARENA_GRID
     'd-ar-nw': (16.0, 51.6), 'd-ar-sw': (16.0, 15.9), 'd-ar-se': (70.0, 15.9),
@@ -117,28 +129,32 @@ NODES = {
 EDGES = [
     ('sw', 'w-fa', 'corridor', True), ('w-fa', 'w-s', 'corridor', True), ('w-s', 'l-s', 'corridor', True),
     ('l-s', 'l-c', 'corridor', True), ('l-c', 'l-n', 'corridor', True), ('l-n', 'w-n', 'corridor', True),
-    ('w-n', 'w-54', 'corridor', True), ('w-54', 'nw', 'corridor', True), ('nw', 'n-14', 'corridor', True),
+    ('w-n', 'w-54', 'corridor', True), ('w-54', 'nw', 'corridor', True),
+    ('nw', 'nw-w', 'corridor', True), ('nw', 'nw-e', 'corridor', True), ('nw-e', 'n-14', 'corridor', True),
     ('n-14', 'n-m', 'corridor', True), ('n-m', 'n-acc', 'corridor', True), ('n-acc', 'n-f', 'corridor', True),
     ('n-f', 'n-40', 'corridor', True), ('n-40', 'n-55', 'corridor', True), ('n-55', 'n-68', 'corridor', True),
-    ('n-68', 'ne', 'corridor', True), ('ne', 'e-50', 'corridor', True), ('e-50', 'e-34', 'corridor', True),
-    ('e-34', 'e-18', 'corridor', True), ('e-18', 'se', 'corridor', True), ('se', 's-60', 'corridor', True),
+    # the east corridor is closed at both ends by full walls (north: y=61.7 under the north corridor; south: the
+    # diagonal wall at y=10-13 and the wall at y=4.4); it is reached through the arena SE door only
+    ('n-68', 'ne', 'corridor', True), ('e-50', 'e-34', 'corridor', True),
+    ('e-34', 'e-18', 'corridor', True), ('se', 's-60', 'corridor', True),
     ('s-60', 's-42', 'corridor', True), ('s-42', 's-25', 'corridor', True), ('s-25', 's-15', 'corridor', True),
-    ('s-15', 'sw', 'corridor', True),
+    ('s-15', 'sw-e', 'corridor', True), ('sw-e', 'sw', 'corridor', True), ('sw', 'sw-w', 'corridor', True),
     # restrooms
     ('n-m', 'd-m', 'door', True), ('d-m', 'rt-m', 'corridor', True),
     ('n-acc', 'd-acc', 'door', True), ('d-acc', 'rt-acc', 'corridor', True),
     ('n-f', 'd-f', 'door', True), ('d-f', 'f-in', 'corridor', True), ('f-in', 'rt-f', 'corridor', True),
     # elevators
-    ('nw', 'el2', 'door', True), ('sw', 'el1', 'door', True),
+    ('nw', 'd-el2', 'door', True), ('d-el2', 'el2', 'door', True),
+    ('sw', 'd-el1', 'door', True), ('d-el1', 'el1', 'door', True),
     # stairs (stair cores are destinations; climbing is not step-free)
-    ('nw', 'd-stA', 'door', True), ('d-stA', 'stA', 'stairs', False),
-    ('sw', 'd-stC', 'door', True), ('d-stC', 'stC', 'stairs', False),
+    ('nw-w', 'd-stA', 'door', True), ('d-stA', 'stA', 'stairs', False),
+    ('sw-w', 'd-stC', 'door', True), ('d-stC', 'stC', 'stairs', False),
     ('ne', 'd-stB', 'door', True), ('d-stB', 'stB', 'stairs', False),
     ('se', 'd-stD', 'door', True), ('d-stD', 'stD', 'stairs', False),
     # entrances (main entrance has 行動不便坡道 on the platform; side doors confirmed step-free on site)
     ('l-c', 'ent-main', 'door', True), ('ent-main', 'ent-main-out', 'ramp', True),
-    ('nw', 'ent-nw', 'door', True), ('ent-nw', 'ent-nw-out', 'door', True),
-    ('sw', 'ent-sw', 'door', True), ('ent-sw', 'ent-sw-out', 'door', True),
+    ('nw-w', 'ent-nw', 'door', True), ('ent-nw', 'ent-nw-out', 'door', True),
+    ('sw-w', 'ent-sw', 'door', True), ('ent-sw', 'ent-sw-out', 'door', True),
     # first aid
     ('w-fa', 'd-fa', 'door', True), ('d-fa', 'fa', 'corridor', True),
     # arena

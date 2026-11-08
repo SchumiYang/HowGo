@@ -13,6 +13,7 @@ import sys
 
 LEVEL = sys.argv[sys.argv.index('--level') + 1] if '--level' in sys.argv else '1F'
 SPACING = 4.0
+KEEP_M = 0.5  # an existing point within this distance of a sampled edge is kept as it is
 
 # Straight corridor runs to walk for the magnetic map (node chains from nav.geojson, without the "1F-" prefix).
 WALKS = [
@@ -20,7 +21,7 @@ WALKS = [
     ('walk-lobby', '門廳（繞 A101）', ['w-s', 'l-s', 'l-c', 'l-n', 'w-n']),
     ('walk-west-n', '西側走廊（北段）', ['w-n', 'w-54', 'nw']),
     ('walk-north', '北側走廊', ['n-14', 'n-m', 'n-acc', 'n-f', 'n-40', 'n-55', 'n-68', 'ne']),
-    ('walk-east', '東側走廊', ['ne', 'e-50', 'e-34', 'e-18', 'se']),
+    ('walk-east', '東側走廊', ['e-50', 'e-34', 'e-18']),  # closed at both ends (no link to ne / se)
     ('walk-south', '南側走廊', ['se', 's-60', 's-42', 's-25', 's-15', 'sw']),
 ]
 
@@ -42,13 +43,14 @@ EXTRA_WALKS = [
 
 # 2F: corridors around the stands (node chains from author_2f.py; south-side ids are the mirrored "-s" nodes)
 WALKS_2F = [
-    ('walk-north', '北側走廊', ['nw', 'n-a', 'n-c', 'n-43', 'n-69', 'ne']),
-    ('walk-south', '南側走廊', ['nw-s', 'n-a-s', 'n-c-s', 'n-43-s', 'n-69-s', 'ne-s']),
-    ('walk-west', '西側走廊', ['nw', 'w-55', 'w-34', 'w-55-s', 'nw-s']),
+    ('walk-north', '北側走廊', ['nw', 'n-a', 'n-c', 'n-43', 'n-69', 'ne-n', 'ne']),
+    ('walk-south', '南側走廊', ['nw-s', 'n-a-s', 'n-c-s', 'n-43-s', 'n-69-s', 'ne-n-s', 'ne-s']),
+    ('walk-west', '西側走廊', ['nw', 'lw', 'w-55', 'w-34', 'w-55-s', 'lw-s', 'nw-s']),
     ('walk-east', '東側走廊', ['ne', 'e-55', 'e-34', 'e-55-s', 'ne-s']),
     # front walkway behind the court parapet: one loop from the NW lobby (repeat it the other way round)
-    ('walk-front', '看台前走道一圈', ['nw', 'wk-nw', 'wk-n43', 'wk-ne', 'wk-e34', 'wk-ne-s', 'wk-n43-s', 'wk-nw-s', 'wk-w34',
-                                 'wk-nw', 'nw']),
+    ('walk-front', '看台前走道一圈', ['nw', 'nw-c', 'wk-nw', 'wk-nw-n', 'wk-n43', 'wk-ne-n', 'wk-ne', 'wk-ne-e', 'wk-e34',
+                                 'wk-ne-e-s', 'wk-ne-s', 'wk-ne-n-s', 'wk-n43-s', 'wk-nw-n-s', 'wk-nw-s', 'wk-nw-w-s',
+                                 'wk-w34', 'wk-nw-w', 'wk-nw', 'nw-c', 'nw']),
 ]
 
 
@@ -62,10 +64,12 @@ def main():
     # must not renumber the points already surveyed (new points get fresh ids after the highest one)
     path = f'data/tianmu/survey/{LEVEL}_plan.geojson'
     old_ids = {}
+    old_near = {}
     if os.path.exists(path):
         for f in json.load(open(path, encoding='utf-8'))['features']:
             if f['properties'].get('kind') == 'point':
                 old_ids[tuple(f['geometry']['coordinates'])] = f['properties']['id']
+                old_near[f['properties']['id']] = f['properties'].get('near')
     next_no = [max((int(i.rsplit('sp', 1)[1]) for i in old_ids.values()), default=0)]
 
     def add(p, src):
@@ -80,13 +84,22 @@ def main():
         points.append({'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': xy},
                        'properties': {'kind': 'point', 'id': pid, 'level': LEVEL, 'near': src}})
 
-    for e in edges:
-        if not (e['from'].startswith(LEVEL) and e['to'].startswith(LEVEL)):
-            continue  # nav.geojson holds every level and cross-level connectors
-        if not e['accessible'] or e['type'] not in ('corridor', 'door', 'ramp'):
-            continue
-        if '-ar-' in e['from'] and '-ar-' in e['to']:
-            continue  # arena floor grid: open space, not a corridor to sample every 4 m
+    sampled = [e for e in edges if e['from'].startswith(LEVEL) and e['to'].startswith(LEVEL)  # skip connectors
+               and e['accessible'] and e['type'] in ('corridor', 'door', 'ramp')
+               and not ('-ar-' in e['from'] and '-ar-' in e['to'])]  # arena grid: open floor, not a corridor
+
+    def seg_dist(p, a, b):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        t = max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / ((dx * dx + dy * dy) or 1e-12)))
+        return math.dist(p, (a[0] + t * dx, a[1] + t * dy))
+
+    # points of the existing plan that still lie on a sampled edge keep their id and position when the graph is
+    # re-authored (nodes added / moved elsewhere); points left off the new edges (e.g. inside a wall) are dropped
+    for (x, y), pid in sorted(old_ids.items(), key=lambda kv: kv[1]):
+        if any(seg_dist((x, y), pos[e['from']], pos[e['to']]) <= KEEP_M for e in sampled):
+            add([x, y], old_near.get(pid) or 'kept')
+
+    for e in sampled:
         a, b = pos[e['from']], pos[e['to']]
         n = max(1, round(math.dist(a, b) / SPACING))
         for i in range(n + 1):

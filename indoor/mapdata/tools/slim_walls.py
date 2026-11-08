@@ -15,7 +15,9 @@ def main():
     for level in ('1F', '2F'):
         path = f'data/tianmu/levels/{level}/walls.geojson'
         full = f'build/{level}_walls_full.geojson'
-        if not os.path.exists(full):
+        # a walls.geojson still carrying text strokes was just written by build_map.py: it is the new full linework
+        current = json.load(open(path, encoding='utf-8'))
+        if not os.path.exists(full) or any(f['properties'].get('kind') in DROP for f in current['features']):
             shutil.copyfile(path, full)
         data = json.load(open(full, encoding='utf-8'))
         before = collections.Counter(f['properties'].get('kind') or f['properties']['layer'] for f in data['features'])
