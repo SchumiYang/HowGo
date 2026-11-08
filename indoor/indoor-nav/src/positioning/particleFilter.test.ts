@@ -47,6 +47,25 @@ describe('ParticleFilter', () => {
     expect(e.x).toBeGreaterThan(15)
   })
 
+  it('never moves through a wall: a step every particle is blocked on leaves them where they are', () => {
+    // a 2 x 2 m room: a 3 m step is blocked whichever way a particle tries
+    const room: XY[] = [[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]
+    const g = OccupancyGrid.build({ level: '1F', units: [unit(room)], walls: room.slice(1).map((p, i) => wall(room[i], p)) })
+    const pf = new ParticleFilter(g, { n: 400 }, mulberry32(4))
+    pf.init([{ x: 1, y: 1, w: 1 }], 0.2, { mean: 0, sigma: 0.01, uniformFrac: 0 }, 0)
+    const before = [Array.from(pf.x), Array.from(pf.y)]
+    const h0 = Array.from(pf.h)
+    pf.predict(step(0, 0, 3))
+    expect(pf.lostSteps).toBe(1)
+    for (let i = 0; i < pf.n; i++) {
+      expect([pf.x[i], pf.y[i]]).toEqual([before[0][i], before[1][i]])
+      expect(g.isFree(pf.x[i], pf.y[i])).toBe(true)
+    }
+    // headings widened (about 20 degrees), so the next steps can find a way round
+    const dh = Array.from(pf.h).map((h, i) => Math.abs(h - h0[i]))
+    expect(dh.reduce((a, b) => a + b, 0) / dh.length).toBeGreaterThan(0.1)
+  })
+
   it('turns the corner and keeps particles inside the map', () => {
     const pf = new ParticleFilter(grid, { n: 600 }, mulberry32(9))
     pf.init([{ x: 30, y: 1.25, w: 1 }], 0.3, { mean: 0, sigma: 0.05, uniformFrac: 0 }, 0)

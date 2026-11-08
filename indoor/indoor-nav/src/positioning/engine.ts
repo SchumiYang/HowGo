@@ -192,6 +192,7 @@ class PositioningEngine implements Positioning {
   private readonly portals = new Map<string, number[][]>()
   private readonly magGrids = new Map<string, MagGrid>()
   private readonly magOpts: MagOptions
+  private readonly magOptsByLevel = new Map<string, MagOptions>()
   private readonly rng: () => number
   private level: string
   private pdr: Pdr
@@ -312,6 +313,25 @@ class PositioningEngine implements Positioning {
     const m = this.magmaps.get(level)
     if (!g && m) this.magGrids.set(level, (g = new MagGrid(m, this.magOpts.fillRadiusM)))
     return g ?? null
+  }
+
+  /**
+   * Magnetic likelihood options for a level: sigmaB / sigmaV raised to the map's own forward/reverse repeatability
+   * (magmap stats.repeatability.corridors['+registration'].rms_B / rms_Bv). The 2F map repeats to 4.1 / 5.1 uT, not
+   * the 3 uT the 1F corridors do: matched at 3 uT, its small errors outvoted the walls (2026-11-08 Pixel 2F run: the
+   * cloud was pulled off the corner passage into the west lobby in 7 of 20 replays, 0 of 20 at the map's own sigma).
+   */
+  private magOptsFor(level: string): MagOptions {
+    let o = this.magOptsByLevel.get(level)
+    if (!o) {
+      const rep = (this.magmaps.get(level) as { stats?: { repeatability?: Record<string, Record<string, { rms_B?: number; rms_Bv?: number }>> } } | undefined)
+        ?.stats?.repeatability?.corridors?.['+registration']
+      // only a clearly worse map (>= 25 % above the default): 1F folds at 3.0–3.4 uT stay at 3 (LOWO: no gain there)
+      const pick = (def: number, rms: number | undefined) => (rms !== undefined && rms >= 1.25 * def ? rms : def)
+      o = { ...this.magOpts, sigmaB: pick(this.magOpts.sigmaB, rep?.rms_B), sigmaV: pick(this.magOpts.sigmaV, rep?.rms_Bv) }
+      this.magOptsByLevel.set(level, o)
+    }
+    return o
   }
 
   private newFilter(): ParticleFilter {
@@ -565,7 +585,7 @@ class PositioningEngine implements Positioning {
     const levelMag = this.magGrid(this.level)
     if (levelMag && step.magB !== null) this.checkMagResidual(step.magB, levelMag)
     const mg = this.stats.magHealthy ? levelMag : null
-    if (mg && step.magB !== null && step.magBv !== null && pf.weightMagnetic(step.magB, step.magBv, mg, this.magOpts) > 0) {
+    if (mg && step.magB !== null && step.magBv !== null && pf.weightMagnetic(step.magB, step.magBv, mg, this.magOptsFor(this.level)) > 0) {
       this.stats.magSteps++
       this.lastAbsT = step.t
     }

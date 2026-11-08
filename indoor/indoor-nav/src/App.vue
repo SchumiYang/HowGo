@@ -105,18 +105,28 @@ const insets = computed(() => ({ top: 20, bottom: sheetH.value + 16, left: 16, r
 const sideEl = useTemplateRef<HTMLElement>('side')
 const controlsZone = ref<{ right: number; bottom: number } | null>(null)
 let ro: ResizeObserver | undefined
+let mo: MutationObserver | undefined
 onMounted(() => {
   ro = new ResizeObserver(() => {
     sheetH.value = sheetEl.value?.offsetHeight ?? sheetH.value
     const r = sideEl.value?.getBoundingClientRect()
     if (r) controlsZone.value = { right: window.innerWidth - r.left, bottom: r.bottom }
     updateSnapCaps()
+    updateSheetScrollable()
   })
   if (sheetEl.value) ro.observe(sheetEl.value)
+  // content can change size while the sheet's own box stays capped; recheck overflow on DOM changes
+  if (sheetEl.value) {
+    mo = new MutationObserver(() => requestAnimationFrame(updateSheetScrollable))
+    mo.observe(sheetEl.value, { childList: true, subtree: true, characterData: true })
+  }
   if (sideEl.value) ro.observe(sideEl.value)
   if (appEl.value) ro.observe(appEl.value)
 })
-onBeforeUnmount(() => ro?.disconnect())
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  mo?.disconnect()
+})
 
 // ---- bottom sheet: drag the handle / tap / arrow keys between peek, half and full ----
 type Snap = 'peek' | 'half' | 'full'
@@ -159,6 +169,25 @@ function stepSnap(dir: 1 | -1) {
   const order = dir > 0 ? SNAPS : [...SNAPS].reverse()
   const next = order.slice(order.indexOf(snap.value) + 1).find((s) => dir * (hs[s] - cur) > 8)
   if (next) snap.value = next
+}
+
+/**
+ * The whole sheet drags, not just the grip: a press on the sheet's background (anything but a control)
+ * starts the same drag. While the content overflows, the background scrolls it natively instead and
+ * only the grip drags.
+ */
+const sheetScrollable = ref(false)
+function updateSheetScrollable() {
+  const sheet = sheetEl.value
+  if (sheet) sheetScrollable.value = sheet.scrollHeight > sheet.clientHeight + 1
+}
+const SHEET_CONTROLS = 'button, a, input, select, textarea, label, summary, [role="button"], [role="tab"], [role="option"], [contenteditable]'
+
+function onSheetDown(e: PointerEvent) {
+  const target = e.target as Element | null
+  if (!target || target.closest('.grip-btn')) return
+  if (target.closest(SHEET_CONTROLS) || sheetScrollable.value) return
+  onGripDown(e)
 }
 
 function onGripDown(e: PointerEvent) {
@@ -796,10 +825,14 @@ const liveChip = computed(() => {
       id="tn-sheet"
       ref="sheet"
       class="sheet"
-      :class="{ dragging: dragH !== null }"
+      :class="{ dragging: dragH !== null, scrollable: sheetScrollable }"
       :data-snap="snap"
       :style="{ maxHeight: sheetMaxH + 'px' }"
       :aria-label="t('導航面板')"
+      @pointerdown="onSheetDown"
+      @pointermove="onGripMove"
+      @pointerup="onGripUp"
+      @pointercancel="onGripUp"
     >
       <button
         type="button"
@@ -808,9 +841,6 @@ const liveChip = computed(() => {
         :aria-expanded="snap !== 'peek'"
         :aria-label="t('面板高度：點按展開或收合，上下鍵調整，可拖曳')"
         @pointerdown="onGripDown"
-        @pointermove="onGripMove"
-        @pointerup="onGripUp"
-        @pointercancel="onGripUp"
         @click="onGripClick"
         @keydown.up.prevent="stepSnap(1)"
         @keydown.down.prevent="stepSnap(-1)"
@@ -1055,6 +1085,10 @@ const liveChip = computed(() => {
 }
 .sheet.dragging {
   transition: none;
+}
+/* the background drags the sheet unless its content needs to scroll */
+.sheet:not(.scrollable) {
+  touch-action: none;
 }
 /* full-width drag handle, stays on top while the sheet content scrolls */
 .grip-btn {

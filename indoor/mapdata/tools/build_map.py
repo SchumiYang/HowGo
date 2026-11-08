@@ -19,6 +19,15 @@ DATA = os.path.join(ROOT, "data", "tianmu", "levels")
 FLOORS = ["1F", "2F"]
 COURT_M = (28.0, 15.0)        # FIBA court, inside edges of boundary lines
 HALL_M = (57.62, 39.00)       # dimension annotations 5762 / 3900 (cm), arena hall interior
+# Linework the classifier calls 'wall' that is not a wall, judged on the plan (metres, after calibration): every
+# 'wall' primitive lying entirely inside the box gets the class instead. Keep each entry explained.
+NOT_WALLS = {
+    "1F": [
+        # curved outline 1.9 m in front of the main entrance facade, closed against the facade with no door in it:
+        # the canopy / eave edge above the ramp platform (the entrance doors are in the facade line x = 0)
+        ((-2.0, 27.3, -1.0, 40.2), "canopy"),
+    ],
+}
 
 LAYER_COLORS = {"wall": (20, 20, 20), "column": (200, 30, 30), "stairs": (30, 110, 220),
                 "fixture": (0, 150, 140), "court": (230, 130, 0), "door": (160, 60, 200),
@@ -26,7 +35,7 @@ LAYER_COLORS = {"wall": (20, 20, 20), "column": (200, 30, 30), "stairs": (30, 11
 # internal classes -> schema layer
 CLASS_TO_LAYER = {"wall": "wall", "column": "column", "stairs": "stairs", "fixture": "fixture",
                   "court": "court", "door": "door", "text": "other", "dim": "other", "hatch": "other",
-                  "seating": "other"}
+                  "seating": "other", "canopy": "other"}
 
 
 # ----------------------------------------------------------------------------- geometry helpers
@@ -407,6 +416,39 @@ def classify(prims, S, columns, floor, hall_box=None, court_box=None, dim_idx=()
         if not partner:
             cls[i] = "hatch"
 
+    # box of a shaft / void / overhead-equipment X: the single-line outline whose corners are the ends of two crossing
+    # hatch diagonals. It is a symbol (often drawn across real walls and corridors, e.g. the 1F east corridor), not a
+    # wall; the real walls around it are double lines and stay. Elevator cars are drawn the same way.
+    xs = [s for s in diag if cls[s[0]] == "hatch"]
+    boxes = []
+    for a_i in range(len(xs)):
+        for b_i in range(a_i + 1, len(xs)):
+            (_, p0, p1, la, ang_a), (_, q0, q1, lb, ang_b) = xs[a_i], xs[b_i]
+            if abs(la - lb) > 0.05 * max(la, lb) or abs(ang_a - ang_b) < 5:
+                continue
+            if np.hypot(*((p0 + p1) / 2 - (q0 + q1) / 2)) > 0.15 * S:
+                continue  # not crossing at their midpoints
+            P = np.array([p0, p1, q0, q1])
+            boxes.append((P.min(0), P.max(0)))
+    # a closed rectangle with a single corner-to-corner hatch diagonal (1F elevator car #1) is the same symbol
+    for _, p0, p1, _, _ in xs:
+        mn, mx = np.minimum(p0, p1), np.maximum(p0, p1)
+        for i, p in enumerate(prims):
+            if cls[i] is None and p["closed"] and len(p["a"]) == 5 and \
+                    np.all(np.abs(p["mn"] - mn) < 0.12 * S) and np.all(np.abs(p["mx"] - mx) < 0.12 * S):
+                boxes.append((mn, mx))
+                break
+    tol = 0.12 * S
+    for mn, mx in boxes:
+        for i, p in enumerate(prims):
+            if cls[i] is not None or size[i] < 0.5 or np.any(p["mn"] < mn - tol) or np.any(p["mx"] > mx + tol):
+                continue
+            a = p["a"]
+            on_edge = np.minimum(np.minimum(np.abs(a[:, 0] - mn[0]), np.abs(a[:, 0] - mx[0])),
+                                 np.minimum(np.abs(a[:, 1] - mn[1]), np.abs(a[:, 1] - mx[1])))
+            if np.all(on_edge < tol):
+                cls[i] = "hatch"
+
     # fixtures: remaining small closed shapes and small curvy polylines
     for i, p in enumerate(prims):
         if cls[i] is not None:
@@ -460,15 +502,19 @@ def write_geojson(floor, prims, cls, T):
     for p, c in zip(prims, cls):
         if c == "junk":
             continue
-        layer = CLASS_TO_LAYER[c]
         coords = np.round(to_m(T, p["a"]), 2)
+        if c == "wall":
+            for (x0, y0, x1, y1), kind in NOT_WALLS.get(floor, []):
+                if coords[:, 0].min() >= x0 and coords[:, 0].max() <= x1 and coords[:, 1].min() >= y0 and coords[:, 1].max() <= y1:
+                    c = kind
+        layer = CLASS_TO_LAYER[c]
         # drop consecutive duplicates after rounding
         keep = np.r_[True, np.any(np.diff(coords, axis=0) != 0, axis=1)]
         coords = coords[keep]
         if len(coords) < 2:
             continue
         props = {"layer": layer}
-        if c in ("text", "dim", "hatch", "seating"):
+        if c in ("text", "dim", "hatch", "seating", "canopy"):
             props["kind"] = c
         feats.append({"type": "Feature", "properties": props,
                       "geometry": {"type": "LineString", "coordinates": coords.tolist()}})

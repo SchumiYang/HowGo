@@ -78,8 +78,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     60.0,
-     61.5
+     61.5,
+     60.9
     ]
    },
    "properties": {
@@ -96,8 +96,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     60.0,
-     6.1
+     61.5,
+     6.7
     ]
    },
    "properties": {
@@ -150,8 +150,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     4.5,
-     64.3
+     8.25,
+     61.75
     ]
    },
    "properties": {
@@ -168,8 +168,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     4.5,
-     3.3
+     8.25,
+     5.85
     ]
    },
    "properties": {
@@ -186,8 +186,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     81.0,
-     64.5
+     76.3,
+     63.2
     ]
    },
    "properties": {
@@ -204,8 +204,8 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     81.0,
-     3.1
+     76.3,
+     4.4
     ]
    },
    "properties": {
@@ -222,7 +222,7 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     -6.0,
+     -0.7,
      57.6
     ]
    },
@@ -240,7 +240,7 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     -6.0,
+     -0.7,
      10.0
     ]
    },

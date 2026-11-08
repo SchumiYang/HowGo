@@ -17,7 +17,7 @@ type FlutterObject = {
   removeEventListener: (type: 'message', listener: (event: { data: string }) => void) => void
 }
 
-function flutterObject(): FlutterObject | null {
+export function flutterObject(): FlutterObject | null {
   const candidate = (window as unknown as { flutterObject?: FlutterObject }).flutterObject
   return candidate && typeof candidate.postMessage === 'function' ? candidate : null
 }
@@ -166,4 +166,17 @@ export function isEmbedded() {
     if (sessionStorage.getItem('howgo-embedded') === '1') return true
   } catch {}
   return /; wv\)/.test(navigator.userAgent)
+}
+
+/**
+ * Opens a URL outside the web view. Inside Town Pass the `launch_map` bridge message hands it to the
+ * OS (Google Maps app or browser); elsewhere it opens a new tab. Returns false when nothing was sent.
+ */
+export function openExternal(url: string): boolean {
+  const bridge = flutterObject()
+  if (bridge) {
+    bridge.postMessage(JSON.stringify({ name: 'launch_map', data: url }))
+    return true
+  }
+  return window.open(url, '_blank', 'noopener') !== null
 }

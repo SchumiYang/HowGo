@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { t } from '~/i18n'
 const level = defineModel<number>({ required: true })
+/**
+ * UI-018: size to the content instead of the level's fixed height. Levels 1-2 may grow up to the top
+ * level so a collapsed summary is never cut off; level 0 stays the compact peek.
+ */
+const props = defineProps<{ fit?: boolean }>()
 const height = ref<number | null>(null)
 const stops = [0.24, 0.53, 0.82]
 const MIN_HEIGHT = 190
@@ -49,7 +54,9 @@ function cycle() {
 
 <template>
   <aside ref="sheet" class="map-sheet" :data-dragging="height !== null"
-    :style="{ height: height !== null ? height + 'px' : `max(${MIN_HEIGHT}px, ${stops[level]! * 100}dvh)` }">
+    :data-fit="props.fit && height === null" :style="height !== null ? { height: height + 'px' }
+      : props.fit ? { height: 'auto', maxHeight: `min(max(${MIN_HEIGHT}px, ${stops[level === 0 ? 0 : 2]! * 100}dvh), calc(100dvh - var(--safe-top) - 136px))` }
+      : { height: `max(${MIN_HEIGHT}px, ${stops[level]! * 100}dvh)` }">
     <button class="sheet-handle" type="button" :aria-label="level === 2 ? t('收起路線面板') : t('展開路線面板')"
       @pointerdown="start" @pointermove="move" @pointerup="end" @pointercancel="end" @click="cycle"
       @keydown.up.prevent="level = Math.min(2, level + 1)" @keydown.down.prevent="level = Math.max(0, level - 1)">

@@ -38,22 +38,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     9.0,
-     62.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp003",
-    "level": "2F",
-    "near": "2F-nw~2F-d-stA"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      16.5,
      62.0
     ]
@@ -310,22 +294,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     73.5,
-     62.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp020",
-    "level": "2F",
-    "near": "2F-n-69~2F-ne"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      21.0,
      62.5
     ]
@@ -438,102 +406,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     63.1,
-     61.75
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp028",
-    "level": "2F",
-    "near": "2F-d-f~2F-rt-f"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     60.0,
-     61.5
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp029",
-    "level": "2F",
-    "near": "2F-d-f~2F-rt-f"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     76.5,
-     64.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp030",
-    "level": "2F",
-    "near": "2F-ne~2F-d-stB"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     8.0,
-     59.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp031",
-    "level": "2F",
-    "near": "2F-nw~2F-w-55"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     5.0,
-     57.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp032",
-    "level": "2F",
-    "near": "2F-nw~2F-w-55"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     2.0,
-     55.0
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp033",
-    "level": "2F",
-    "near": "2F-nw~2F-w-55"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      0.6,
      57.6
     ]
@@ -623,22 +495,6 @@
     "id": "2F-sp039",
     "level": "2F",
     "near": "2F-w-55~2F-w-34"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     76.33,
-     59.67
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp040",
-    "level": "2F",
-    "near": "2F-ne~2F-e-55"
    }
   },
   {
@@ -765,22 +621,6 @@
    "properties": {
     "kind": "point",
     "id": "2F-sp048",
-    "level": "2F",
-    "near": "2F-wk-nw~2F-wk-n43"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     19.99,
-     51.65
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp049",
     "level": "2F",
     "near": "2F-wk-nw~2F-wk-n43"
    }
@@ -966,22 +806,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     66.01,
-     51.65
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp061",
-    "level": "2F",
-    "near": "2F-wk-n43~2F-wk-ne"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      69.85,
      51.65
     ]
@@ -1126,70 +950,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     12.72,
-     57.88
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp137",
-    "level": "2F",
-    "near": "2F-nw~2F-wk-nw"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     14.43,
-     54.77
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp138",
-    "level": "2F",
-    "near": "2F-nw~2F-wk-nw"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     72.28,
-     58.55
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp139",
-    "level": "2F",
-    "near": "2F-ne~2F-wk-ne"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     71.07,
-     55.1
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp140",
-    "level": "2F",
-    "near": "2F-ne~2F-wk-ne"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      11.0,
      6.6
     ]
@@ -1215,22 +975,6 @@
     "id": "2F-sp072",
     "level": "2F",
     "near": "2F-nw-s~2F-el1"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     9.0,
-     5.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp073",
-    "level": "2F",
-    "near": "2F-nw-s~2F-d-stC"
    }
   },
   {
@@ -1494,22 +1238,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     73.5,
-     5.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp090",
-    "level": "2F",
-    "near": "2F-n-69-s~2F-ne-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      21.0,
      5.1
     ]
@@ -1622,102 +1350,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     63.1,
-     5.85
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp098",
-    "level": "2F",
-    "near": "2F-d-f-s~2F-rt-f-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     60.0,
-     6.1
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp099",
-    "level": "2F",
-    "near": "2F-d-f-s~2F-rt-f-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     76.5,
-     3.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp100",
-    "level": "2F",
-    "near": "2F-ne-s~2F-d-stD"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     8.0,
-     8.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp101",
-    "level": "2F",
-    "near": "2F-nw-s~2F-w-55-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     5.0,
-     10.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp102",
-    "level": "2F",
-    "near": "2F-nw-s~2F-w-55-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     2.0,
-     12.6
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp103",
-    "level": "2F",
-    "near": "2F-nw-s~2F-w-55-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      0.6,
      10.0
     ]
@@ -1791,22 +1423,6 @@
     "id": "2F-sp108",
     "level": "2F",
     "near": "2F-w-55-s~2F-w-34"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     76.33,
-     7.93
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp109",
-    "level": "2F",
-    "near": "2F-ne-s~2F-e-55-s"
    }
   },
   {
@@ -1917,22 +1533,6 @@
    "properties": {
     "kind": "point",
     "id": "2F-sp116",
-    "level": "2F",
-    "near": "2F-wk-nw-s~2F-wk-n43-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
-     19.99,
-     15.95
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp117",
     "level": "2F",
     "near": "2F-wk-nw-s~2F-wk-n43-s"
    }
@@ -2118,22 +1718,6 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     66.01,
-     15.95
-    ]
-   },
-   "properties": {
-    "kind": "point",
-    "id": "2F-sp129",
-    "level": "2F",
-    "near": "2F-wk-n43-s~2F-wk-ne-s"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Point",
-    "coordinates": [
      69.85,
      15.95
     ]
@@ -2246,15 +1830,15 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     12.72,
-     9.72
+     73.5,
+     60.6
     ]
    },
    "properties": {
     "kind": "point",
-    "id": "2F-sp141",
+    "id": "2F-sp145",
     "level": "2F",
-    "near": "2F-nw-s~2F-wk-nw-s"
+    "near": "2F-ne-n~2F-ne"
    }
   },
   {
@@ -2262,15 +1846,415 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     14.43,
-     12.83
+     63.08,
+     61.18
     ]
    },
    "properties": {
     "kind": "point",
-    "id": "2F-sp142",
+    "id": "2F-sp146",
     "level": "2F",
-    "near": "2F-nw-s~2F-wk-nw-s"
+    "near": "2F-d-f~2F-f-in"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     7.46,
+     59.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp147",
+    "level": "2F",
+    "near": "2F-nw~2F-w-box"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     3.93,
+     57.6
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp148",
+    "level": "2F",
+    "near": "2F-nw~2F-w-box"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     8.1,
+     57.15
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp149",
+    "level": "2F",
+    "near": "2F-nw~2F-lw"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5.2,
+     53.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp150",
+    "level": "2F",
+    "near": "2F-nw~2F-lw"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.0,
+     53.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp151",
+    "level": "2F",
+    "near": "2F-lw~2F-w-55"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.33,
+     58.73
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp152",
+    "level": "2F",
+    "near": "2F-ne~2F-e-55"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.75,
+     51.65
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp153",
+    "level": "2F",
+    "near": "2F-wk-nw~2F-wk-nw-n"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     64.25,
+     51.65
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp154",
+    "level": "2F",
+    "near": "2F-wk-n43~2F-wk-ne-n"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.88,
+     57.92
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp155",
+    "level": "2F",
+    "near": "2F-nw~2F-nw-c"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.75,
+     54.85
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp156",
+    "level": "2F",
+    "near": "2F-nw~2F-nw-c"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.25,
+     54.85
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp157",
+    "level": "2F",
+    "near": "2F-ne~2F-ne-c"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.5,
+     7.0
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp158",
+    "level": "2F",
+    "near": "2F-ne-n-s~2F-ne-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     63.08,
+     6.42
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp159",
+    "level": "2F",
+    "near": "2F-d-f-s~2F-f-in-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     7.46,
+     8.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp160",
+    "level": "2F",
+    "near": "2F-nw-s~2F-w-box-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     3.93,
+     10.0
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp161",
+    "level": "2F",
+    "near": "2F-nw-s~2F-w-box-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     8.1,
+     10.45
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp162",
+    "level": "2F",
+    "near": "2F-nw-s~2F-lw-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     5.2,
+     14.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp163",
+    "level": "2F",
+    "near": "2F-nw-s~2F-lw-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     2.0,
+     14.3
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp164",
+    "level": "2F",
+    "near": "2F-lw-s~2F-w-55-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     76.33,
+     8.87
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp165",
+    "level": "2F",
+    "near": "2F-ne-s~2F-e-55-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     21.75,
+     15.95
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp166",
+    "level": "2F",
+    "near": "2F-wk-nw-s~2F-wk-nw-n-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     64.25,
+     15.95
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp167",
+    "level": "2F",
+    "near": "2F-wk-n43-s~2F-wk-ne-n-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.88,
+     9.68
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp168",
+    "level": "2F",
+    "near": "2F-nw-s~2F-nw-c-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     12.75,
+     12.75
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp169",
+    "level": "2F",
+    "near": "2F-nw-s~2F-nw-c-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     73.25,
+     12.75
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp170",
+    "level": "2F",
+    "near": "2F-ne-s~2F-ne-c-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.5,
+     63.1
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp171",
+    "level": "2F",
+    "near": "2F-d-stB~2F-vb"
    }
   },
   {
@@ -2279,14 +2263,14 @@
     "type": "Point",
     "coordinates": [
      72.28,
-     9.05
+     65.7
     ]
    },
    "properties": {
     "kind": "point",
-    "id": "2F-sp143",
+    "id": "2F-sp172",
     "level": "2F",
-    "near": "2F-ne-s~2F-wk-ne-s"
+    "near": "2F-n-69~2F-n-72"
    }
   },
   {
@@ -2294,15 +2278,31 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     71.07,
-     12.5
+     74.5,
+     4.5
     ]
    },
    "properties": {
     "kind": "point",
-    "id": "2F-sp144",
+    "id": "2F-sp173",
     "level": "2F",
-    "near": "2F-ne-s~2F-wk-ne-s"
+    "near": "2F-d-stD~2F-vb-s"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     72.28,
+     1.9
+    ]
+   },
+   "properties": {
+    "kind": "point",
+    "id": "2F-sp174",
+    "level": "2F",
+    "near": "2F-n-69-s~2F-n-72-s"
    }
   },
   {
@@ -2331,8 +2331,12 @@
       65.7
      ],
      [
+      69.5,
+      61.0
+     ],
+     [
       73.5,
-      62.0
+      60.6
      ]
     ]
    },
@@ -2341,7 +2345,7 @@
     "id": "2F-walk-north",
     "level": "2F",
     "name": "北側走廊",
-    "length_m": 67.7
+    "length_m": 71.0
    }
   },
   {
@@ -2370,8 +2374,12 @@
       1.9
      ],
      [
+      69.5,
+      6.6
+     ],
+     [
       73.5,
-      5.6
+      7.0
      ]
     ]
    },
@@ -2380,7 +2388,7 @@
     "id": "2F-walk-south",
     "level": "2F",
     "name": "南側走廊",
-    "length_m": 67.7
+    "length_m": 71.0
    }
   },
   {
@@ -2393,8 +2401,12 @@
       61.0
      ],
      [
+      5.2,
+      53.3
+     ],
+     [
       2.0,
-      55.0
+      53.3
      ],
      [
       2.0,
@@ -2402,7 +2414,11 @@
      ],
      [
       2.0,
-      12.6
+      14.3
+     ],
+     [
+      5.2,
+      14.3
      ],
      [
       11.0,
@@ -2415,7 +2431,7 @@
     "id": "2F-walk-west",
     "level": "2F",
     "name": "西側走廊",
-    "length_m": 64.0
+    "length_m": 64.7
    }
   },
   {
@@ -2425,7 +2441,7 @@
     "coordinates": [
      [
       73.5,
-      62.0
+      60.6
      ],
      [
       82.0,
@@ -2441,7 +2457,7 @@
      ],
      [
       73.5,
-      5.6
+      7.0
      ]
     ]
    },
@@ -2450,7 +2466,7 @@
     "id": "2F-walk-east",
     "level": "2F",
     "name": "東側走廊",
-    "length_m": 64.4
+    "length_m": 62.8
    }
   },
   {
@@ -2463,7 +2479,15 @@
       61.0
      ],
      [
-      16.15,
+      12.75,
+      54.85
+     ],
+     [
+      17.35,
+      50.25
+     ],
+     [
+      21.75,
       51.65
      ],
      [
@@ -2471,8 +2495,16 @@
       51.65
      ],
      [
-      69.85,
+      64.25,
       51.65
+     ],
+     [
+      68.65,
+      50.25
+     ],
+     [
+      69.85,
+      46.0
      ],
      [
       69.85,
@@ -2480,6 +2512,14 @@
      ],
      [
       69.85,
+      21.6
+     ],
+     [
+      68.65,
+      17.35
+     ],
+     [
+      64.25,
       15.95
      ],
      [
@@ -2487,8 +2527,16 @@
       15.95
      ],
      [
-      16.15,
+      21.75,
       15.95
+     ],
+     [
+      17.35,
+      17.35
+     ],
+     [
+      16.15,
+      21.6
      ],
      [
       16.15,
@@ -2496,7 +2544,15 @@
      ],
      [
       16.15,
-      51.65
+      46.0
+     ],
+     [
+      17.35,
+      50.25
+     ],
+     [
+      12.75,
+      54.85
      ],
      [
       11.0,
@@ -2509,7 +2565,7 @@
     "id": "2F-walk-front",
     "level": "2F",
     "name": "看台前走道一圈",
-    "length_m": 200.1
+    "length_m": 195.7
    }
   }
  ]

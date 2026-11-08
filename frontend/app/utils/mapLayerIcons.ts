@@ -1,5 +1,5 @@
 import type { ExpressionSpecification, Map as MapLibreMap } from 'maplibre-gl'
-import { palette } from './palette'
+import { palette, semantic } from './palette'
 
 /**
  * UI-004: one circular-badge SVG per layer-panel category, shared by the layer panel, the map
@@ -11,17 +11,17 @@ export const layerIconNames = [
 ] as const
 export type LayerIconName = typeof layerIconNames[number]
 
-/** Badge colours from the spec table (UI-001 swatches), for anything that colour-codes a category. */
+/** Badge colours (UI-004 table, v2 UI-008 for 出入口／坡道, 身障停車格, 停車, 坡度), for anything that colour-codes a category. */
 export const layerIconColors: Record<LayerIconName, string> = {
   pedestrian: palette.primary600,
-  slope: palette.secondary800,
-  'accessible-parking': palette.primary900,
-  'entrance-ramp': palette.grey700,
+  slope: palette.secondary700,
+  'accessible-parking': palette.blue600,
+  'entrance-ramp': palette.grey400,
   'friendly-store': palette.secondary500,
   'accessible-restroom': palette.primary800,
   'public-transit': palette.grey800,
   park: palette.green500,
-  parking: palette.secondary700,
+  parking: palette.blue300,
   'accessible-facilities': palette.orange500,
 }
 
@@ -78,4 +78,94 @@ export async function addLayerIcons(map: MapLibreMap, base = '/') {
       // A missing icon only leaves that category without a marker; the rest still load.
     }
   }))
+}
+
+/* ---------- Route destination pin ---------- */
+
+export const DESTINATION_PIN_ID = 'route-destination-pin'
+/** The pin's location dot is centred 8 px above the bottom of the 40 x 60 artwork. */
+export const DESTINATION_PIN_OFFSET: [number, number] = [0, 8]
+
+/** public/icons/navigation/map_icon_mappin_park_green_pressed.svg at 2x, 40 x 60 CSS px at icon-size 1. */
+export async function addDestinationPin(map: MapLibreMap, base = '/') {
+  if (map.hasImage(DESTINATION_PIN_ID)) return
+  try {
+    const [w, h] = [80, 120]
+    const image = new Image(w, h)
+    image.src = `${base.replace(/\/?$/, '/')}icons/navigation/map_icon_mappin_park_green_pressed.svg`
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(image, 0, 0, w, h)
+    if (!map.hasImage(DESTINATION_PIN_ID)) map.addImage(DESTINATION_PIN_ID, ctx.getImageData(0, 0, w, h), { pixelRatio: 2 })
+  } catch {
+    // Without the artwork the destination keeps no marker; the route line still ends there.
+  }
+}
+
+/* ---------- UI-009 selection markers ---------- */
+
+export const layerDotId = (name: LayerIconName) => `layer-dot-${name}`
+
+/** `icon-image` for the small category dots shown for unselected markers while something is selected. */
+export const layerDotExpression: ExpressionSpecification = [
+  'match', ['get', 'kind'],
+  ...Object.entries(kindIcons).flatMap(([kind, name]) => [kind, layerDotId(name)]),
+  layerDotId('accessible-facilities'),
+] as unknown as ExpressionSpecification
+
+export const SELECTED_PIN_ID = 'map-selected-location'
+
+/**
+ * Dots: badge colour centre and outer ring with a thin white (map-marker-white) ring between,
+ * 12 CSS px at icon-size 1. Pin: map-selected-location teardrop for non-facility picks.
+ */
+export function addSelectionImages(map: MapLibreMap) {
+  const px = 24
+  for (const name of layerIconNames) {
+    const id = layerDotId(name)
+    if (map.hasImage(id)) continue
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = px
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const disc = (radius: number, colour: string) => {
+      ctx.beginPath()
+      ctx.arc(px / 2, px / 2, radius, 0, Math.PI * 2)
+      ctx.fillStyle = colour
+      ctx.fill()
+    }
+    disc(11.5, layerIconColors[name])
+    disc(8.5, semantic.mapMarkerWhite)
+    disc(6.5, layerIconColors[name])
+    map.addImage(id, ctx.getImageData(0, 0, px, px), { pixelRatio: 2 })
+  }
+  if (!map.hasImage(SELECTED_PIN_ID)) {
+    const w = 56
+    const h = 72
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.beginPath()
+    ctx.moveTo(w / 2, h - 2)
+    ctx.bezierCurveTo(w / 2, h - 2, 3, 40, 3, 26)
+    ctx.arc(w / 2, 26, w / 2 - 3, Math.PI, 0)
+    ctx.bezierCurveTo(w - 3, 40, w / 2, h - 2, w / 2, h - 2)
+    ctx.closePath()
+    ctx.fillStyle = semantic.mapSelectedLocation
+    ctx.strokeStyle = semantic.mapMarkerWhite
+    ctx.lineWidth = 3
+    ctx.fill()
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(w / 2, 26, 9, 0, Math.PI * 2)
+    ctx.fillStyle = semantic.mapMarkerWhite
+    ctx.fill()
+    map.addImage(SELECTED_PIN_ID, ctx.getImageData(0, 0, w, h), { pixelRatio: 2 })
+  }
 }

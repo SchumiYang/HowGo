@@ -7,14 +7,10 @@
 .place-card .place-badge { width: 52px; height: 52px; align-self: flex-start; }
 .place-title-row { display: flex; align-items: flex-start; gap: 4px; }
 .place-title-row h2 { flex: 1; min-width: 0; }
-.icon-button.place-close {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  margin: -3px -6px 0 0;
-  color: var(--text-hint, var(--grey-400));
-}
-.icon-button.place-close:hover { color: var(--text-secondary, var(--grey-700)); }
+/* Title links to Google Maps; the pin icon (Grey / 300) trails the last line of the name. */
+.place-map-link { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.place-map-link:hover, .place-map-link:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.place-map-icon { display: inline-block; margin-left: 4px; vertical-align: -3px; color: var(--grey-300); }
 
 /* Route legend: 指引側人行道 shares Green / 500 with 行經人行道, so its swatch mirrors the map style
    (lighter fill + dashed Primary / 700 outline) instead of relying on colour. */

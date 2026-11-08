@@ -30,6 +30,8 @@ export interface PfOptions {
   roughenM: number
   /** extra attempts for a blocked step, each multiplying the weight by retryPenalty */
   retries: number
+  /** heading offset jitter (rad) when every particle is blocked (they stay put) */
+  lostTurn: number
   retryPenalty: number
 }
 
@@ -45,6 +47,7 @@ export const DEFAULT_PF: PfOptions = {
   essFrac: 0.5,
   roughenM: 0.08,
   retries: 2,
+  lostTurn: (20 * Math.PI) / 180,
   retryPenalty: 0.3,
 }
 
@@ -206,13 +209,14 @@ export class ParticleFilter {
       else this.w[i] = 0
     }
     if (!alive) {
-      // every hypothesis hit a wall (map error or a bad cloud): move unconstrained rather than lose the track
+      // every hypothesis hit a wall (a heading error, map error or a bad cloud): stay put — never through a wall (the
+      // old unconstrained move put the 2026-11-08 Pixel 2F run into the west seating) — and widen the heading
+      // offsets so the next steps can find the way round
       this.lostSteps++
       for (let i = 0; i < n; i++) {
-        const th = step.yaw + this.h[i] + gauss() * o.headingSigma
-        const L = step.length * this.sc[i]
-        this.x[i] = ox[i] + L * Math.cos(th)
-        this.y[i] = oy[i] + L * Math.sin(th)
+        this.x[i] = ox[i]
+        this.y[i] = oy[i]
+        this.h[i] += gauss() * o.lostTurn
         this.w[i] = 1 / n
       }
     }

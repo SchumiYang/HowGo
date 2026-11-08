@@ -6,14 +6,22 @@ HowGo 是以通用與包容設計為目標的臺北步行導航。室外可比�
 
 | 區塊 | 實作 |
 | --- | --- |
-| 好行 `frontend/` | Nuxt、Vue、MapLibre GL JS。一般模式提供地圖探索、起終點搜尋、三種路線比較和即時導航。無障礙模式以目前位置規劃輪椅路線，提供大箭頭和地圖兩種導航畫面。 |
+| 好行 `frontend/` | Nuxt、Vue、MapLibre GL JS。進入時先選一般模式或友善模式。一般模式提供地圖探索、圖層篩選、起終點搜尋、三種路線比較和即時導航。友善模式以目前位置規劃輪椅路線，提供大字卡和地圖兩種導航畫面。 |
 | FastAPI `backend/` | 室外地點搜尋、設施查詢、候選路線評估，以及 `/v1/indoor` 場館資料與管理 API。室外資料來自本機 SQLite 和快照，室內資料來自 `indoor/mapdata/`。 |
 | 路由服務 `.ors/` | Java openrouteservice（ORS）依 OSM 路網產生室外候選，FastAPI 以本機圖資篩選與排序。 |
 | 室內導航 `indoor/indoor-nav/src/` | 從室外一般模式點選場館標記進入，也可使用 `?indoor=tianmu`。Nuxt 延後載入室內介面，室內在裝置上依場館路網獨立算路。室內外目前共用入口，跨室內外的連續路線尚未實作。 |
 | 好行管理 `indoor/indoor-nav/` | 獨立的 Vite 管理端，提供平面圖校準、POI 編輯、場勘建圖及定位驗證。建置入口為 `admin.html` 和 `survey.html`。 |
 | 部署 `deploy/cloudflare/` | 好行與好行管理各有 Worker 設定，提供靜態前端與同網域 `/api/*` 代理。 |
 
-室外使用 OpenFreeMap 向量底圖。一般模式使用調整過的 Positron，無障礙模式使用 Liberty，標籤放大 1.3 倍。若向量樣式或圖磚索引載入失敗，改用 OSM raster。室外定位優先使用安全來源的瀏覽器定位，也支援台北通 WebView 的位置橋接。大眾運輸路線尚未實作。 [底圖實作](frontend/app/utils/basemap.ts) · [定位來源](frontend/app/utils/geolocation.ts)
+室外使用 OpenFreeMap 向量底圖。一般模式使用調整過的 Positron，友善模式使用 Liberty，標籤放大 1.3 倍。若向量樣式或圖磚索引載入失敗，改用 OSM raster。在台北通 WebView 內，單次定位預設走台北通的 `location` 橋接（由 App 申請定位權限），導航中的連續定位優先使用瀏覽器位置串流，取不到時改為輪詢橋接。一般瀏覽器使用安全來源的 Geolocation API。大眾運輸路線尚未實作。 [底圖實作](frontend/app/utils/basemap.ts) · [定位來源](frontend/app/utils/geolocation.ts)
+
+### 介面
+
+- **色彩。** 全站色票與語意權杖集中在 [`main.css`](frontend/app/assets/main.css) 的 `:root`，MapLibre 圖層的 paint 屬性從 [`palette.ts`](frontend/app/utils/palette.ts) 讀同一組 HEX。品牌主色為 Primary / 500 `#5AB4C5`，新增顏色先加到這兩處再引用。
+- **圖層徽章。** 每個設施分類有一枚圓形徽章（[`public/icons/map-layers/`](frontend/public/icons/map-layers/)）。選取某個標記時，它保留完整徽章，其他標記縮成分類色圓點。點地圖空白處會放一枚紅色選取點。資訊框標題與後方圖示會在 Google 地圖開啟該座標。在台北通內經 `launch_map` 橋接交給系統開啟。
+- **人行道配色。** `GET /v1/walkways` 為實體人行道回傳 `grade`（`comfortable`／`limited`／`blocked`，同算路的寬度分級）。地圖依此以主色、黃、紅填色，缺值時用主色。
+- **路線預覽。** 規劃頁同一位置的坡道徽章以碰撞處理只畫一枚。路線細節收合時，底部面板高度依內容縮合。
+- **即時導航。** 目前步驟（或左右滑動預覽的步驟）以主色粗線、深色描邊、白色方向箭頭和終點圓環呈現，鏡頭框住整段。其他路段以 35% 淡線呈現。轉彎步驟另含前後 30 公尺，短於 25 公尺的步驟含前後 20 公尺。導航中隱藏人行道色帶、通行空間面、行穿線與替代路線等規劃用圖層。目前步驟附近的設施顯示完整徽章，其他沿線設施為 55% 的分類色圓點。目前位置為白邊深青圓點、半透明外圈，裝置提供羅盤方向時顯示方向扇形。 [導航畫面](frontend/app/app.vue)
 
 ## 本機啟動
 
@@ -196,13 +204,13 @@ curl -sS http://127.0.0.1:8000/v1/route-options \
 | `POST /v1/route-options` | 以同一起終點比較三種室外路線，每種模式各自回傳結果或錯誤。 |
 | `POST /v1/routes` | 查單一模式，省略 `mode` 時使用 `accessible`。 |
 | `GET /v1/places`、`/v1/meta` | 本機地點搜尋，以及資料類型和快照狀態。 |
-| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 依地圖視窗範圍取得室外圖層。 |
+| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 依地圖視窗範圍取得室外圖層。`/v1/walkways` 的實體人行道含 `grade` 通行分級。 |
 | `GET /v1/indoor/venues`、`/v1/indoor/data/{venue}/{path}` | 場館清單與室內圖資。 |
 
-Cloudflare Worker 的設定在 `deploy/cloudflare/`。好行以 `pnpm exec nuxt generate` 產生靜態前端，好行管理以 `npm run build` 產生管理端。Worker 讀取建置產物，並經 Cloudflare Tunnel 將 `/api/*` 代理至 FastAPI。室內編輯、上傳和建圖端點原本供本機管理端使用，FastAPI 目前沒有使用者驗證。公開部署前須確認代理只讓一般使用者呼叫導航所需 API，並限制管理功能的存取。 [Worker 代理](deploy/cloudflare/worker/index.js) · [室內管理端點](backend/rollx/indoor.py)
+Cloudflare Worker 的設定在 `deploy/cloudflare/`。好行以 `pnpm exec nuxt generate` 產生靜態前端，好行管理以 `npm run build` 產生管理端。部署好行時在 `deploy/cloudflare/howgo/` 執行 `npm run deploy`，它以 `cf` CLI 上傳 `frontend/.output/public` 並帶入 `../secrets.env` 的代理金鑰。Worker 已存有金鑰時，可改用 `npx cf deploy --message "<說明>"`。Worker 讀取建置產物，並經 Cloudflare Tunnel 將 `/api/*` 代理至 FastAPI。室內編輯、上傳和建圖端點原本供本機管理端使用，FastAPI 目前沒有使用者驗證。公開部署前須確認代理只讓一般使用者呼叫導航所需 API，並限制管理功能的存取。 [Worker 代理](deploy/cloudflare/worker/index.js) · [室內管理端點](backend/rollx/indoor.py)
 
 ## 驗證與效能
 
-- 好行前端在 `frontend/` 執行 `pnpm typecheck` 或 `pnpm build`。室內管理端和定位測試在 `indoor/indoor-nav/` 執行 `npm test` 或 `npm run build`。
+- 好行前端在 `frontend/` 執行 `pnpm typecheck` 或 `pnpm build`。調整地圖或導航畫面時，可用 Playwright 開手機尺寸的無頭瀏覽器，授予定位後從開發伺服器走完「搜尋目的地 → 預覽路線 → 開始導航 → 鍵盤左右鍵切換步驟」截圖比對。室內管理端和定位測試在 `indoor/indoor-nav/` 執行 `npm test` 或 `npm run build`。
 - 後端在 `backend/` 的 venv 安裝 `pytest` 後執行 `python -m pytest`。室外算路可使用上方的芝山站測試指令。
 - 既有圖層優先改善項目是首次開圖及平移後的載入時間。現行程式會按縮放層級限制圖層請求，平移後仍依視窗查詢。下一步是讓相鄰視窗重用資料，再用手機 Safari 比較請求次數、傳輸量與圖層穩定時間。
