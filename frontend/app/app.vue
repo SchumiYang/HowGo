@@ -11,7 +11,7 @@ import type { IconName } from './components/AppIcon.vue'
 import type { AppMode } from './components/ModeLanding.vue'
 import type { Coordinate, Place } from './composables/usePlaceSearch'
 import {
-  SELECTED_PIN_ID, addLayerIcons, addSelectionImages, layerDotExpression, layerIconColors, layerIconExpression, layerIconFor,
+  DESTINATION_PIN_ID, DESTINATION_PIN_OFFSET, SELECTED_PIN_ID, addDestinationPin, addLayerIcons, addSelectionImages, layerDotExpression, layerIconColors, layerIconExpression, layerIconFor,
   layerImageId, type LayerIconName,
 } from './utils/mapLayerIcons'
 import { distanceM, iconPoints, routePasses } from './utils/layerGeometry'
@@ -1864,7 +1864,7 @@ onMounted(async () => {
               'icon-allow-overlap': true, 'icon-ignore-placement': true } },
           { id: 'live-position', source: 'live-position', type: 'circle',
             paint: { 'circle-radius': 7, 'circle-color': LIVE_DOT_COLOR, 'circle-stroke-color': palette.white, 'circle-stroke-width': 2 } },
-          { id: 'pins', source: 'pins', type: 'circle', filter: ['!=', ['get', 'endpoint'], 'selected'], paint: {
+          { id: 'pins', source: 'pins', type: 'circle', filter: ['==', ['get', 'endpoint'], 'start'], paint: {
             'circle-color': ['match', ['get', 'endpoint'], 'start', palette.white, palette.orange500],
             'circle-radius': 9,
             'circle-stroke-color': ['match', ['get', 'endpoint'], 'start', palette.primary700, palette.white],
@@ -1872,6 +1872,10 @@ onMounted(async () => {
           } },
           { id: 'pins-centre', source: 'pins', type: 'circle', filter: ['==', ['get', 'endpoint'], 'start'],
             paint: { 'circle-radius': 3.5, 'circle-color': palette.primary700 } },
+          // Route destination: the map-pin artwork, its location dot on the destination.
+          { id: 'destination-pin', source: 'pins', type: 'symbol', filter: ['==', ['get', 'endpoint'], 'end'],
+            layout: { 'icon-image': DESTINATION_PIN_ID, 'icon-anchor': 'bottom', 'icon-offset': DESTINATION_PIN_OFFSET,
+              'icon-allow-overlap': true, 'icon-ignore-placement': true } },
           // UI-009: red location pin (map-selected-location) for non-facility picks on the map page.
           { id: 'selected-location', source: 'pins', type: 'symbol', filter: ['==', ['get', 'endpoint'], 'selected'],
             layout: { 'icon-image': SELECTED_PIN_ID, 'icon-anchor': 'bottom', 'icon-allow-overlap': true,
@@ -1889,6 +1893,7 @@ onMounted(async () => {
     map.on('load', () => {
       if (map) void addIndoorVenueMarkers(map, { onOpen: openIndoor, visible: () => appMode.value === 'general' })
       if (map) void addLayerIcons(map, config.app.cdnURL || config.app.baseURL)
+      if (map) void addDestinationPin(map, config.app.cdnURL || config.app.baseURL)
       if (map) addSelectionImages(map)
       if (map) addLiveHeadingImage(map)
       if (map) addNavArrowImage(map)

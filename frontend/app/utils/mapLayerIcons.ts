@@ -80,6 +80,32 @@ export async function addLayerIcons(map: MapLibreMap, base = '/') {
   }))
 }
 
+/* ---------- Route destination pin ---------- */
+
+export const DESTINATION_PIN_ID = 'route-destination-pin'
+/** The pin's location dot is centred 8 px above the bottom of the 40 x 60 artwork. */
+export const DESTINATION_PIN_OFFSET: [number, number] = [0, 8]
+
+/** public/icons/navigation/map_icon_mappin_park_green_pressed.svg at 2x, 40 x 60 CSS px at icon-size 1. */
+export async function addDestinationPin(map: MapLibreMap, base = '/') {
+  if (map.hasImage(DESTINATION_PIN_ID)) return
+  try {
+    const [w, h] = [80, 120]
+    const image = new Image(w, h)
+    image.src = `${base.replace(/\/?$/, '/')}icons/navigation/map_icon_mappin_park_green_pressed.svg`
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(image, 0, 0, w, h)
+    if (!map.hasImage(DESTINATION_PIN_ID)) map.addImage(DESTINATION_PIN_ID, ctx.getImageData(0, 0, w, h), { pixelRatio: 2 })
+  } catch {
+    // Without the artwork the destination keeps no marker; the route line still ends there.
+  }
+}
+
 /* ---------- UI-009 selection markers ---------- */
 
 export const layerDotId = (name: LayerIconName) => `layer-dot-${name}`
