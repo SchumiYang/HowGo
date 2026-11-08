@@ -82,6 +82,17 @@ describe.skipIf(!available)('replay of live validation runs', () => {
         for (const c of r.checkpoints) lines.push(`    t=${((c.t - r.track[0].t) / 1000).toFixed(0).padStart(4)} truth=(${c.truth.map((v) => v.toFixed(1)).join(',')}) est=(${c.estimate?.map((v) => v.toFixed(1)).join(',')}) err=${c.error_m?.toFixed(1)} acc=${c.accuracy_m}`)
       }
     }
+    // regression (2026-11-08 Pixel, 2F corner lobby -> corner passage -> front walkway): the 2F magnetic map matched
+    // at 3 uT pulled the cloud off the passage into the west lobby (live 10.9 / 12.4 m, replays failed 7 of 20 seeds)
+    const px = jobs.find(([r, d]) => r.run_id === '20261108-111925-pixel9a' && !d)?.[0]
+    if (px) {
+      const errs = SEEDS.flatMap((seed) => replayRun(px, venueData, { radiomap, magmap }, { seed, ...EXTRA })!.checkpoints.map((c) => c.error_m!))
+      lines.push(`regression 20261108-111925-pixel9a (2F corner passage): checkpoint error median ${med(errs).toFixed(1)} m, max ${Math.max(...errs).toFixed(1)} m`)
+      if (!Object.keys(EXTRA).length) {
+        expect(med(errs)).toBeLessThan(3)
+        expect(Math.max(...errs)).toBeLessThan(8)
+      }
+    }
     if (hits.length) lines.push(`replay: ${((100 * hits.reduce((a, b) => a + b, 0)) / hits.length).toFixed(0)}% of checkpoint errors within accuracy_m (target ~68%)`)
     if (Object.keys(EXTRA).length) lines.push(`options override: ${JSON.stringify(EXTRA)}`)
     console.log(lines.join('\n'))
