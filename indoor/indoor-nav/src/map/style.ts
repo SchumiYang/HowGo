@@ -97,8 +97,6 @@ export const LEVEL_LAYERS = [
   'units-fill', 'units-outline', 'walls-line', 'columns-fill', 'walls-3d', 'seating-3d', 'seating-parapet-3d', 'labels', 'pois', 'pois-acc',
   'route-casing', 'route-line', 'route-joint', 'route-ghost', 'route-pts-circle', 'route-pts-label', 'route-dest', 'me-acc', 'me-acc-line', 'me-cone', 'me-dot',
 ] as const
-/** Layers that show what is *not* on the current level (dimmed). */
-export const OFF_LEVEL_LAYERS = ['route-off'] as const
 /** Static filters combined with the level filter (setFilter replaces the whole filter). */
 export const BASE_FILTERS: Partial<Record<string, ExpressionSpecification>> = {
   'me-acc': ['==', ['get', 'kind'], 'acc'],
@@ -140,11 +138,6 @@ export function baseStyle(): StyleSpecification {
       },
     },
     { id: 'columns-fill', type: 'fill', source: SRC.columns, paint: { 'fill-color': COLORS.column, 'fill-outline-color': COLORS.wall } },
-    {
-      id: 'route-off', type: 'line', source: SRC.route,
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': COLORS.routeCasing, 'line-opacity': 0.4, 'line-width': z(2.5, 7), 'line-dasharray': [1, 1.6] },
-    },
     {
       id: 'route-casing', type: 'line', source: SRC.route,
       layout: { 'line-cap': 'round', 'line-join': 'round' },

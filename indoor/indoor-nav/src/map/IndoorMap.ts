@@ -10,7 +10,7 @@ import { routeSources, venueSources } from './convert'
 import type { FloorplanOverlay } from './floorplan'
 import { accuracyOpacity, circleRing, wedgeRing } from './markers'
 import { registerIcons } from './icons'
-import { BASE_FILTERS, baseStyle, LEVEL_LAYERS, OFF_LEVEL_LAYERS, PITCH_3D, SRC } from './style'
+import { BASE_FILTERS, baseStyle, LEVEL_LAYERS, PITCH_3D, SRC } from './style'
 
 setWorkerUrl(workerUrl)
 
@@ -178,12 +178,10 @@ export class IndoorMap {
     await this.loaded
     this.level = level
     const on: ExpressionSpecification = ['==', ['get', 'level'], level]
-    const off: ExpressionSpecification = ['!=', ['get', 'level'], level]
     for (const id of LEVEL_LAYERS) {
       const base = BASE_FILTERS[id]
       this.map.setFilter(id, base ? ['all', base, on] : on)
     }
-    for (const id of OFF_LEVEL_LAYERS) this.map.setFilter(id, off)
   }
 
   /** Blue dot. `heading` is a compass bearing in degrees (clockwise from north). */
