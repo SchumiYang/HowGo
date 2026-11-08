@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <defs>
+    <mask id="simplified-features-cutout" x="0" y="0" width="24" height="24" maskUnits="userSpaceOnUse">
+      <path d="M0 0h24v24H0z" fill="#fff"/>
+      <circle cx="12" cy="12" r="5.5" fill="#000"/>
+      <path d="m7.9 12.2 3.8 3.7 7.8-9.2" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <polygon mask="url(#simplified-features-cutout)" fill="currentColor" stroke="currentColor" stroke-width=".7" stroke-linejoin="round" points="
+    9.74,4.12 10.18,1.66 13.82,1.66 14.26,4.12 15.98,4.83 18.02,3.40 20.60,5.98 19.17,8.02
+    19.88,9.74 22.34,10.18 22.34,13.82 19.88,14.26 19.17,15.98 20.60,18.02 18.02,20.60 15.98,19.17
+    14.26,19.88 13.82,22.34 10.18,22.34 9.74,19.88 8.02,19.17 5.98,20.60 3.40,18.02 4.83,15.98
+    4.12,14.26 1.66,13.82 1.66,10.18 4.12,9.74 4.83,8.02 3.40,5.98 5.98,3.40 8.02,4.83"/>
+  <path d="m7.9 12.2 3.8 3.7 7.8-9.2" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

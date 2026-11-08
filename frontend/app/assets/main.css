@@ -1,5 +1,5 @@
 /*
- * UI-001 site-wide color system (uiux_edit/前端畫面調整交接.md): 39 base swatches + semantic tokens.
+ * UI-001 site-wide color system (uiux_edit_v2/前端畫面調整交接.md): 42 base swatches + semantic tokens.
  * Every component color must resolve to one of these. utils/palette.ts mirrors the HEX values for
  * MapLibre paint properties, which cannot read CSS variables: change both together.
  */
@@ -43,6 +43,9 @@
   --orange-300: #F4B992;
   --orange-500: #FD853A;
   --green-500: #76A732;
+  --blue-300: #93C5FD;
+  --blue-600: #2563EB;
+  --violet-700: #6D28D9;
   --white: var(--white-50);
 
   /* Semantic tokens (UI-001 用途對應). */
@@ -57,6 +60,12 @@
   --text-hint: var(--grey-400);
   --text-secondary: var(--grey-700);
   --text-primary: var(--grey-800);
+  --map-selected-location: var(--red-500);
+  --indoor-map-accent: var(--violet-700);
+  --map-marker-white: var(--white-50);
+  /* UI-001 v3: 好行 / 好行管理 service shortcut icons (TownPass assets/svg/icon_howgo*.svg). */
+  --service-icon-ink: var(--grey-800);
+  --service-icon-accent: var(--primary-600);
 
   /* Legacy names still used across the app, re-pointed at UI-001 tokens. */
   --text-muted: var(--text-secondary);
@@ -93,6 +102,11 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--grey-50); }
+/*
+ * Full-screen map app: the document itself never scrolls or rubber-bands; every screen is a fixed
+ * layer and only inner panels (sheets, lists, nav card) scroll. See .map-app for pinch/double-tap.
+ */
+html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; }
@@ -179,10 +193,6 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
   white-space: nowrap;
 }
 .chip[aria-pressed="true"] { color: var(--white); border-color: var(--action); background: var(--action); }
-.check-chip { cursor: pointer; white-space: normal; }
-.check-chip:has(input:checked) { color: var(--primary-800); border-color: var(--primary-300); background: var(--primary-50); }
-.check-chip input { margin: 0; accent-color: var(--action); }
-.check-chip small { font-size: 11px; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .badge {
   display: inline-flex;
@@ -197,10 +207,16 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 .badge[data-tone="good"] { background: var(--background-white); color: var(--text-primary); border: 1px solid var(--green-500); }
 .badge[data-tone="warn"] { background: var(--secondary-50); color: var(--secondary-800); border: 1px solid var(--secondary-200); }
 .badge[data-tone="alarm"] { background: var(--background-white); color: var(--alarm-default); border: 1px solid var(--alarm-default); }
+.badge[data-tone="info"] { background: var(--primary-50); color: var(--primary-800); border: 1px solid var(--primary-200); }
 .badge[data-tone="neutral"] { background: var(--grey-50); color: var(--text-secondary); border: 1px solid var(--grey-100); }
 
 /* ---------- Map shell ---------- */
-.map-app { position: fixed; inset: 0; overflow: hidden; isolation: isolate; }
+/*
+ * touch-action: pinch or double-tap on the overlays (nav card, sheets, buttons) would otherwise zoom
+ * the whole page, which then pans in every direction. pan-x/pan-y keeps panel scrolling; the map
+ * canvas sets its own touch-action: none and handles pinch/pan itself.
+ */
+.map-app { position: fixed; inset: 0; overflow: hidden; isolation: isolate; touch-action: pan-x pan-y; }
 .map-app > .map { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map-app .maplibregl-ctrl-top-left { left: max(12px, env(safe-area-inset-left)); }
 .map-app[data-screen="explore"] .maplibregl-ctrl-top-left { top: calc(var(--safe-top) + 82px); }
@@ -322,7 +338,8 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
   height: 34px;
   border-radius: 10px;
   background: var(--primary-50);
-  color: var(--primary-700);
+  /* UI-017: the switch arrows are Primary/500. */
+  color: var(--primary-500);
   font-family: Roboto, system-ui, sans-serif;
 }
 .mode-menu { padding: 14px; }
@@ -346,9 +363,6 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 .mode-option strong { display: block; color: var(--text-primary); }
 .mode-option:disabled strong { color: var(--grey-500); }
 .layer-settings { padding: 14px; }
-.layer-details { margin-top: 12px; }
-.layer-details summary { min-height: 40px; display: flex; align-items: center; color: var(--primary-700); font-weight: 600; cursor: pointer; }
-.sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--text-muted); font-size: 13px; }
 /* Centred so it clears the attribution button (left) and the FAB stack (right). */
 .zoom-hint {
   display: flex;
@@ -397,7 +411,7 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 }
 .place-icon.muted { border-color: var(--grey-100); background: var(--grey-50); color: var(--grey-400); }
 .place-body { flex: 1; min-width: 0; }
-.place-body h2 { font-size: 18px; line-height: 26px; overflow-wrap: anywhere; }
+.place-body h2 { font-size: 16px; line-height: 23px; overflow-wrap: anywhere; }
 .place-body > small { margin-top: 4px; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
 .tag-list li { padding: 3px 10px; border-radius: 8px; background: var(--grey-50); color: var(--text-secondary); }
@@ -503,6 +517,8 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
   transition: height .18s ease;
 }
 .map-sheet[data-dragging="true"] { transition: none; }
+/* UI-018: a fitted sheet sizes to its content; the footer sits 16px (8 + 8) under the details link. */
+.map-sheet[data-fit="true"] .sheet-content { flex: 0 1 auto; }
 .sheet-handle {
   display: grid;
   place-items: center;
@@ -514,43 +530,46 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
   cursor: ns-resize;
   touch-action: none;
 }
-.sheet-handle span { width: 48px; height: 5px; border-radius: 99px; background: var(--grey-200); }
+.sheet-handle span { width: 48px; height: 5px; border-radius: 99px; background: var(--grey-300); } /* UI-010 */
 .sheet-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 20px 8px; }
 .sheet-footer { padding: 8px 20px max(16px, var(--safe-bottom)); background: var(--surface); }
 .sheet-status { display: grid; gap: 4px; justify-items: start; padding: 2px 20px 10px; }
 .sheet-status strong { font-size: 16px; line-height: 22px; }
 
+/* UI-010 route tabs: three equal tabs, one line each (icon + name + minutes), short rounded underline */
 .route-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0 20px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--grey-100);
 }
 .route-tabs button {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
   min-height: 48px;
-  padding: 4px 2px 10px;
+  padding: 4px 2px 12px;
   border: 0;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--grey-500);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
-.route-tabs button[aria-selected="true"] { color: var(--primary-700); }
+.route-tabs .tab-icon { flex: none; }
+.route-tabs .tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.route-tabs button[aria-selected="true"] { color: var(--primary-600); }
 .route-tabs button[aria-selected="true"]::after {
   content: "";
   position: absolute;
   left: 22%;
   right: 22%;
   bottom: -1px;
-  height: 4px;
-  border-radius: 4px;
+  height: 5px;
+  border-radius: 99px;
   background: var(--primary-500);
 }
 .tab-time { font-family: Roboto, "PingFang TC", system-ui, sans-serif; }
@@ -901,15 +920,8 @@ small { display: block; color: var(--text-muted); font-size: 13px; line-height: 
 
 @media (max-width: 420px) {
   .route-tabs { margin-inline: 12px; }
-  .route-tabs button {
-    display: grid;
-    justify-items: center;
-    gap: 2px;
-    padding: 3px 2px 7px;
-    line-height: 1.15;
-    white-space: normal;
-  }
-  .tab-time { white-space: nowrap; }
+  .route-tabs button { gap: 4px; font-size: 14px; } /* UI-010: stays on one line */
+  .route-tabs .tab-icon { width: 20px; height: 20px; }
   .nav-actions button, .dialog-actions button { padding-inline: 10px; }
 }
 

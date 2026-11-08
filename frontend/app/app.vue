@@ -5,12 +5,15 @@ import { localizeRouteError, localizeRouteText } from './utils/routeLocale'
 import type { Feature, FeatureCollection, LineString, MultiPolygon, Point, Polygon } from 'geojson'
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature, Popup as MapLibrePopup } from 'maplibre-gl'
 import { createRouteTracker } from './utils/navigation'
-import { getFix, locationAvailable, watchFix, type FixError } from './utils/geolocation'
+import { getFix, locationAvailable, openExternal, watchFix, type FixError } from './utils/geolocation'
 import { LOCAL_CJK_FONT, TAIPEI_BOUNDS, collapseAttribution, loadBasemap } from './utils/basemap'
 import type { IconName } from './components/AppIcon.vue'
 import type { AppMode } from './components/ModeLanding.vue'
 import type { Coordinate, Place } from './composables/usePlaceSearch'
-import { addLayerIcons, layerIconExpression, layerIconFor, layerImageId, type LayerIconName } from './utils/mapLayerIcons'
+import {
+  SELECTED_PIN_ID, addLayerIcons, addSelectionImages, layerDotExpression, layerIconColors, layerIconExpression, layerIconFor,
+  layerImageId, type LayerIconName,
+} from './utils/mapLayerIcons'
 import { distanceM, iconPoints, routePasses } from './utils/layerGeometry'
 import { palette } from './utils/palette'
 
@@ -22,10 +25,10 @@ useHead({ htmlAttrs: { lang: () => locale.value } })
  */
 type Screen = 'explore' | 'preview' | 'search' | 'picker' | 'navigate'
 type Endpoint = 'start' | 'end'
-type FacilityKind = typeof categories[number]['kind']
+type FacilityKind = typeof facilityKinds[number]
 type Facility = Feature<Point, { kind: FacilityKind; name: string; label: string; distance_m?: number }>
 type Facilities = FeatureCollection<Point, Facility['properties']> & { truncated?: boolean }
-type WalkwayKind = typeof walkwayCategories[number]['kind']
+type WalkwayKind = typeof walkwayKinds[number]
 type Walkway = Feature<Polygon | MultiPolygon | LineString, { kind: WalkwayKind; name: string; label: string }>
 type Walkways = FeatureCollection<Walkway['geometry'], Walkway['properties']> & { truncated?: boolean }
 type SlopeFeature = Feature<Point | LineString, { kind: string; name?: string; source: string; slope?: number; incline?: string }>
@@ -72,44 +75,33 @@ type RouteResult = {
   highlights?: FeatureCollection<Point | Polygon, { route_context: string }>
   access_points?: Partial<Record<Endpoint, { coordinates: Coordinate; offset_m: number }>>
 }
+/** /v1/meta: only the service coverage is used (to reject GPS fixes outside Taipei). */
 type Metadata = {
-  source_url: string
   coverage: [number, number, number, number]
-  empty_types: FacilityKind[]
-  snapshot: { imported_at: string; fetched_at?: string } | null
 }
 
-const categories = [
-  { kind: '1', label: '斜坡道', color: palette.grey700 },
-  { kind: '3', label: '無障礙電梯', color: palette.orange500 },
-  { kind: '4', label: '公園', color: palette.green500 },
-  { kind: '7', label: '捷運站及公園無障礙出入口', color: palette.grey700 },
-  { kind: '8', label: '友善店家', color: palette.secondary500 },
-  { kind: '9', label: '無障礙廁所', color: palette.primary800 },
-  { kind: '14', label: '身障設施', color: palette.orange500 },
-  { kind: '15', label: '路邊停車場', color: palette.secondary700 },
-  { kind: '16', label: '路邊停車格', color: palette.secondary700 },
-  { kind: 'accessible-parking', label: '身心障礙停車格', color: palette.primary900 },
-  { kind: '18', label: '公車站', color: palette.grey800 },
-  { kind: '20', label: '捷運站', color: palette.grey800 },
-] as const
+/**
+ * /v1/facilities kinds: 1 斜坡道, 3 無障礙電梯, 4 公園, 7 捷運站及公園無障礙出入口, 8 友善店家, 9 無障礙廁所,
+ * 14 身障設施, 15 路邊停車場, 16 路邊停車格, accessible-parking 身心障礙停車格, 18 公車站, 20 捷運站.
+ * Display names come from each feature's `label`.
+ */
+const facilityKinds = ['1', '3', '4', '7', '8', '9', '14', '15', '16', 'accessible-parking', '18', '20'] as const
 /** Map marker size for the UI-004 badges (images are 32 CSS px at icon-size 1). */
 const LAYER_ICON_SIZE: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 15, .62, 18, .9]
 
-const walkwayCategories = [
-  { kind: '11', label: '人行道', color: palette.primary600 },
-  { kind: '12', label: '標線型人行道', color: palette.primary600 },
-  { kind: '13', label: '行穿線（市府）', color: palette.primary600 },
-  { kind: 'osm-crossing', label: '行人穿越道（OSM）', color: palette.primary600 },
-  { kind: 'arcade', label: '騎樓整平路段', color: palette.primary600 },
-] as const
+/** /v1/walkways kinds: 11 人行道, 12 標線型人行道, 13 行穿線（市府）, osm-crossing 行人穿越道（OSM）, arcade 騎樓整平路段. */
+const walkwayKinds = ['11', '12', '13', 'osm-crossing', 'arcade'] as const
+/**
+ * UI-014: walkway polygons are coloured by the backend's feasibility grade (`grade`, from
+ * rollx/route_modes.py sidewalk_grade: comfortable 可行 / limited 勉強可行 / blocked 不可行).
+ * Missing or unknown grades fall back to Primary / 500; this is display only, the card shows the raw grade.
+ */
 const walkwayColor: ExpressionSpecification = [
-  'match', ['get', 'kind'], '11', palette.primary600, '12', palette.primary600, '13', palette.primary600,
-  'arcade', palette.primary600, palette.grey600,
+  'match', ['get', 'grade'], 'limited', palette.secondary500, 'blocked', palette.red500, palette.primary500,
 ]
 
 type LayerKind = FacilityKind | WalkwayKind | 'slope'
-const allLayerKinds: LayerKind[] = [...[...categories, ...walkwayCategories].map(item => item.kind), 'slope']
+const allLayerKinds: LayerKind[] = [...facilityKinds, ...walkwayKinds, 'slope']
 // UI-004: each quick-filter group has one badge icon, shared with the map markers and place card.
 const layerGroups = [
   { label: '人行通道', icon: 'pedestrian', kinds: ['11', '12', '13', 'osm-crossing', 'arcade'] },
@@ -123,7 +115,7 @@ const layerGroups = [
   { label: '停車', icon: 'parking', kinds: ['15', '16'] },
   { label: '身障設施', icon: 'accessible-facilities', kinds: ['3', '14'] },
 ] satisfies { label: string; icon: LayerIconName; kinds: LayerKind[] }[]
-const SLOPE_COLOR = palette.secondary800
+const SLOPE_COLOR = layerIconColors.slope
 /** Below these zooms the point / walkway layers would cover the whole map, so they are not drawn or fetched. */
 const FACILITY_MIN_ZOOM = 15
 const WALKWAY_MIN_ZOOM = 14
@@ -137,8 +129,29 @@ const routeColors = {
   sidewalk: palette.green500, guidedSidewalk: palette.green500, guidedOutline: palette.primary700,
   ramp: palette.primary700, slope: palette.secondary600,
 }
-// UI-001 has no blue; the live GPS dot uses Primary / 600 with a white ring and halo.
-const LIVE_COLOR = palette.primary600
+/*
+ * UI-019 live position: Primary / 700 dot with a thin white ring, over a Primary / 500 accuracy disc
+ * (28% fill, thin stroke) and a Primary / 700 heading cone (32% at the centre) when a heading is known.
+ */
+const LIVE_DOT_COLOR = palette.primary700
+const LIVE_DISC_COLOR = palette.primary500
+const LIVE_RADIUS_PX = 22
+const LIVE_HEADING_ID = 'live-heading-cone'
+/** UI-019 navigation focus: other route steps at 35%, off-step facilities as 55% category dots. */
+const NAV_OTHER_ROUTE_OPACITY = .35
+const NAV_OFF_STEP_DOT_OPACITY = .55
+const NAV_ARROW_ID = 'nav-step-chevron'
+/** Context drawn around a turn so the step shows the approach and the exit, not just the corner. */
+const NAV_TURN_APPROACH_M = 30
+const NAV_TURN_EXIT_M = 30
+const NAV_SHORT_STEP_M = 25
+/**
+ * Layers that only explain the route while planning. During navigation they compete with the step
+ * (five extra colours: sidewalk greens, walkway teal, crossing dashes, halos), so they are hidden.
+ */
+const NAV_HIDDEN_LAYERS = ['walkways-fill', 'walkways-outline', 'crossings-osm', 'route-sidewalk-fill',
+  'route-sidewalk-outline', 'guided-sidewalk-fill', 'guided-sidewalk-outline', 'route-alternatives',
+  'slope-lines', 'route-access-points']
 const routeKey = [
   { context: 'route', label: '路線', color: routeColors.route },
   { context: 'sidewalk', label: '行經人行道', color: routeColors.sidewalk },
@@ -155,8 +168,8 @@ const facilityMessage = ref('')
 const walkwayMessage = ref('')
 const enabledLayers = ref<LayerKind[]>([...allLayerKinds])
 const allLayersSelected = computed(() => allLayerKinds.every(kind => enabledLayers.value.includes(kind)))
-const enabledFacilities = computed(() => categories.map(item => item.kind).filter(kind => enabledLayers.value.includes(kind)))
-const enabledWalkways = computed(() => walkwayCategories.map(item => item.kind).filter(kind => enabledLayers.value.includes(kind)))
+const enabledFacilities = computed(() => facilityKinds.filter(kind => enabledLayers.value.includes(kind)))
+const enabledWalkways = computed(() => walkwayKinds.filter(kind => enabledLayers.value.includes(kind)))
 const showLayers = ref(false)
 const mapZoom = ref(FACILITY_MIN_ZOOM)
 const facilitiesHiddenByZoom = computed(() => mapReady.value && mapZoom.value < FACILITY_MIN_ZOOM && enabledFacilities.value.length > 0)
@@ -276,7 +289,18 @@ const exploreInput = useTemplateRef<HTMLInputElement>('exploreInput')
 const browseLayerIcon = computed(() => layerIconFor(browseDetails.value[0]?.kind))
 const browseLayerLabel = computed(() => layerGroups.find(group => group.icon === browseLayerIcon.value)?.label ?? '')
 
-/** UI-003: closing the card clears the selection so the map runs to the bottom edge again. */
+/** Google Maps search URL for the selected spot (its own coordinates, lat,lng). */
+const googleMapsUrl = computed(() => {
+  const point = browsePlace.value?.coordinates
+  return point ? `https://www.google.com/maps/search/?api=1&query=${point[1].toFixed(6)},${point[0].toFixed(6)}` : undefined
+})
+function openInGoogleMaps(event: MouseEvent) {
+  if (!googleMapsUrl.value) return
+  event.preventDefault()
+  openExternal(googleMapsUrl.value)
+}
+
+/** UI-003: clearing the selection removes the card so the map runs to the bottom edge again. */
 function clearBrowsePlace() {
   setBrowsePlace(null)
 }
@@ -300,10 +324,35 @@ function chooseExplorePlace(place: Place) {
   focusPlaceOnMap(place.coordinates)
 }
 
-function setBrowsePlace(place: Place | null, details: FeatureDetail[] = []) {
+/**
+ * UI-009: `marker` is the tapped map marker (point feature carrying a `uid`) when a facility, walkway
+ * or slope was picked; it is drawn full-size on top while every other marker shrinks to a dot.
+ * Non-facility picks (empty map, search results) have no marker and get the red location pin instead.
+ */
+const selectedMarker = shallowRef<Feature<Point> | null>(null)
+
+function setBrowsePlace(place: Place | null, details: FeatureDetail[] = [], marker: Feature<Point> | null = null) {
   browsePlace.value = place
   browseDetails.value = details
+  selectedMarker.value = place ? marker : null
   updatePins()
+  applyMarkerSelection()
+}
+
+/** Explore-screen selection drives the marker styles; route screens always show full badges. */
+function applyMarkerSelection() {
+  if (!map || !mapReady.value) return
+  const active = screen.value === 'explore' && !!browsePlace.value
+  const uid = selectedMarker.value?.properties?.uid ?? null
+  setSource('selected-marker', active && selectedMarker.value ? [selectedMarker.value] : [])
+  const isSelected: ExpressionSpecification = ['==', ['get', 'uid'], uid ?? '']
+  for (const [layer, image] of [['facilities', layerIconExpression], ['walkway-icons', layerImageId('pedestrian')],
+    ['slope-markers', layerImageId('slope')]] as const) {
+    map.setLayoutProperty(layer, 'icon-image', active ? layerDotExpression : image)
+    // Dots are 12 CSS px at icon-size 1; the selected marker itself is drawn by `selected-marker` on top.
+    map.setLayoutProperty(layer, 'icon-size', active ? 1 : LAYER_ICON_SIZE)
+    map.setPaintProperty(layer, 'icon-opacity', active ? ['case', isSelected, 0, .55] : 1)
+  }
 }
 
 /** Page 1 card arrow: selected place becomes the destination; origin is kept or taken from GPS. */
@@ -376,8 +425,86 @@ function cancelLocate() {
   locating.value = false
 }
 
+/** Last drawn live point, so a heading change can redraw without a new fix. */
+let livePoint: Coordinate | null = null
+/** Compass heading in degrees clockwise from north, or null when the device reports none. */
+let liveHeading: number | null = null
+
 function drawLivePosition(point: Coordinate | null) {
-  setSource('live-position', point ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties: {} }] : [])
+  livePoint = point
+  setSource('live-position', point ? [{
+    type: 'Feature', geometry: { type: 'Point', coordinates: point },
+    properties: liveHeading === null ? {} : { heading: liveHeading },
+  }] : [])
+}
+
+/*
+ * UI-019 heading: the device compass (absolute orientation; iOS reports webkitCompassHeading).
+ * Fixes from the bridge / geolocation carry no heading, so the cone only appears where the
+ * device exposes one. Redraws are limited to changes of at least 3 degrees.
+ */
+let headingListening = false
+function onOrientation(event: DeviceOrientationEvent) {
+  const compass = (event as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading
+  const heading = typeof compass === 'number' ? compass
+    : event.absolute && typeof event.alpha === 'number' ? (360 - event.alpha) % 360 : null
+  if (heading === null) return
+  if (liveHeading !== null && Math.abs(((heading - liveHeading + 540) % 360) - 180) < 3) return
+  liveHeading = heading
+  if (livePoint) drawLivePosition(livePoint)
+}
+function listenHeading(on: boolean) {
+  if (on === headingListening || typeof window === 'undefined') return
+  headingListening = on
+  const type = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation'
+  if (on) window.addEventListener(type, onOrientation as EventListener)
+  else {
+    window.removeEventListener(type, onOrientation as EventListener)
+    liveHeading = null
+    if (livePoint) drawLivePosition(livePoint)
+  }
+}
+
+/** White chevron drawn along the shown step, pointing the way to walk. */
+function addNavArrowImage(target: MapLibreMap) {
+  if (target.hasImage(NAV_ARROW_ID)) return
+  const px = 28
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = px
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  ctx.strokeStyle = palette.white
+  ctx.lineWidth = 4
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.beginPath()
+  ctx.moveTo(10, 7)
+  ctx.lineTo(18, 14)
+  ctx.lineTo(10, 21)
+  ctx.stroke()
+  target.addImage(NAV_ARROW_ID, ctx.getImageData(0, 0, px, px), { pixelRatio: 2 })
+}
+
+/** Heading cone image: a 70 degree wedge pointing north, fading from 32% Primary / 700 at the centre to clear. */
+function addLiveHeadingImage(target: MapLibreMap) {
+  if (target.hasImage(LIVE_HEADING_ID)) return
+  const px = LIVE_RADIUS_PX * 4
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = px
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const c = px / 2
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(LIVE_DOT_COLOR.slice(i, i + 2), 16))
+  const gradient = ctx.createRadialGradient(c, c, 0, c, c, c)
+  gradient.addColorStop(0, `rgba(${r},${g},${b},0.32)`)
+  gradient.addColorStop(1, `rgba(${r},${g},${b},0)`)
+  ctx.beginPath()
+  ctx.moveTo(c, c)
+  ctx.arc(c, c, c, -Math.PI / 2 - 35 * Math.PI / 180, -Math.PI / 2 + 35 * Math.PI / 180)
+  ctx.closePath()
+  ctx.fillStyle = gradient
+  ctx.fill()
+  target.addImage(LIVE_HEADING_ID, ctx.getImageData(0, 0, px, px), { pixelRatio: 2 })
 }
 
 /**
@@ -790,8 +917,14 @@ const navCard = computed(() => {
     detail: localizeRouteText(first?.note ?? ''),
   }
 })
-/** Smaller status line under the badges while there is no usable live position. */
-const navStatusText = computed(() => navState.value === 'waiting' || navState.value === 'offroute' ? navMessage.value : '')
+/**
+ * Smaller status line under the badges while there is no usable live position.
+ * UI-011: the "checking your position" message is covered by the badge alone, so it renders nothing.
+ */
+const navStatusText = computed(() => {
+  if (navState.value !== 'waiting' && navState.value !== 'offroute') return ''
+  return navMessage.value === t('正在確認你與路線的位置。') ? '' : navMessage.value
+})
 const remaining = computed(() => {
   if (!result.value || !tracker.value) return null
   const left = Math.max(0, tracker.value.total - (progress.value ?? 0))
@@ -829,8 +962,9 @@ function startNavigation() {
   setSource('route-alternatives', [])
   go('navigate')
   navState.value = 'waiting'
-  const start = result.value.route.geometry.coordinates[0] as Coordinate
-  map?.easeTo({ duration: 0,  center: start, zoom: Math.max(map.getZoom(), 17), offset: [0, -Math.round(window.innerHeight * .12)] })
+  // UI-011: once the nav card is laid out, centre the first step in the visible map area.
+  const zoom = Math.max(map?.getZoom() ?? 17, 17)
+  void nextTick(() => { if (session === navSession) liveNavCamera(zoom) })
   if (!locationAvailable()) {
     navMessage.value = t('此環境無法取得定位，可左右滑動預覽步驟。')
     return
@@ -889,7 +1023,7 @@ function startNavigation() {
     }
     navState.value = 'active'
     navMessage.value = ''
-    if (previewStep.value === null) map?.jumpTo({ center: point, zoom: Math.max(map.getZoom(), 16) })
+    if (previewStep.value === null && map) liveNavCamera(Math.max(map.getZoom(), 16))
   }, ({ code }: FixError) => {
     if (session !== navSession) return
     navState.value = 'waiting'
@@ -927,7 +1061,7 @@ function demoAdvance() {
     navState.value = 'active'
     navMessage.value = ''
   }
-  map?.easeTo({ duration: 0,  center: point, offset: [0, -Math.round(window.innerHeight * .12)] })
+  liveNavCamera()
 }
 
 async function replan() {
@@ -972,28 +1106,102 @@ function toggleRouteStep(row: Maneuver, index: number) {
   if (selectedStep.value !== null) map?.panTo(row.position, { duration: 0 })
 }
 
+/** Route-distance range (metres) a manoeuvre's card covers: turns ±8 m around the turn, other steps start→end. */
+const maneuverRange = (maneuver: Maneuver): [number, number] => isTurn(maneuver.action)
+  ? [maneuver.at_m - 8, maneuver.at_m + 8] : [maneuver.at_m, Math.max(maneuver.at_m, maneuver.end_m)]
+
 function highlightManeuver(maneuver: Maneuver | undefined) {
   if (!maneuver) {
     setSource('selected-step', [])
     return
   }
-  const turn = isTurn(maneuver.action)
-  const coordinates = tracker.value?.slice(turn ? maneuver.at_m - 8 : maneuver.at_m, turn ? maneuver.at_m + 8 : maneuver.end_m)
+  const coordinates = tracker.value?.slice(...maneuverRange(maneuver))
   setSource('selected-step', coordinates?.length ? [{
     type: 'Feature', geometry: { type: 'LineString', coordinates }, properties: {},
   }] : [])
 }
 
-watch(previewStep, (index) => {
-  if (screen.value !== 'navigate') return
-  if (index === null) {
-    highlightManeuver(undefined)
-    if (liveFix.value) map?.easeTo({ duration: 0,  center: liveFix.value, offset: [0, -Math.round(window.innerHeight * .12)] })
+/* ---------- UI-011 navigation camera ---------- */
+
+const navPanelEl = ref<HTMLElement | null>(null)
+
+/** Height of the top safe area (env() can't be read directly, so measure a probe). */
+function safeTopInset() {
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;top:0;visibility:hidden;pointer-events:none;height:var(--safe-top)'
+  document.body.append(probe)
+  const height = probe.getBoundingClientRect().height
+  probe.remove()
+  return height
+}
+
+/**
+ * easeTo offset that puts the camera target at the centre of the map area that is actually visible:
+ * below the top inset and above the bottom nav card (or right of it when the card floats on the left).
+ */
+function navViewOffset(): [number, number] {
+  const container = map?.getContainer()
+  if (!container) return [0, 0]
+  const box = container.getBoundingClientRect()
+  const panel = navPanelEl.value?.getBoundingClientRect()
+  const top = safeTopInset()
+  let bottom = 0
+  let left = 0
+  if (panel && panel.height) {
+    if (panel.width >= box.width * 0.6) bottom = Math.max(0, box.bottom - panel.top)
+    else left = Math.max(0, panel.right - box.left)
+  }
+  const x = left + (box.width - left) / 2
+  const y = top + Math.max(0, box.height - top - bottom) / 2
+  return [Math.round(x - box.width / 2), Math.round(y - box.height / 2)]
+}
+
+/**
+ * Frame the shown step in the map area that is actually visible (below the top inset, above the nav
+ * card), so its whole line, chevrons and end ring are on screen. Zoom stays between street and
+ * block level so short steps don't jump to building scale.
+ */
+function centerOnStep(maneuver: Maneuver | undefined) {
+  if (!map || !maneuver) return
+  const line = navStepLine(maneuver)
+  if (line.length < 2) return
+  const container = map.getContainer().getBoundingClientRect()
+  const panel = navPanelEl.value?.getBoundingClientRect()
+  const [offsetX] = navViewOffset()
+  const top = safeTopInset() + 72
+  const bottom = panel && panel.width >= container.width * 0.6 ? Math.max(0, container.bottom - panel.top) + 28 : 28
+  const left = Math.max(36, offsetX * 2 + 36)
+  let [minX, minY, maxX, maxY] = [Infinity, Infinity, -Infinity, -Infinity]
+  for (const [x, y] of line) {
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y)
+  }
+  if (container.height - top - bottom < 80) {
+    map.easeTo({ center: [(minX + maxX) / 2, (minY + maxY) / 2], offset: navViewOffset(), duration: 0 })
     return
   }
-  const maneuver = navSteps.value[index]
-  highlightManeuver(maneuver)
-  if (maneuver) map?.panTo(maneuver.position, { duration: 0, offset: [0, -Math.round(window.innerHeight * .12)] })
+  map.fitBounds([[minX, minY], [maxX, maxY]], {
+    padding: { top, bottom, left, right: 36 }, maxZoom: 18.2, duration: 350,
+  })
+}
+
+/** Live navigation camera: the live position when there is one, otherwise the current step. */
+function liveNavCamera(zoom?: number) {
+  if (!map) return
+  // No `zoom` key unless asked: MapLibre checks `'zoom' in options`.
+  if (liveFix.value) map.easeTo({ center: liveFix.value, offset: navViewOffset(), duration: 0, ...(zoom === undefined ? {} : { zoom }) })
+  else {
+    if (zoom !== undefined) map.jumpTo({ zoom })
+    centerOnStep(navSteps.value[currentStepIndex.value])
+  }
+}
+
+watch(previewStep, async (index) => {
+  if (screen.value !== 'navigate') return
+  const maneuver = index === null ? undefined : navSteps.value[index]
+  await nextTick() // the card height (and so the visible area) follows the new step
+  if (screen.value !== 'navigate' || previewStep.value !== index) return
+  if (index === null) liveNavCamera()
+  else centerOnStep(maneuver)
 })
 
 watch(progress, (value) => {
@@ -1051,14 +1259,6 @@ let visibleFacilities: Facilities = { type: 'FeatureCollection', features: [] }
 let visibleSlopes: Feature[] = []
 let inspectionPopup: MapLibrePopup | undefined
 
-const displayedDate = computed(() => {
-  const snapshot = metadata.value?.snapshot
-  if (!snapshot) return ''
-  return new Intl.DateTimeFormat(locale.value, { timeZone: 'Asia/Taipei' }).format(
-    new Date(snapshot.fetched_at ?? snapshot.imported_at),
-  )
-})
-
 function setSource(name: string, features: Feature[]) {
   map?.getSource<GeoJSONSource>(name)?.setData({ type: 'FeatureCollection', features })
 }
@@ -1067,7 +1267,7 @@ function setSource(name: string, features: Feature[]) {
 const routeLayerIds = [
   'route-sidewalk-fill', 'route-sidewalk-outline', 'guided-sidewalk-fill', 'guided-sidewalk-outline',
   'route-alternatives', 'route-outline', 'route', 'route-walked', 'unverified-walkways', 'selected-step',
-  'route-access-points', 'route-ramp-halo', 'route-ramps', 'route-slope-halo', 'route-slope-markers',
+  'route-access-points', 'route-ramps', 'route-slope-markers',
 ]
 
 function applyRouteLayerState() {
@@ -1176,21 +1376,41 @@ function withMerged(hits: MapGeoJSONFeature[]): MapGeoJSONFeature[] {
   })
 }
 
-function drawFacilities(features: Facility[]) {
-  const passes = routeFilter()
-  setSource('facilities', mergeIntoPlanner(passes ? features.filter(passes) : features, mergedFacilities))
+/**
+ * UI-009: every marker carries a `uid` (source + feature id) so the selected one can be told apart
+ * from the rest in layer expressions; a walkway polygon and its badge point share the same uid.
+ */
+function withUid<F extends Feature>(features: F[], prefix: string): F[] {
+  return features.map(feature => feature.properties?.uid ? feature : {
+    ...feature, properties: { ...feature.properties, uid: `${prefix}:${feature.id ?? JSON.stringify(feature.geometry)}` },
+  })
 }
 
+/** What each marker layer currently draws, for the UI-019 step focus. */
+let drawnFacilities: Feature[] = []
+let drawnWalkways: Feature[] = []
+let drawnSlopes: Feature[] = []
+
+function drawFacilities(features: Facility[]) {
+  const passes = routeFilter()
+  drawnFacilities = withUid(mergeIntoPlanner(passes ? features.filter(passes) : features, mergedFacilities), 'f')
+  setSource('facilities', drawnFacilities)
+}
+
+let walkwayIcons: Feature<Point>[] = []
 function drawWalkways(features: Walkway[]) {
   const passes = routeFilter()
-  const shown = passes ? features.filter(passes) : features
+  const shown = withUid(passes ? features.filter(passes) : features, 'w')
+  walkwayIcons = iconPoints(shown)
+  drawnWalkways = shown
   setSource('walkways', shown)
-  setSource('walkway-icons', iconPoints(shown))
+  setSource('walkway-icons', walkwayIcons)
 }
 
 function drawSlopes(features: Feature[]) {
   const passes = routeFilter()
-  setSource('slopes', mergeIntoPlanner(passes ? features.filter(passes) : features, mergedSlopes))
+  drawnSlopes = mergeIntoPlanner(passes ? features.filter(passes) : features, mergedSlopes)
+  setSource('slopes', drawnSlopes)
 }
 
 /** Re-applies the route filter to the cached data after the route or the screen changes. */
@@ -1200,6 +1420,7 @@ function redrawLayerData() {
   drawFacilities(visibleFacilities.features.filter(item => types.includes(item.properties.kind)))
   drawWalkways(visibleWalkways)
   drawSlopes(showSlopes.value ? visibleSlopes : [])
+  if (navFocusActive) applyNavStepFocus()
 }
 
 watch(result, (route) => {
@@ -1215,24 +1436,134 @@ watch(screen, (value) => {
   if (value !== 'navigate') endConfirm.value = false
   updatePins()
   applyRouteLayerState()
+  applyMarkerSelection()
+  listenHeading(value === 'navigate')
 })
 
+/* ---------- UI-019 navigation step focus ---------- */
+
+/** Route-distance range drawn for a step while navigating: turns include their approach and exit. */
+function navStepRange(maneuver: Maneuver): [number, number] {
+  const total = tracker.value?.total ?? 0
+  if (isTurn(maneuver.action)) return [Math.max(0, maneuver.at_m - NAV_TURN_APPROACH_M), Math.min(total, maneuver.at_m + NAV_TURN_EXIT_M)]
+  const end = Math.min(total, Math.max(maneuver.at_m + 1, maneuver.end_m))
+  // Short steps (a crossing, a few stairs) would be a stub under their own badge; show 20 m either side.
+  if (end - maneuver.at_m < NAV_SHORT_STEP_M) return [Math.max(0, maneuver.at_m - 20), Math.min(total, end + 20)]
+  return [maneuver.at_m, end]
+}
+function navStepLine(maneuver: Maneuver): Coordinate[] {
+  return (tracker.value?.slice(...navStepRange(maneuver)) ?? []) as Coordinate[]
+}
+
+/**
+ * While navigating, the shown step (live progress, or the swiped-to preview) is drawn in Primary / 500
+ * at full strength and the rest of the route at 35%. Markers within the step's reach keep their full
+ * badge; every other marker along the route becomes its category dot at 55%. Planner ramp / slope
+ * badges (the route's attached icons) only appear for the shown step.
+ */
+let navFocusActive = false
+const fullMarkerImages = [['facilities', layerIconExpression], ['walkway-icons', layerImageId('pedestrian')],
+  ['slope-markers', layerImageId('slope')]] as const
+const plannerMarkerLayers = [['route-ramps', 'ramp'], ['route-slope-markers', 'slope']] as const
+
+function applyNavStepFocus() {
+  if (!map || !mapReady.value) return
+  const step = screen.value === 'navigate' ? navSteps.value[shownStepIndex.value] : undefined
+  const line = step ? navStepLine(step) : []
+  if (!step || line.length < 2) {
+    if (!navFocusActive) return
+    navFocusActive = false
+    setSource('selected-step', [])
+    setSource('nav-step-end', [])
+    map.setPaintProperty('selected-step', 'line-color', palette.orange500)
+    map.setPaintProperty('selected-step', 'line-width', 7)
+    map.setPaintProperty('selected-step-casing', 'line-opacity', 0)
+    for (const id of ['route', 'route-walked']) map.setPaintProperty(id, 'line-opacity', 1)
+    map.setPaintProperty('route-outline', 'line-color', routeColors.casing)
+    map.setPaintProperty('route-outline', 'line-opacity', 1)
+    for (const id of NAV_HIDDEN_LAYERS) map.setLayoutProperty(id, 'visibility', 'visible')
+    for (const [id, context] of plannerMarkerLayers) map.setFilter(id, ['==', ['get', 'route_context'], context])
+    applyRouteLayerState()
+    applyMarkerSelection()
+    return
+  }
+  navFocusActive = true
+  /*
+   * Hierarchy, strongest first: the shown step (Primary / 500 on a Primary / 700 casing, white chevrons
+   * pointing the way, a ring where the step ends), then the rest of the route as a pale 35% line on a
+   * white casing, then the map. Planning-only layers are hidden.
+   */
+  setSource('selected-step', [{ type: 'Feature', geometry: { type: 'LineString', coordinates: line }, properties: { nav: true } }])
+  setSource('nav-step-end', [{ type: 'Feature', geometry: { type: 'Point', coordinates: line.at(-1)! }, properties: {} }])
+  map.setPaintProperty('selected-step', 'line-color', palette.primary500)
+  map.setPaintProperty('selected-step', 'line-width', 8)
+  map.setPaintProperty('selected-step-casing', 'line-opacity', 1)
+  for (const id of ['route', 'route-walked']) map.setPaintProperty(id, 'line-opacity', NAV_OTHER_ROUTE_OPACITY)
+  map.setPaintProperty('route-outline', 'line-color', palette.white)
+  map.setPaintProperty('route-outline', 'line-opacity', 1)
+  for (const id of NAV_HIDDEN_LAYERS) map.setLayoutProperty(id, 'visibility', 'none')
+
+  const nearPoint = routePasses(line, ROUTE_POINT_BUFFER_M)
+  const nearArea = routePasses(line, ROUTE_AREA_BUFFER_M)
+  const uids = new Set<string>()
+  for (const feature of [...drawnFacilities, ...drawnSlopes]) {
+    const uid = feature.properties?.uid
+    if (typeof uid === 'string' && nearPoint(feature.geometry)) uids.add(uid)
+  }
+  for (const feature of drawnWalkways) {
+    const uid = feature.properties?.uid
+    if (typeof uid === 'string' && nearArea(feature.geometry)) uids.add(uid)
+  }
+  const onStep: ExpressionSpecification = ['in', ['get', 'uid'], ['literal', [...uids]]]
+  for (const [layer, image] of fullMarkerImages) {
+    map.setLayoutProperty(layer, 'icon-image', ['case', onStep, image, layerDotExpression])
+    map.setLayoutProperty(layer, 'icon-size', ['case', onStep, LAYER_ICON_SIZE, .8])
+    map.setPaintProperty(layer, 'icon-opacity', ['case', onStep, 1, NAV_OFF_STEP_DOT_OPACITY])
+  }
+  const badgeIds = plannerBadges.filter(badge => nearPoint({ type: 'Point', coordinates: badge.coordinates }))
+    .map(badge => badge.mergeId)
+  for (const [id, context] of plannerMarkerLayers) {
+    map.setFilter(id, ['all', ['==', ['get', 'route_context'], context], ['in', ['get', 'merge_id'], ['literal', badgeIds]]])
+  }
+}
+
+watch([screen, shownStepIndex, result], () => applyNavStepFocus())
+
+/** Facility ids are strings, which MapLibre drops from rendered features; match on the `uid` instead. */
 function facilityPosition(hit: MapGeoJSONFeature): Coordinate {
-  const source = visibleFacilities.features.find(item => item.id === hit.id)
+  const source = visibleFacilities.features.find(item => `f:${item.id}` === hit.properties.uid)
   return (source?.geometry.coordinates ?? (hit.geometry as Point).coordinates) as Coordinate
+}
+
+/** The badge point for a tapped marker: the point itself, or the badge of a tapped walkway area / slope line. */
+function markerFor(hit: MapGeoJSONFeature): Feature<Point> | null {
+  const uid = hit.properties.uid
+  if (typeof uid !== 'string') return null
+  const point = hit.geometry.type === 'Point'
+    ? { type: 'Feature' as const, geometry: { type: 'Point' as const, coordinates: hit.layer.id === 'facilities' ? facilityPosition(hit) : hit.geometry.coordinates }, properties: hit.properties }
+    : walkwayIcons.find(item => item.properties?.uid === uid)
+      ?? visibleSlopes.find((item): item is Feature<Point> => item.geometry.type === 'Point' && item.properties?.uid === uid)
+  return point ?? null
 }
 
 function updatePins() {
   const routing = screen.value !== 'explore'
+  if (!routing) {
+    // UI-009: on the map page only non-facility picks get a pin (map-selected-location); facilities
+    // are marked by their own full badge instead.
+    const coordinates = !selectedMarker.value ? browsePlace.value?.coordinates : null
+    setSource('pins', coordinates ? [{
+      type: 'Feature', geometry: { type: 'Point', coordinates }, properties: { endpoint: 'selected' },
+    }] : [])
+    return
+  }
   setSource('pins', (['start', 'end'] as const).flatMap((endpoint) => {
     if (screen.value === 'picker' && endpoint === editingTarget.value) return []
-    const coordinates = routing
-      ? endpoints[endpoint]
-      : endpoint === 'end' ? browsePlace.value?.coordinates : null
+    const coordinates = endpoints[endpoint]
     return coordinates ? [{
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates },
-      properties: { endpoint, current: routing && fromGps[endpoint] },
+      properties: { endpoint, current: fromGps[endpoint] },
     }] : []
   }))
 }
@@ -1321,7 +1652,8 @@ async function refreshSlopes() {
     if (controller.signal.aborted) return
     // UI-004: slope sections keep their line and get one category icon at the line's midpoint.
     visibleSlopes = data.features.flatMap<Feature>((item) => {
-      const properties = { ...item.properties, kind: 'slope' }
+      // The line and its midpoint badge share one uid (UI-009 selection).
+      const properties = { ...item.properties, kind: 'slope', uid: `s:${item.id ?? JSON.stringify(item.geometry.coordinates)}` }
       if (item.geometry.type === 'Point') {
         return [{ ...item, properties: { ...properties, label: t('坡度點位') } }]
       }
@@ -1356,9 +1688,10 @@ watch(enabledFacilities, () => {
 function describeHits(hits: MapGeoJSONFeature[]): FeatureDetail[] {
   const features: FeatureDetail[] = []
   const slopeLabels: Record<string, string> = { up: t('上坡'), down: t('下坡'), 'up/down': t('有高低差'), steep: t('陡坡'), yes: t('有坡度') }
+  const gradeLabels: Record<string, string> = { comfortable: t('可行'), limited: t('勉強可行'), blocked: t('不可行') }
   const shown = new Set<string>()
   for (const { properties } of hits) {
-    const { kind, name, label, source, width, slope, offset_m, incline, route_context, side, guided } = properties
+    const { kind, name, label, source, width, slope, offset_m, incline, route_context, side, guided, grade } = properties
     const title = route_context === 'sidewalk' || route_context === 'guided-sidewalk' ? String(label)
       : route_context === 'ramp' ? guided ? t('指引側無障礙坡道') : t('鄰近無障礙坡道')
       : kind === '13' ? t('行人穿越道') : kind === '11' ? t('實體人行道') : String(label)
@@ -1368,6 +1701,8 @@ function describeHits(hits: MapGeoJSONFeature[]): FeatureDetail[] {
     // Width/slope come from the source data. Missing values stay hidden rather than invented (spec §11).
     const lines = [
       typeof width === 'number' && width > 0 ? t('寬度（來源數值） {0}', width) : '',
+      // UI-014: the backend's own grade, shown as-is (the map colour falls back for unknown values, the card does not).
+      typeof grade === 'string' && grade ? t('通行評估 {0}', gradeLabels[grade] ?? grade) : '',
       typeof slope === 'number' ? t('坡度 {0}%', slope)
         : typeof incline === 'string' ? slopeLabels[incline] ?? t('坡度 {0}', incline) : '',
       kind === 'slope' && guided ? t('指引側人行道附近的坡度點') : '',
@@ -1436,9 +1771,11 @@ onMounted(async () => {
           'route-access-points': emptySource(),
           'unverified-walkways': emptySource(),
           'selected-step': emptySource(),
+          'nav-step-end': emptySource(),
           'live-position': emptySource(),
           pins: emptySource(),
           'walkway-icons': emptySource(),
+          'selected-marker': emptySource(),
         },
         layers: [
           { id: 'background', type: 'background', paint: { 'background-color': palette.grey50 } },
@@ -1479,9 +1816,20 @@ onMounted(async () => {
             filter: ['==', ['get', 'kind'], 'osm-crossing'],
             paint: { 'line-color': palette.primary600, 'line-dasharray': [1.5, 1],
               'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 17, 4.5] } },
+          // UI-019 step casing (navigation only; transparent while planning).
+          { id: 'selected-step-casing', source: 'selected-step', type: 'line',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': palette.primary700, 'line-width': 12, 'line-opacity': 0 } },
           { id: 'selected-step', source: 'selected-step', type: 'line',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
             paint: { 'line-color': palette.orange500, 'line-width': 7 } },
+          { id: 'selected-step-arrows', source: 'selected-step', type: 'symbol',
+            filter: ['==', ['get', 'nav'], true],
+            layout: { 'symbol-placement': 'line', 'symbol-spacing': 56, 'icon-image': NAV_ARROW_ID,
+              'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-rotation-alignment': 'map' } },
+          { id: 'selected-step-end', source: 'nav-step-end', type: 'circle', paint: {
+            'circle-radius': 6, 'circle-color': palette.white, 'circle-stroke-color': palette.primary700, 'circle-stroke-width': 3,
+          } },
           { id: 'route-access-points', source: 'route-access-points', type: 'circle', paint: {
             'circle-color': palette.white, 'circle-radius': 6, 'circle-stroke-color': routeColors.casing, 'circle-stroke-width': 3,
           } },
@@ -1495,26 +1843,28 @@ onMounted(async () => {
             layout: { 'icon-image': layerImageId('slope'), 'icon-size': LAYER_ICON_SIZE, 'icon-allow-overlap': true } },
           { id: 'facilities', source: 'facilities', type: 'symbol', minzoom: FACILITY_MIN_ZOOM,
             layout: { 'icon-image': layerIconExpression, 'icon-size': LAYER_ICON_SIZE, 'icon-allow-overlap': true } },
+          // UI-009: the selected marker's full badge, above every other marker.
+          { id: 'selected-marker', source: 'selected-marker', type: 'symbol',
+            layout: { 'icon-image': layerIconExpression, 'icon-size': LAYER_ICON_SIZE, 'icon-allow-overlap': true,
+              'icon-ignore-placement': true } },
           // Planner-associated ramps / slopes along the route (UI-006) use the same category badges.
-          { id: 'route-ramp-halo', source: 'route-highlights', minzoom: 14, type: 'circle',
-            filter: ['==', ['get', 'route_context'], 'ramp'],
-            paint: { 'circle-color': routeColors.ramp, 'circle-radius': 15, 'circle-opacity': .22 } },
           { id: 'route-ramps', source: 'route-highlights', minzoom: 14, type: 'symbol',
             filter: ['==', ['get', 'route_context'], 'ramp'],
-            layout: { 'icon-image': layerImageId('entrance-ramp'), 'icon-size': .8, 'icon-allow-overlap': true } },
-          { id: 'route-slope-halo', source: 'route-highlights', minzoom: 14, type: 'circle',
-            filter: ['==', ['get', 'route_context'], 'slope'],
-            paint: { 'circle-color': routeColors.slope, 'circle-radius': 17, 'circle-opacity': .28 } },
+            layout: { 'icon-image': layerImageId('entrance-ramp'), 'icon-size': .8, 'icon-padding': 1 } },
           { id: 'route-slope-markers', source: 'route-highlights', minzoom: 14, type: 'symbol',
             filter: ['==', ['get', 'route_context'], 'slope'],
-            layout: { 'icon-image': layerImageId('slope'), 'icon-size': .9, 'icon-allow-overlap': true } },
-          // Live GPS = filled blue dot with halo (spec §4.2 「藍點」); start pin = teal ring with centre dot
+            layout: { 'icon-image': layerImageId('slope'), 'icon-size': .9, 'icon-padding': 1 } },
+          // UI-019 live position (disc, heading cone, dot on top); start pin = teal ring with centre dot
           // (matches the endpoint card marker); destination = filled orange.
           { id: 'live-position-halo', source: 'live-position', type: 'circle',
-            paint: { 'circle-radius': 20, 'circle-color': LIVE_COLOR, 'circle-opacity': .2 } },
+            paint: { 'circle-radius': LIVE_RADIUS_PX, 'circle-color': LIVE_DISC_COLOR, 'circle-opacity': .28,
+              'circle-stroke-color': LIVE_DISC_COLOR, 'circle-stroke-width': 1, 'circle-stroke-opacity': .8 } },
+          { id: 'live-heading', source: 'live-position', type: 'symbol', filter: ['has', 'heading'],
+            layout: { 'icon-image': LIVE_HEADING_ID, 'icon-rotate': ['get', 'heading'], 'icon-rotation-alignment': 'map',
+              'icon-allow-overlap': true, 'icon-ignore-placement': true } },
           { id: 'live-position', source: 'live-position', type: 'circle',
-            paint: { 'circle-radius': 8, 'circle-color': LIVE_COLOR, 'circle-stroke-color': palette.white, 'circle-stroke-width': 3 } },
-          { id: 'pins', source: 'pins', type: 'circle', paint: {
+            paint: { 'circle-radius': 7, 'circle-color': LIVE_DOT_COLOR, 'circle-stroke-color': palette.white, 'circle-stroke-width': 2 } },
+          { id: 'pins', source: 'pins', type: 'circle', filter: ['!=', ['get', 'endpoint'], 'selected'], paint: {
             'circle-color': ['match', ['get', 'endpoint'], 'start', palette.white, palette.orange500],
             'circle-radius': 9,
             'circle-stroke-color': ['match', ['get', 'endpoint'], 'start', palette.primary700, palette.white],
@@ -1522,6 +1872,10 @@ onMounted(async () => {
           } },
           { id: 'pins-centre', source: 'pins', type: 'circle', filter: ['==', ['get', 'endpoint'], 'start'],
             paint: { 'circle-radius': 3.5, 'circle-color': palette.primary700 } },
+          // UI-009: red location pin (map-selected-location) for non-facility picks on the map page.
+          { id: 'selected-location', source: 'pins', type: 'symbol', filter: ['==', ['get', 'endpoint'], 'selected'],
+            layout: { 'icon-image': SELECTED_PIN_ID, 'icon-anchor': 'bottom', 'icon-allow-overlap': true,
+              'icon-ignore-placement': true } },
         ],
       },
     })
@@ -1535,6 +1889,11 @@ onMounted(async () => {
     map.on('load', () => {
       if (map) void addIndoorVenueMarkers(map, { onOpen: openIndoor, visible: () => appMode.value === 'general' })
       if (map) void addLayerIcons(map, config.app.cdnURL || config.app.baseURL)
+      if (map) addSelectionImages(map)
+      if (map) addLiveHeadingImage(map)
+      if (map) addNavArrowImage(map)
+      // UI-009: indoor-map buildings get a violet footprint highlight below the data layers and markers.
+      if (map) void addIndoorBuildingOutlines(map, 'route-sidewalk-fill')
       mapReady.value = true
       mapZoom.value = map?.getZoom() ?? mapZoom.value
       applyRouteLayerState()
@@ -1558,12 +1917,21 @@ onMounted(async () => {
       const hits = map.queryRenderedFeatures([
         [event.point.x - 4, event.point.y - 4], [event.point.x + 4, event.point.y + 4],
       ], { layers: ['route-slope-markers', 'route-ramps', 'route-sidewalk-fill', 'guided-sidewalk-fill', 'slope-markers', 'slope-lines',
-        'route-access-points', 'crossings-osm', 'unverified-walkways', 'facilities', 'walkway-icons', 'walkways-fill',
-        'walkways-outline'] })
+        'route-access-points', 'crossings-osm', 'unverified-walkways', 'selected-marker', 'facilities', 'walkway-icons',
+        'walkways-fill', 'walkways-outline'] })
       const clicked: Coordinate = [event.lngLat.lng, event.lngLat.lat]
       if (screen.value === 'explore') {
         showLayers.value = false
         showModeMenu.value = false
+        // Tapping the selected marker (or the red location pin) again closes the card.
+        const selectedUid = selectedMarker.value?.properties?.uid
+        const tappedSelected = browsePlace.value && (selectedUid
+          ? hits.some(item => item.properties.uid === selectedUid)
+          : map.queryRenderedFeatures(event.point, { layers: ['selected-location'] }).length > 0)
+        if (tappedSelected) {
+          clearBrowsePlace()
+          return
+        }
         if (!hits.length) {
           setBrowsePlace({ name: t('地圖選取位置'), address: formatCoordinate(clicked), coordinates: clicked, is_road: false })
           return
@@ -1576,7 +1944,7 @@ onMounted(async () => {
         const coordinates = hit.geometry.type === 'Point'
           ? parking ? facilityPosition(parking) : hit.geometry.coordinates as Coordinate
           : clicked
-        setBrowsePlace({ name: detail.name || detail.title, address: '', coordinates, is_road: false }, features)
+        setBrowsePlace({ name: detail.name || detail.title, address: '', coordinates, is_road: false }, features, markerFor(hit))
         return
       }
       if (!hits.length) return
@@ -1639,7 +2007,11 @@ onBeforeUnmount(() => {
           </form>
           <button type="button" class="mode-pill" :aria-expanded="showModeMenu" aria-controls="mode-menu"
             @click="showModeMenu = !showModeMenu; showLayers = false">
-            <span class="mode-badge">Aa</span>{{ t('一般') }}
+            <!-- UI-017: public/icons/display-mode/switch.svg, inlined so it follows currentColor (Primary/500) -->
+            <span class="mode-badge"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="currentColor"
+              stroke="currentColor" stroke-width="0.8" stroke-linejoin="round"><path id="mode-switch-arc"
+              d="M3 13.5c.3-4.6 3.9-8.2 8.8-8.3V2.7l6 4.3-6 4.3V8.9c-3.7 0-7.2 1.5-8.8 4.6Z" /><use href="#mode-switch-arc"
+              transform="rotate(180 12 12)" /></g></svg></span>{{ t('一般') }}
           </button>
         </div>
 
@@ -1665,7 +2037,7 @@ onBeforeUnmount(() => {
             <span><strong>{{ t('一般模式') }}</strong><small>{{ t('目前使用中') }}</small></span><AppIcon name="check" />
           </button>
           <button type="button" class="mode-option" aria-pressed="false" @click="showModeMenu = false; switchMode('accessible')">
-            <span><strong>{{ t('無障礙模式') }}</strong><small>{{ t('高對比大字、大圖示導航、固定輪椅路線') }}</small></span>
+            <span><strong>{{ t('友善模式') }}</strong><small>{{ t('高對比大字、大圖示導航、固定輪椅路線') }}</small></span>
           </button>
         </section>
 
@@ -1682,28 +2054,9 @@ onBeforeUnmount(() => {
               <LayerIcon :name="group.icon" />{{ t(group.label) }}
             </button>
           </div>
-          <details class="layer-details">
-            <summary>{{ t('個別圖層') }}</summary>
-            <div v-for="(items, index) in [walkwayCategories, categories]" :key="index" class="chip-row"
-              role="group" :aria-label="index === 0 ? t('通行空間') : t('設施點')">
-              <label v-for="item in items" :key="item.kind" class="chip check-chip">
-                <input v-model="enabledLayers" type="checkbox" :value="item.kind">
-                <LayerIcon :name="layerIconFor(item.kind)!" />{{ t(item.label) }}
-                <small v-if="metadata?.empty_types.some(kind => kind === item.kind)">{{ t('來源無點位') }}</small>
-              </label>
-              <label v-if="index === 0" class="chip check-chip"><input v-model="enabledLayers" type="checkbox" value="slope"><LayerIcon name="slope" />{{ t('坡度') }}</label>
-            </div>
-          </details>
-          <p class="hint">{{ t('選項左側的圖示與地圖上的標記相同，可用來辨識設施與通行空間的類別。') }}</p>
           <p v-if="facilitiesHiddenByZoom" class="hint" role="status">{{ t('放大地圖可查看設施點位。') }}</p>
           <p v-if="walkwayMessage" class="hint" role="status">{{ walkwayMessage }}</p>
           <p v-if="facilityMessage" class="hint" role="status">{{ facilityMessage }}</p>
-          <footer class="sources">
-            <a :href="metadata?.source_url || 'https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7'">{{ t('輪行臺北設施資料') }}</a>
-            <span v-if="displayedDate">・{{ displayedDate }}</span><br>
-            <a href="https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e">{{ t('臺北市騎樓整平圖資') }}</a><br>
-            <a href="https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611">{{ t('臺北市路邊停車格位') }}</a>
-          </footer>
         </section>
 
         <button v-if="facilitiesHiddenByZoom && !showLayers && !showModeMenu && exploreSearch.query.value.trim().length < 2"
@@ -1726,15 +2079,24 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- UI-003: the card only exists while a place or facility is selected. -->
-      <section v-if="browsePlace" class="place-card" :aria-label="t('選取的地點')" aria-live="polite">
+      <!-- UI-020: no close button; the title takes its space. Escape inside the card still clears the selection. -->
+      <section v-if="browsePlace" class="place-card" :aria-label="t('選取的地點')" aria-live="polite"
+        @keydown.esc.prevent="clearBrowsePlace">
         <LayerIcon v-if="browseLayerIcon" class="place-badge" :name="browseLayerIcon" :size="52" :label="browseLayerLabel" />
         <span v-else class="place-icon"><AppIcon name="pin" :size="26" /></span>
         <div class="place-body">
           <div class="place-title-row">
-            <h2>{{ browsePlace.name }}</h2>
-            <button type="button" class="icon-button ghost place-close" :aria-label="t('取消選取')" @click="clearBrowsePlace">
-              <AppIcon name="close" :size="20" />
-            </button>
+            <!-- Title + pin icon (public/icons/place-card/primary_icon_others.svg) open the spot in Google Maps. -->
+            <h2>
+              <a class="place-map-link" :href="googleMapsUrl" target="_blank" rel="noopener"
+                :aria-label="t('{0}，在 Google 地圖開啟', browsePlace.name)" @click="openInGoogleMaps">
+                {{ browsePlace.name }}<svg class="place-map-icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                  aria-hidden="true"><path stroke="currentColor" stroke-width="2" d="M12 4C15.866 4 19 7.13401 19 11C19 16.0159
+                  13.8819 19.0342 12.3984 19.8037C12.1456 19.9349 11.8544 19.9349 11.6016 19.8037C10.1181 19.0342 5 16.0159 5
+                  11C5 7.13401 8.13401 4 12 4ZM12 8C10.3431 8 9 9.34315 9 11C9 12.6569 10.3431 14 12 14C13.6569 14 15 12.6569
+                  15 11C15 9.34315 13.6569 8 12 8Z" /></svg>
+              </a>
+            </h2>
           </div>
           <ul v-if="browseTags.length" class="tag-list">
             <li v-for="tag in browseTags" :key="tag">{{ t(tag) }}</li>
@@ -1773,13 +2135,25 @@ onBeforeUnmount(() => {
         </button>
       </header>
 
-      <MapSheet v-model="sheetLevel">
+      <MapSheet v-model="sheetLevel" :fit="!showDetails">
         <template #summary>
           <div v-if="hasOptions" class="route-tabs" role="tablist" :aria-label="t('路線方式')">
             <button v-for="mode in routeModes" :key="mode.key" type="button" role="tab"
               :aria-selected="selectedMode === mode.key" @click="selectMode(mode.key)">
-              <AppIcon :name="mode.icon" :size="18" />
-              <span>{{ t(mode.label) }}</span>
+              <!-- UI-010 icons: public/icons/route-tabs/{fastest,balanced,wheelchair}.svg, inlined for currentColor -->
+              <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                <path v-if="mode.key === 'fastest'" fill="currentColor" d="M14.6 1 3 14h7l-1.6 9L21 10h-7l1.4-9z" />
+                <g v-else-if="mode.key === 'balanced'" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5v18m-8 0h16M3 5h18M5.5 5 2 13h7L5.5 5Zm13 0L15 13h7l-3.5-8Z" />
+                  <path d="M2 13c.2 2.8 6.8 2.8 7 0m6 0c.2 2.8 6.8 2.8 7 0" />
+                </g>
+                <template v-else>
+                  <circle cx="11" cy="3" r="2.1" fill="currentColor" />
+                  <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                    d="M10.7 7 12 13.6h5l2.1 5.9h2.1M11.4 10H17M7.8 10.5a5.5 5.5 0 1 0 6.5 7.9" />
+                </template>
+              </svg>
+              <span class="tab-label">{{ t(mode.label) }}</span>
               <span class="tab-time">{{ routeOptions[mode.key]?.route
                 ? t('{0}分', minutes(routeOptions[mode.key]!.route!.duration_s)) : t('無') }}</span>
             </button>
@@ -1806,7 +2180,6 @@ onBeforeUnmount(() => {
                 <AppIcon :name="fact.icon" :size="15" />{{ fact.text }}
               </li>
             </ul>
-            <p class="hint">{{ t('摘要依沿線可比對圖資，未覆蓋路段的通行條件待確認，請以現場路況為準。') }}</p>
 
             <button type="button" class="text-button details-toggle" :aria-expanded="showDetails"
               @click="showDetails = !showDetails; if (showDetails) sheetLevel = 2">
@@ -1896,9 +2269,10 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <section class="nav-panel" :aria-label="t('導航指引')">
+      <section ref="navPanelEl" class="nav-panel" :aria-label="t('導航指引')">
         <div class="nav-status-row">
-          <span v-if="demoMode" class="badge" data-tone="warn">{{ t('示範模擬位置') }}</span>
+          <span v-if="previewStep !== null" class="badge" data-tone="info">{{ t('預覽 第 {0}/{1} 步', previewStep + 1, navSteps.length) }}</span>
+          <span v-else-if="demoMode" class="badge" data-tone="warn">{{ t('示範模擬位置') }}</span>
           <span v-else-if="navState === 'active'" class="badge" data-tone="good">{{ t('GPS 導航中') }}</span>
           <span v-else-if="navState === 'offroute'" class="badge" data-tone="alarm">{{ t('偏離路線') }}</span>
           <span v-else-if="navState !== 'arrived'" class="badge" data-tone="neutral">{{ t('尚未取得導航位置') }}</span>

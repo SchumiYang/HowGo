@@ -1,5 +1,5 @@
 /**
- * UI-001 base palette (uiux_edit/前端畫面調整交接.md) for code that cannot read CSS custom properties,
+ * UI-001 base palette, 42 colours (uiux_edit_v2/前端畫面調整交接.md), for code that cannot read CSS custom properties,
  * such as MapLibre paint properties. It mirrors the :root tokens in assets/main.css: change both together.
  */
 export const palette = {
@@ -42,6 +42,9 @@ export const palette = {
   orange300: '#F4B992',
   orange500: '#FD853A',
   green500: '#76A732',
+  blue300: '#93C5FD',
+  blue600: '#2563EB',
+  violet700: '#6D28D9',
 } as const
 
 /** UI-001 semantic tokens (same names as the CSS custom properties, camel-cased). */
@@ -57,4 +60,9 @@ export const semantic = {
   textHint: palette.grey400,
   textSecondary: palette.grey700,
   textPrimary: palette.grey800,
+  mapSelectedLocation: palette.red500,
+  indoorMapAccent: palette.violet700,
+  mapMarkerWhite: palette.white,
+  serviceIconInk: palette.grey800,
+  serviceIconAccent: palette.primary600,
 } as const

@@ -1,7 +1,7 @@
 import { locale, t } from '~/i18n'
 import type { Map as MapLibreMap, Marker } from 'maplibre-gl'
 import { watch } from 'vue'
-import { palette } from './palette'
+import { semantic } from './palette'
 
 /** A building with an indoor map (FastAPI GET /v1/indoor/venues). */
 export interface IndoorVenue {
@@ -74,14 +74,15 @@ function injectStyle() {
 .indoor-venue-marker {
   display: inline-flex; align-items: center; gap: 6px;
   min-height: 48px; min-width: 48px; padding: 0 16px 0 12px;
-  border: 2px solid var(--white, ${palette.white}); border-radius: 999px;
-  background: var(--primary-700, ${palette.primary700}); color: var(--white, ${palette.white});
+  border: 2px solid var(--map-marker-white, ${semantic.mapMarkerWhite}); border-radius: 999px;
+  background: var(--indoor-map-accent, ${semantic.indoorMapAccent}); color: var(--map-marker-white, ${semantic.mapMarkerWhite});
   font: 600 14px/20px "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
   white-space: nowrap; cursor: pointer;
   box-shadow: var(--shadow-floating);
 }
-.indoor-venue-marker:hover { background: var(--primary-800, ${palette.primary800}); }
-.indoor-venue-marker:focus-visible { outline: 3px solid var(--primary-300, ${palette.primary300}); outline-offset: 2px; }
+/* UI-001 has no darker violet, so hover deepens the accent instead of switching tokens. */
+.indoor-venue-marker:hover { filter: brightness(.88); }
+.indoor-venue-marker:focus-visible { outline: 3px solid var(--indoor-map-accent, ${semantic.indoorMapAccent}); outline-offset: 2px; }
 .indoor-venue-marker[data-compact] { padding: 0; justify-content: center; width: 48px; }
 .indoor-venue-marker[data-compact] .indoor-venue-label { display: none; }
 .indoor-venue-marker[hidden] { display: none; }`
@@ -138,4 +139,74 @@ export async function addIndoorVenueMarkers(map: MapLibreMap, { onOpen, visible 
     map.off('zoom', update)
     for (const { marker } of markers) marker.remove()
   }
+}
+
+/* ---------- UI-009 building footprint highlight ---------- */
+
+type LocalUnits = { features?: { properties?: { category?: string }; geometry?: { type?: string; coordinates?: unknown } }[] }
+type VenueFrame = { origin?: { lng: number; lat: number }; bearing_deg?: number; default_level?: string; levels?: { id: string }[] }
+
+/** Local venue metres → [lng, lat]; same tangent-plane frame as indoor-nav/src/geo/frame.ts and backend local_to_lnglat. */
+function toLngLat([x, y]: number[], origin: { lng: number; lat: number }, bearingDeg: number): [number, number] {
+  const r = 6378137
+  const th = bearingDeg * Math.PI / 180
+  const east = x! * Math.cos(th) + y! * Math.sin(th)
+  const north = -x! * Math.sin(th) + y! * Math.cos(th)
+  return [origin.lng + (east / (r * Math.cos(origin.lat * Math.PI / 180))) * 180 / Math.PI, origin.lat + (north / r) * 180 / Math.PI]
+}
+
+function convexHull(points: number[][]): number[][] {
+  const sorted = [...points].sort((a, b) => a[0]! - b[0]! || a[1]! - b[1]!)
+  const cross = (o: number[], a: number[], b: number[]) => (a[0]! - o[0]!) * (b[1]! - o[1]!) - (a[1]! - o[1]!) * (b[0]! - o[0]!)
+  const half = (list: number[][]) => list.reduce<number[][]>((hull, p) => {
+    while (hull.length >= 2 && cross(hull[hull.length - 2]!, hull[hull.length - 1]!, p) <= 0) hull.pop()
+    hull.push(p)
+    return hull
+  }, [])
+  const lower = half(sorted)
+  const upper = half([...sorted].reverse())
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)]
+}
+
+/**
+ * The venue data has no separate building-outline polygon, so the footprint is the outline of the
+ * default level's indoor units (rooms, corridors, stairs…), excluding outdoor `walkway` units such as
+ * an entrance platform. Returns null when the venue data cannot be loaded; the map then shows only the entrance.
+ */
+async function venueFootprint(id: string): Promise<[number, number][] | null> {
+  try {
+    const base = `/api/v1/indoor/data/${encodeURIComponent(id)}/`
+    const venue = await (await fetch(base + 'venue.json')).json() as VenueFrame
+    const level = venue.default_level ?? venue.levels?.[0]?.id
+    if (!venue.origin || !level) return null
+    const units = await (await fetch(`${base}levels/${encodeURIComponent(level)}/units.geojson`)).json() as LocalUnits
+    const points = (units.features ?? []).flatMap((feature) => {
+      if (feature.properties?.category === 'walkway') return []
+      const { type, coordinates } = feature.geometry ?? {}
+      const polygons = type === 'Polygon' ? [coordinates] : type === 'MultiPolygon' ? coordinates as unknown[] : []
+      return (polygons as number[][][][]).flatMap(rings => rings[0] ?? [])
+    })
+    if (points.length < 3) return null
+    const ring = convexHull(points).map(p => toLngLat(p, venue.origin!, venue.bearing_deg ?? 0))
+    return [...ring, ring[0]!]
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Violet (indoor-map-accent) footprint per indoor venue: 16 % fill and a 2 px outline, inserted
+ * below `beforeId` so markers and the HTML entrance stay on top.
+ */
+export async function addIndoorBuildingOutlines(map: MapLibreMap, beforeId?: string) {
+  const venues = await fetchIndoorVenues()
+  const outlines = (await Promise.all(venues.map(async v => ({ v, ring: await venueFootprint(v.id) }))))
+    .flatMap(({ v, ring }) => ring ? [{ type: 'Feature' as const, properties: { venue: v.id }, geometry: { type: 'Polygon' as const, coordinates: [ring] } }] : [])
+  if (!outlines.length || map.getSource('indoor-buildings')) return
+  const before = beforeId && map.getLayer(beforeId) ? beforeId : undefined
+  map.addSource('indoor-buildings', { type: 'geojson', data: { type: 'FeatureCollection', features: outlines } })
+  map.addLayer({ id: 'indoor-building-fill', source: 'indoor-buildings', type: 'fill',
+    paint: { 'fill-color': semantic.indoorMapAccent, 'fill-opacity': .16 } }, before)
+  map.addLayer({ id: 'indoor-building-outline', source: 'indoor-buildings', type: 'line',
+    paint: { 'line-color': semantic.indoorMapAccent, 'line-width': 2 } }, before)
 }

@@ -47,6 +47,9 @@ def write_walkways(conn, rows):
 
 
 def query_walkways(conn, bounds, kinds, limit, *, sloped_only=False):
+    # Imported here: route_modes -> directions -> walkways would otherwise be a circular import.
+    from .route_modes import sidewalk_grade
+
     if not conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'walkways'").fetchone():
         return [], False
     if sloped_only and not any(row[1] == "slope" for row in conn.execute("PRAGMA table_info(walkways)")):
@@ -70,6 +73,11 @@ def query_walkways(conn, bounds, kinds, limit, *, sloped_only=False):
             for key in ("width", "slope"):
                 if key in row.keys() and row[key] is not None:
                     properties[key] = row[key]
+            # The route planner's feasibility grade for physical sidewalks (comfortable / limited /
+            # blocked), exposed so the map can colour them (frontend UI-014).
+            grade = sidewalk_grade(properties.get("width")) if kind == "11" else None
+            if grade:
+                properties["grade"] = grade
             features.append({
                 "type": "Feature",
                 "id": row["id"],
