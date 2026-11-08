@@ -28,7 +28,7 @@ export function locationAvailable() {
   return useBrowser() || flutterObject() !== null
 }
 
-export const locationSourceLabel = () => useBrowser() ? 'browser' : flutterObject() ? 'townpass' : 'none'
+export const locationSourceLabel = () => browserUsable() ? 'browser' : flutterObject() ? 'townpass' : 'none'
 
 function bridgeFix(timeoutMs: number): Promise<Fix> {
   const bridge = flutterObject()
@@ -69,30 +69,73 @@ function bridgeFix(timeoutMs: number): Promise<Fix> {
   })
 }
 
-export function getFix(options: { highAccuracy?: boolean; timeout?: number; maximumAge?: number } = {}): Promise<Fix> {
-  const timeout = options.timeout ?? 18000
-  if (useBrowser()) {
-    return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
-      ({ coords, timestamp }) => resolve({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp }),
-      ({ code, message }) => reject({ code: code as FixError['code'], message }),
-      { enableHighAccuracy: options.highAccuracy ?? false, timeout, maximumAge: options.maximumAge ?? 15000 },
-    ))
-  }
-  return bridgeFix(timeout)
+/*
+ * Inside Town Pass the WebView can remember an "allow" for this origin while the app itself has no
+ * Android location permission (e.g. after a reinstall). navigator.geolocation then fails with
+ * PERMISSION_DENIED and the app never asks again. The bridge goes through the app's geolocator,
+ * which does request the permission, so fall back to it and keep using it for this session.
+ */
+let browserBlocked = false
+const browserUsable = () => useBrowser() && !(browserBlocked && flutterObject())
+const shouldFallBack = (error: FixError) => error.code !== 3 && flutterObject() !== null
+
+function browserFix(options: { highAccuracy?: boolean; maximumAge?: number }, timeout: number): Promise<Fix> {
+  return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+    ({ coords, timestamp }) => resolve({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp }),
+    ({ code, message }) => reject({ code: code as FixError['code'], message }),
+    { enableHighAccuracy: options.highAccuracy ?? false, timeout, maximumAge: options.maximumAge ?? 15000 },
+  ))
 }
 
-/** Continuous updates. Returns a stop function. The bridge has no stream, so it polls one request at a time. */
-export function watchFix(onFix: (fix: Fix) => void, onError: (error: FixError) => void): () => void {
-  if (useBrowser()) {
-    const id = navigator.geolocation.watchPosition(
-      ({ coords, timestamp }) => onFix({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp }),
-      ({ code, message }) => onError({ code: code as FixError['code'], message }),
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 18000 },
-    )
-    return () => navigator.geolocation.clearWatch(id)
+/**
+ * One-shot fix. Inside Town Pass the bridge is the default: it goes through the app's geolocator,
+ * which also asks for the Android location permission, so the browser path below works afterwards.
+ * Elsewhere (or if the bridge gives no answer) the browser Geolocation API is used.
+ */
+export async function getFix(options: { highAccuracy?: boolean; timeout?: number; maximumAge?: number } = {}): Promise<Fix> {
+  const timeout = options.timeout ?? 18000
+  if (flutterObject()) {
+    try {
+      return await bridgeFix(timeout)
+    } catch (error) {
+      // Permission refused or location off: the browser would fail the same way.
+      if ((error as FixError).code === 1 || !useBrowser()) throw error
+    }
   }
+  if (!useBrowser()) return bridgeFix(timeout)
+  try {
+    return await browserFix(options, timeout)
+  } catch (error) {
+    if (!shouldFallBack(error as FixError)) throw error
+    browserBlocked = true
+    return bridgeFix(timeout)
+  }
+}
+
+/**
+ * Continuous updates. Returns a stop function. The browser stream is preferred for navigation (smoother
+ * than polling); the bridge has no stream, so it polls one request at a time and is used when the browser
+ * path is unavailable or blocked inside Town Pass.
+ */
+export function watchFix(onFix: (fix: Fix) => void, onError: (error: FixError) => void): () => void {
   let stopped = false
   let timer: ReturnType<typeof setTimeout> | undefined
+  let watchId: number | undefined
+  if (browserUsable()) {
+    watchId = navigator.geolocation.watchPosition(
+      ({ coords, timestamp }) => onFix({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, timestamp }),
+      ({ code, message }) => {
+        const error = { code: code as FixError['code'], message }
+        if (!shouldFallBack(error) || stopped) return onError(error)
+        // Switch to the Town Pass bridge (see getFix).
+        browserBlocked = true
+        navigator.geolocation.clearWatch(watchId!)
+        watchId = undefined
+        void poll()
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 18000 },
+    )
+  }
   const poll = async () => {
     try {
       const fix = await bridgeFix(15000)
@@ -103,10 +146,11 @@ export function watchFix(onFix: (fix: Fix) => void, onError: (error: FixError) =
     }
     if (!stopped) timer = setTimeout(poll, 2000)
   }
-  void poll()
+  if (watchId === undefined) void poll()
   return () => {
     stopped = true
     clearTimeout(timer)
+    if (watchId !== undefined) navigator.geolocation.clearWatch(watchId)
   }
 }
 
