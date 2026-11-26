@@ -1,27 +1,148 @@
-# HowGo（好行）
+# HowGo 好行
+【2026臺北秋季程式設計節-城市通微服務大黑客松】第三名得獎團隊：報報王
 
-HowGo 是以通用與包容設計為目標的臺北步行導航。室外可比較一般步行、平衡和無障礙路線。室內涵蓋臺北市立大學天母體育館 1F、2F，可導航到電梯、廁所及其他館內地點。
+## **1. 專案簡介 / Project Overview**
 
-## 功能與架構
+### **專案目的與想解決的問題**
 
-| 區塊 | 實作 |
-| --- | --- |
-| 好行 `frontend/` | Nuxt、Vue、MapLibre GL JS。一般模式提供地圖探索、起終點搜尋、三種路線比較和即時導航。無障礙模式以目前位置規劃輪椅路線，提供大箭頭和地圖兩種導航畫面。 |
-| FastAPI `backend/` | 室外地點搜尋、設施查詢、候選路線評估，以及 `/v1/indoor` 場館資料與管理 API。室外資料來自本機 SQLite 和快照，室內資料來自 `indoor/mapdata/`。 |
-| 路由服務 `.ors/` | Java openrouteservice（ORS）依 OSM 路網產生室外候選，FastAPI 以本機圖資篩選與排序。 |
-| 室內導航 `indoor/indoor-nav/src/` | 從室外一般模式點選場館標記進入，也可使用 `?indoor=tianmu`。Nuxt 延後載入室內介面，室內在裝置上依場館路網獨立算路。室內外目前共用入口，跨室內外的連續路線尚未實作。 |
-| 好行管理 `indoor/indoor-nav/` | 獨立的 Vite 管理端，提供平面圖校準、POI 編輯、場勘建圖及定位驗證。建置入口為 `admin.html` 和 `survey.html`。 |
-| 部署 `deploy/cloudflare/` | 好行與好行管理各有 Worker 設定，提供靜態前端與同網域 `/api/*` 代理。 |
+> **不只是找到目的地，而是找到真正適合自己的路線。<br>
+> 整合室內外通行圖資、室內建圖與跨樓層導航，降低移動及資訊取得的門檻。**
 
-室外使用 OpenFreeMap 向量底圖。一般模式使用調整過的 Positron，無障礙模式使用 Liberty，標籤放大 1.3 倍。若向量樣式或圖磚索引載入失敗，改用 OSM raster。室外定位優先使用安全來源的瀏覽器定位，也支援台北通 WebView 的位置橋接。大眾運輸路線尚未實作。 [底圖實作](frontend/app/utils/basemap.ts) · [定位來源](frontend/app/utils/geolocation.ts)
+**好行 HowGo** 是以通用與包容設計為目標的導航服務。對行動能力受限的使用者而言，最短的路線，不一定是能夠通行的路線；走到建築物門口，也不代表已經抵達真正的目的地。
 
-## 本機啟動
+我們關注的使用者包含輪椅使用者、高齡者、孕婦、暫時受傷的人、推嬰兒車或攜帶大型行李的旅客，以及面對語言障礙、資訊使用障礙的使用者。這些需求可能是長期、暫時或因情境而產生，每個人都可能需要更適合自己的導航資訊。
 
-每個小節的指令都從專案根目錄開始。建議使用 Node.js 24 LTS、pnpm 10、Python 3.11 以上，以及支援 FTS5 與 R*Tree 的 SQLite。下列指令以 macOS／Linux 為例。Python 模組名稱沿用 `rollx`。
+本專案聚焦兩個問題。
 
-### 1. 準備室內前端依賴
+- **找到適合自身條件的路線** 整合人行道、騎樓、坡道、行人穿越道及設施資訊，提供最短距離、平衡與無障礙三種室外路線，讓使用者理解差異後選擇。
+- **降低室內建圖與導航的導入門檻** 提供平面圖與 POI 建置、Wi-Fi／地磁建圖及定位驗證工具，讓導航服務能從室外入口延伸到館內目的地。
 
-Nuxt 會載入室內導航元件，建置前需安裝兩個前端套件目錄的依賴。室內套件使用 npm 鎖檔。
+目前以 **臺北市立大學天母體育館 1F、2F** 為室內示範場域，串連「尋找附近無障礙停車格 → 室外導航至場館 → 進入室內地圖 → 跨樓層前往觀眾席」的使用流程。室內外目前各自計算路線，使用者抵達場館後切換至室內導航。
+
+| 目標使用者 | 主要需求 | 可參考的路線條件 |
+| --- | --- | --- |
+| 輪椅使用者 | 避免階梯、陡坡與狹窄通道 | 無階梯、較平緩、通道較寬，跨樓層使用電梯 |
+| 長者 | 減少體力負擔及跌倒風險 | 較平緩、減少繞行，跨樓層優先考慮電梯 |
+| 孕婦 | 避免過度費力與長距離繞行 | 較平緩、路線較短，跨樓層優先考慮電梯 |
+| 推行李箱或嬰兒車的使用者 | 減少搬運與不平整路面的影響 | 無階梯、平順通道；可自行評估是否接受短階梯換取較少繞行 |
+| 暫時腳受傷者 | 降低上下樓梯與長距離步行負擔 | 無階梯、減少繞行，跨樓層優先考慮電梯 |
+| 語言障礙使用者 | 理解搜尋、設施及導航操作 | 繁體中文／英文介面與清楚的導航提示 |
+| 資訊使用弱勢使用者 | 理解搜尋、設施及導航操作 | 簡化版功能與使用者介面 |
+
+
+### **核心功能摘要**
+
+**🗺️ 三種室外路線比較**
+
+同一起終點可比較三種模式的預估時間、距離與路線摘要。後端透過 openrouteservice（ORS）取得候選，再比對本機人行道、階梯與坡度資料，進行篩選及排序。不同模式可能選中同一條路線。
+
+- **最短距離** 使用一般步行路網，從候選中選擇 ORS 預估時間最少的結果。介面名稱沿用「最短距離」，目前實際以時間排序。
+- **平衡** 排除已知過窄通道及較陡坡段，接受有限的短階梯，並考量人行道覆蓋與繞路成本。
+- **無障礙** 使用輪椅路由，避開階梯，另以本機資料排除已知過窄通道與實際比對到的坡段。
+
+**📍 地點搜尋與導航**
+
+起點、終點支援 **目前位置、地圖選點及本機地點／地址搜尋**。搜尋資料來自預先整理的 OSM 快照，以 SQLite 搜尋索引查詢。開始導航後，依位置進度呈現直行、轉彎及有資料支持的穿越道、側別與設施提示，並以地圖高亮呈現選取路段及相關設施。
+
+**♿ 通行設施圖層**
+
+依地圖視窗載入斜坡道、人行道、標線型人行道、行穿線、整平騎樓、無障礙電梯、廁所、友善店家、公園、停車與大眾運輸站點等圖資。設施可點選查看資訊；身心障礙停車格也可設為路線起點或終點。
+
+**🏟️ 室內地圖與跨樓層導航**
+
+天母體育館室內地圖呈現不同樓層的平面配置，以及電梯、樓梯、無障礙廁所、出入口等 POI（Point of Interest，興趣點）。使用者可瀏覽設施或選擇目的地，例如「二樓藍區第一排」；無障礙跨樓層路線使用電梯。導航過程依定位進度更新距離與轉向指令。
+
+**🧭 Wi-Fi 與地磁混合定位**
+
+在缺少 GPS 的室內環境，利用可取得的 Wi-Fi 指紋、地磁特徵與計步資訊，搭配預先建立的場域特徵地圖推估位置，並融合氣壓計等資料判斷樓層變化。主要利用手機既有感測器與場域訊號，減少大量增設專用定位硬體的需求；實際可用能力取決於裝置、平台權限及場勘品質。
+
+**🛠️ 室內建圖與定位驗證**
+
+管理端提供三項主要工作流程，支援未來擴展到其他公共場域。
+
+- **樓層平面圖與 POI 建置**：上傳及校準樓層平面圖，新增、編輯電梯、樓梯、廁所及出入口等設施。
+- **Wi-Fi 與地磁建圖**：使用手機蒐集場勘訊號，匯入紀錄並建立室內定位特徵地圖。
+- **定位效果驗證**：記錄及回放定位結果，比較估計位置與參考位置，評估場域中的定位表現。
+
+
+**🌐 友善模式與雙語介面**
+
+一般模式以地圖探索及路線比較為主；**友善模式** 著重高對比、大字體、較大的導航指示與簡化流程，降低高齡者、視覺辨識較弱或不熟悉智慧型手機者的操作門檻。此處的友善模式對應現有程式中的無障礙介面模式，與「無障礙路線」的算路條件分別處理。
+
+主介面與室內導航主要介面支援繁體中文、英文及語言偏好保存；來源地名、地址及部分管理介面仍保留中文。
+
+## **2. 系統架構 / System Architecture**
+
+### **架構圖**
+
+```mermaid
+flowchart TD
+    User[使用者／瀏覽器或台北通 WebView] --> Web[HowGo 主介面\nNuxt・Vue・MapLibre]
+    Admin[場館管理者] --> AdminUI[獨立管理端\nVite・Vue]
+    Web --> Indoor[延後載入室內導航\nDijkstra・裝置端定位]
+    Web --> Tiles[OpenFreeMap 向量底圖\nOSM raster 備援]
+    Web --> Proxy[開發代理／Cloudflare Worker\n同網域 /api]
+    AdminUI --> Proxy
+    Proxy --> API[Python FastAPI]
+    API --> DB[(SQLite\n設施空間索引・地點搜尋索引)]
+    API --> ORS[Java openrouteservice\nOSM 步行與輪椅路網]
+    API --> Venue[室內場館資料\nGeoJSON・定位指紋]
+    Venue --> Indoor
+    Snapshots[下載的市府與 OSM 快照] --> Import[資料清理與匯入]
+    Import --> DB
+    Survey[場勘紀錄與管理操作] --> API
+```
+
+室外由 **FastAPI 統一查詢資料、呼叫 ORS 並評估候選路線**。ORS 是獨立的 Java 路由服務，Python 後端透過 HTTP 與它溝通。室內則在前端以場館路網獨立算路，FastAPI 負責提供圖資與管理功能。
+
+室外底圖採 OpenFreeMap 向量圖磚，MapLibre GL JS 負責繪製。一般模式使用調整過的 Positron，友善模式（現有無障礙介面）使用放大標籤的 Liberty；向量底圖初始化失敗時使用 OSM raster 備援。底圖、設施圖層及路由服務分別負責不同工作。
+
+專案主要目錄如下。
+
+```text
+HowGo/
+├── frontend/                  # Nuxt 主介面，載入室內導航元件
+├── backend/
+│   ├── rollx/                 # FastAPI、資料匯入、搜尋與路線評估
+│   └── data/                  # 本機快照與產生的 SQLite
+├── indoor/
+│   ├── indoor-nav/            # 室內導航原始碼、管理端與測試
+│   └── mapdata/               # 場館圖資、場勘資料及建圖工具
+├── deploy/cloudflare/         # 主介面與管理端的 Worker 設定
+└── .ors/                      # 本機 ORS、Java 與路網，未納入 Git
+```
+
+### **使用到的主要技術堆疊（Tech Stack）**
+
+| 類別 | 技術／版本 | 說明 |
+| --- | --- | --- |
+| 主前端 | Nuxt 4、Vue 3、TypeScript | 以客戶端模式執行，提供地圖、搜尋、路線比較及導航介面 |
+| 室外地圖 | MapLibre GL JS 5、OpenFreeMap、OSM | 向量底圖、GeoJSON 圖層與路線繪製 |
+| 室內前端／管理端 | Vue 3、Vite、MapLibre GL JS 6 | 場館地圖、樓層操作、管理及場勘介面 |
+| 後端 API | Python、FastAPI、Uvicorn、HTTPX | 本機資料服務、ORS 呼叫與候選評估 |
+| 空間運算 | Shapely | 路線與人行道、坡段等圖資的幾何比對 |
+| 資料儲存與搜尋 | SQLite、R*Tree、FTS5、雙字索引 | 設施視窗查詢、中文地點與地址搜尋 |
+| 室外路由 | openrouteservice 9.10.0、Java 21 | 使用 OSM 建置一般步行與輪椅路網 |
+| 室內算路 | TypeScript、Dijkstra | 依場館路網及通行限制規劃路線 |
+| 室內定位 | 計步／PDR、地磁、Wi-Fi 指紋、粒子濾波、氣壓計 | 依裝置可用感測資料融合定位及樓層判斷 |
+| 資料處理 | NumPy、Pillow、GeoJSON、JSON／gzip | 場館建圖、資料清理與固定快照 |
+| 套件與環境 | 主前端 pnpm 10、室內套件 npm、Python venv | 各套件依鎖檔及 requirements 安裝 |
+
+## **3. 安裝與執行方式 / Installation & Run**
+
+### **本地端執行方式**
+
+以下以 macOS／Linux 為例。建議準備 **Node.js 24 LTS、pnpm 10、Python 3.11 以上、Java 21**，並確認 Python 所使用的 SQLite 支援 FTS5 與 R*Tree。主前端使用 pnpm；室內子專案依既有 npm 鎖檔使用 npm。Python 使用 venv。
+
+**1. 取得專案**
+
+```sh
+git clone https://github.com/taipei-doit/townpass2026-HowGo
+```
+
+後續每個小節都從 HowGo 根目錄開始。長時間運行的服務請各開一個終端機。
+
+**2. 安裝室內元件與管理端依賴**
 
 ```sh
 cd indoor/indoor-nav
@@ -172,40 +293,53 @@ ORS 負責依 OSM 路網產生候選；**市府資料的後置篩選與評分由
 
 | 資料集／來源 | 提供者 | 使用方式 |
 | --- | --- | --- |
-| [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) | 臺北市政府交通局 | 斜坡道、無障礙電梯、公園、出入口、友善店家、廁所、停車與大眾運輸站點，以及人行道、標線型人行道、行穿線和坡度紀錄。2026-11-07 的無障礙廁所快照沒有點位。 |
-| [臺北捷運車站出入口無障礙電梯、無障礙坡道 GPS 座標](https://data.taipei/dataset/detail?id=0a3bb422-9eb5-459b-a9d4-138456516183) | 臺北大眾捷運股份有限公司 | 電梯歸入「身障設施」，坡道歸入「出入口／坡道」。匯入時與輪行臺北快照合併。 |
-| [臺北市公廁點位資訊](https://data.taipei/dataset/detail?id=ca205b54-a06f-4d84-894c-d6ab5079ce79) | 臺北市政府環保局 | 「無障礙廁座數」大於 0 的點位匯入無障礙廁所圖層，快照存於 `backend/data/source/facility-9.json`。 |
-| [臺北市騎樓整平工程完成路段表](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) | 臺北市都發局建管處 | 民國 91 至 105 年完工紀錄，用於整平騎樓圖層和側別指引。 |
-| [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) | 臺北市交通局停管處 | 身心障礙專用格位（03、04、18），可選為路線起點或終點。 |
-| [OpenStreetMap 臺灣資料](https://download.geofabrik.de/asia/taiwan.html) | OpenStreetMap 貢獻者，Geofabrik 提供臺灣 PBF | 本機地點、道路與地址搜尋，ORS 路網，以及 OSM 穿越道與 `incline` 坡度快照。 |
-| [天母體育館場館資料](indoor/mapdata/data/tianmu/) | 專案團隊依場館工程平面圖、現場照片及場勘製作 | 室內樓層、牆面、POI、路網和定位指紋。 |
+| [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) | 臺北市政府交通局 | 斜坡道、無障礙電梯、公園、出入口、店家、廁所、人行道、標線型人行道、行穿線、身障設施、停車與站點等圖層及坡度紀錄 |
+| [臺北捷運車站出入口無障礙電梯、無障礙坡道 GPS 座標](https://data.taipei/dataset/detail?id=0a3bb422-9eb5-459b-a9d4-138456516183) | 臺北大眾捷運股份有限公司 | 補充捷運出入口電梯及坡道，與設施快照合併 |
+| [臺北市公廁點位資訊](https://data.taipei/dataset/detail?id=ca205b54-a06f-4d84-894c-d6ab5079ce79) | 臺北市政府環保局 | 將無障礙廁座數大於 0 的點位匯入無障礙廁所圖層 |
+| [臺北市騎樓整平工程完成路段表](https://data.taipei/dataset/detail?id=09504c47-7349-4cab-9ce6-db30f32a392e) | 臺北市都發局建管處 | 民國 91～105 年完工路段，用於整平騎樓圖層及側別指引 |
+| [臺北市路邊停車格位](https://data.taipei/dataset/detail?id=5a911ea5-1694-4301-808e-e1780d971611) | 臺北市交通局停管處 | 篩選身心障礙專用格位代碼 03、04、18，提供圖層及起終點設定 |
+| [OpenStreetMap 臺灣資料／Geofabrik](https://download.geofabrik.de/asia/taiwan.html) | OSM 貢獻者；Geofabrik 提供下載 | ORS 路網、本機地點與地址搜尋、穿越道及 `incline` 坡度快照 |
+| 天母體育館場館圖資 | 團隊依北市大公告工程平面圖、體育館現場照片製作 | 室內樓層、牆面、POI、路網及定位指紋，存放於 `indoor/mapdata/data/tianmu/` |
+| [OpenFreeMap](https://openfreemap.org/) | OpenFreeMap 與相關開放圖資專案 | 線上向量底圖；與本機設施快照及路由資料分開管理 |
 
-底圖為線上圖磚服務，搜尋、設施查詢與路網計算使用已下載的快照。地圖保留 OSM 與 OpenMapTiles 署名。OSM 資料採 ODbL 1.0。 [OpenFreeMap 署名](https://github.com/hyperknot/openfreemap#attribution) · [OSM 資料授權](https://www.openstreetmap.org/copyright) · [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) · [OSM 公共圖磚政策](https://operations.osmfoundation.org/policies/tiles/)
+輪行臺北涵蓋的設施類型包括 **1 斜坡道、3 路外停車場無障礙電梯、4 公園、7 捷運站出入口及公園無障礙出入口、8 友善店家、9 無障礙廁所、11 人行道、12 標線型人行道、13 行穿線、14 身障設施、15 路邊停車場、16 路邊停車格、18 公車站及 20 捷運站**。類型存在不代表每個下載版本都有完整點位；無障礙廁所另以公廁資料補充。站點圖層供查詢使用，目前尚未提供大眾運輸算路。
 
-室外快照放在 `backend/data/source/`。以下指令在 `backend/` 啟用 venv 後執行。
+## **5. 致謝 / Acknowledgments**
 
-| 更新項目 | 指令 |
-| --- | --- |
-| 設施與通行空間 | `python -m rollx.import_facilities`。可加 `--source-dir <資料夾>` 指定另一組快照。 |
-| 捷運無障礙電梯與坡道 | 更新 `backend/data/source/mrt-accessibility.csv`，再匯入設施。 |
-| 身障停車格 | `python -m rollx.import_accessible_parking <SHP 路徑>`，再匯入設施。SHP 匯入需 PyShp、pyproj 與 Shapely。 |
-| 地點搜尋 | 替換 `places.json.gz` 後執行 `python -m rollx.places`。 |
-| OSM 穿越道與坡度 | 使用已安裝 PyOsmium 的環境，執行 `python -m rollx.osm_crossings ../.ors/taipei.osm.pbf` 與 `python -m rollx.slopes ../.ors/taipei.osm.pbf`。 |
+感謝以上資料集來源，以及 OpenStreetMap 貢獻者，讓通行環境與設施資訊得以整合。
 
-## API 與部署
+本專案亦使用下列開放原始碼及開放圖資工具。
 
-| API | 用途 |
-| --- | --- |
-| `POST /v1/route-options` | 以同一起終點比較三種室外路線，每種模式各自回傳結果或錯誤。 |
-| `POST /v1/routes` | 查單一模式，省略 `mode` 時使用 `accessible`。 |
-| `GET /v1/places`、`/v1/meta` | 本機地點搜尋，以及資料類型和快照狀態。 |
-| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 依地圖視窗範圍取得室外圖層。 |
-| `GET /v1/indoor/venues`、`/v1/indoor/data/{venue}/{path}` | 場館清單與室內圖資。 |
+- [Nuxt](https://nuxt.com/)、[Vue](https://vuejs.org/)、[Vite](https://vite.dev/) 與 [TypeScript](https://www.typescriptlang.org/)，提供前端開發基礎。
+- [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js)、[OpenFreeMap](https://openfreemap.org/) 與 [OpenMapTiles](https://openmaptiles.org/)，提供地圖呈現及底圖相關技術。
+- [openrouteservice](https://github.com/GIScience/openrouteservice)，提供一般步行及輪椅路網計算。
+- [FastAPI](https://fastapi.tiangolo.com/)、[Uvicorn](https://www.uvicorn.org/)、[HTTPX](https://www.python-httpx.org/)、[Shapely](https://shapely.readthedocs.io/) 與 [SQLite](https://www.sqlite.org/)，提供 API、空間計算及本機資料儲存。
+- [NumPy](https://numpy.org/)、[Pillow](https://python-pillow.github.io/)、[Vitest](https://vitest.dev/) 及其他依賴工具，支援資料處理、室內建圖與驗證。
 
-Cloudflare Worker 的設定在 `deploy/cloudflare/`。好行以 `pnpm exec nuxt generate` 產生靜態前端，好行管理以 `npm run build` 產生管理端。Worker 讀取建置產物，並經 Cloudflare Tunnel 將 `/api/*` 代理至 FastAPI。室內編輯、上傳和建圖端點原本供本機管理端使用，FastAPI 目前沒有使用者驗證。公開部署前須確認代理只讓一般使用者呼叫導航所需 API，並限制管理功能的存取。 [Worker 代理](deploy/cloudflare/worker/index.js) · [室內管理端點](backend/rollx/indoor.py)
+OSM 資料依 [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) 使用，地圖需保留 [OSM 署名](https://www.openstreetmap.org/copyright) 及底圖要求的署名。使用 OSM 公共 raster 圖磚時，亦須遵守其 [圖磚使用政策](https://operations.osmfoundation.org/policies/tiles/)。各程式套件、政府資料及場館原始平面圖的授權分別適用，開源套件授權與資料授權應分開檢視。競賽符合性仍應依實際競賽文件逐項確認，本文件未將其列為已完成查證的事項。
 
-## 驗證與效能
+# <br><br>**AI Usage Declaration**
 
-- 好行前端在 `frontend/` 執行 `pnpm typecheck` 或 `pnpm build`。室內管理端和定位測試在 `indoor/indoor-nav/` 執行 `npm test` 或 `npm run build`。
-- 後端在 `backend/` 的 venv 安裝 `pytest` 後執行 `python -m pytest`。室外算路可使用上方的芝山站測試指令。
-- 既有圖層優先改善項目是首次開圖及平移後的載入時間。現行程式會按縮放層級限制圖層請求，平移後仍依視窗查詢。下一步是讓相鄰視窗重用資料，再用手機 Safari 比較請求次數、傳輸量與圖層穩定時間。
+## **1. AI 模型**
+
+- ChatGPT：GPT-6.1 Astra / Sol
+- Claude：Claude Opus 5.5
+
+## **2. 使用範圍**
+
+### **程式碼產生**
+
+### **文字生成**
+
+AI 協助整理開發規格、技術說明、README、介面文案與英文語系文字。道路、地址及設施名稱以資料來源為準，英文介面仍可能保留中文來源名稱。
+
+## **3. AI 產生內容如何被驗證或修改**
+
+本文件以現有專案 README、套件設定、前端整合設定與功能資料整理，並將限制及待確認項目分開說明。程式與文案可透過下列方式持續驗證。
+
+- **程式檢查** 執行前端型別檢查、建置、室內測試及後端測試。
+- **路線比對** 使用相同起終點比較三種模式，檢查候選、限制、評分、地圖幾何與導航指令的一致性。
+- **介面測試** 在不同螢幕寬度及中英文介面操作搜尋、路線選擇、導航與室內功能。
+- **場域驗證** 比對人行道、坡段、穿越道及室內設施，確認實際通行條件與定位表現。
+
+上述項目為驗證方法；本聲明不代表每個版本都已完成全部實機與現場測試。
