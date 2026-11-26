@@ -1,4 +1,4 @@
-# HowGo 好行
+# HowGo（好行）
 
 HowGo 是以通用與包容設計為目標的臺北步行導航。室外可比較一般步行、平衡和無障礙路線。室內涵蓋臺北市立大學天母體育館 1F、2F，可導航到電梯、廁所及其他館內地點。
 
@@ -6,22 +6,14 @@ HowGo 是以通用與包容設計為目標的臺北步行導航。室外可比�
 
 | 區塊 | 實作 |
 | --- | --- |
-| 好行 `frontend/` | Nuxt、Vue、MapLibre GL JS。進入時先選一般模式或友善模式。一般模式提供地圖探索、圖層篩選、起終點搜尋、三種路線比較和即時導航。友善模式以目前位置規劃輪椅路線，提供大字卡和地圖兩種導航畫面。 |
+| 好行 `frontend/` | Nuxt、Vue、MapLibre GL JS。一般模式提供地圖探索、起終點搜尋、三種路線比較和即時導航。無障礙模式以目前位置規劃輪椅路線，提供大箭頭和地圖兩種導航畫面。 |
 | FastAPI `backend/` | 室外地點搜尋、設施查詢、候選路線評估，以及 `/v1/indoor` 場館資料與管理 API。室外資料來自本機 SQLite 和快照，室內資料來自 `indoor/mapdata/`。 |
 | 路由服務 `.ors/` | Java openrouteservice（ORS）依 OSM 路網產生室外候選，FastAPI 以本機圖資篩選與排序。 |
 | 室內導航 `indoor/indoor-nav/src/` | 從室外一般模式點選場館標記進入，也可使用 `?indoor=tianmu`。Nuxt 延後載入室內介面，室內在裝置上依場館路網獨立算路。室內外目前共用入口，跨室內外的連續路線尚未實作。 |
 | 好行管理 `indoor/indoor-nav/` | 獨立的 Vite 管理端，提供平面圖校準、POI 編輯、場勘建圖及定位驗證。建置入口為 `admin.html` 和 `survey.html`。 |
 | 部署 `deploy/cloudflare/` | 好行與好行管理各有 Worker 設定，提供靜態前端與同網域 `/api/*` 代理。 |
 
-室外使用 OpenFreeMap 向量底圖。一般模式使用調整過的 Positron，友善模式使用 Liberty，標籤放大 1.3 倍。若向量樣式或圖磚索引載入失敗，改用 OSM raster。在台北通 WebView 內，單次定位預設走台北通的 `location` 橋接（由 App 申請定位權限），導航中的連續定位優先使用瀏覽器位置串流，取不到時改為輪詢橋接。一般瀏覽器使用安全來源的 Geolocation API。大眾運輸路線尚未實作。 [底圖實作](frontend/app/utils/basemap.ts) · [定位來源](frontend/app/utils/geolocation.ts)
-
-### 介面
-
-- **色彩。** 全站色票與語意權杖集中在 [`main.css`](frontend/app/assets/main.css) 的 `:root`，MapLibre 圖層的 paint 屬性從 [`palette.ts`](frontend/app/utils/palette.ts) 讀同一組 HEX。品牌主色為 Primary / 500 `#5AB4C5`，新增顏色先加到這兩處再引用。
-- **圖層徽章。** 每個設施分類有一枚圓形徽章（[`public/icons/map-layers/`](frontend/public/icons/map-layers/)）。選取某個標記時，它保留完整徽章，其他標記縮成分類色圓點。點地圖空白處會放一枚紅色選取點。資訊框標題與後方圖示會在 Google 地圖開啟該座標。在台北通內經 `launch_map` 橋接交給系統開啟。
-- **人行道配色。** `GET /v1/walkways` 為實體人行道回傳 `grade`（`comfortable`／`limited`／`blocked`，同算路的寬度分級）。地圖依此以主色、黃、紅填色，缺值時用主色。
-- **路線預覽。** 規劃頁同一位置的坡道徽章以碰撞處理只畫一枚。路線細節收合時，底部面板高度依內容縮合。
-- **即時導航。** 目前步驟（或左右滑動預覽的步驟）以主色粗線、深色描邊、白色方向箭頭和終點圓環呈現，鏡頭框住整段。其他路段以 35% 淡線呈現。轉彎步驟另含前後 30 公尺，短於 25 公尺的步驟含前後 20 公尺。導航中隱藏人行道色帶、通行空間面、行穿線與替代路線等規劃用圖層。目前步驟附近的設施顯示完整徽章，其他沿線設施為 55% 的分類色圓點。目前位置為白邊深青圓點、半透明外圈，裝置提供羅盤方向時顯示方向扇形。 [導航畫面](frontend/app/app.vue)
+室外使用 OpenFreeMap 向量底圖。一般模式使用調整過的 Positron，無障礙模式使用 Liberty，標籤放大 1.3 倍。若向量樣式或圖磚索引載入失敗，改用 OSM raster。室外定位優先使用安全來源的瀏覽器定位，也支援台北通 WebView 的位置橋接。大眾運輸路線尚未實作。 [底圖實作](frontend/app/utils/basemap.ts) · [定位來源](frontend/app/utils/geolocation.ts)
 
 ## 本機啟動
 
@@ -36,7 +28,7 @@ cd indoor/indoor-nav
 npm ci
 ```
 
-### 2. 啟動 FastAPI
+**3. 建立 Python 環境、匯入快照並啟動 API**
 
 ```sh
 cd backend
@@ -48,11 +40,12 @@ python -m rollx.places
 python -m uvicorn rollx.main:app --reload --port 8000
 ```
 
-兩支匯入指令從本機快照重建 SQLite。已有相容資料庫時可略過。若從舊版沿用 `places.sqlite`，或「天母」「天母體育館」等查詢回傳 `PLACES_UNAVAILABLE`，在 `backend/` 執行 `.venv/bin/python -m rollx.places`。它會建立新版 FTS5 雙字索引，在重建成功後替換原本的資料庫。 [FastAPI 文件](http://127.0.0.1:8000/docs)
+匯入指令使用 `backend/data/source/` 的本機資料快照。已建立相容資料庫時可略過重建。地點搜尋若出現 `PLACES_UNAVAILABLE` 或舊版索引不相容，可在 backend 的 venv 重新執行 `python -m rollx.places`，建立新版搜尋資料庫。
 
-### 3. 啟動室外路由服務
 
-本機配置使用 ORS 9.10.0 和 Java 21。`.ors/` 未納入 Git，新環境需要自行準備 ORS JAR 和涵蓋臺北的 OSM PBF。以下為 `.ors/ors-config.yml` 的路網設定。
+**4. 準備並啟動 ORS**
+
+`.ors/` 未納入 Git，需要另行準備 ORS 9.10.0 JAR、Java 21，以及涵蓋服務範圍的 OSM PBF。先建立 `.ors/ors-config.yml`，並將檔案路徑對應到實際資料。
 
 ```yaml
 ors:
@@ -71,20 +64,15 @@ ors:
         enabled: true
 ```
 
-先執行 `curl http://127.0.0.1:8080/ors/v2/health`。若已回傳 `{"status":"ready"}`，可以直接使用正在執行的 ORS。
-
-這台開發電腦的 Java 位於 `.ors/java/`。需要啟動 ORS 時，從 HowGo 專案根目錄執行：
-
 ```sh
 cd .ors
-./java/bin/java -Xmx2g -jar ors.jar --server.address=127.0.0.1 --server.port=8080
+java -Xmx2g -jar ors.jar --server.address=127.0.0.1 --server.port=8080
 ```
 
-其他開發環境若已將相容的 Java 加到 PATH，可將 `./java/bin/java` 換成 `java`。首次啟動會建置 `graphs/`。在另一個終端機重查健康狀態，等到回傳 `{"status":"ready"}` 再測試室外算路。也可用 `ORS_BASE_URL` 指向另一個已啟用兩種 profile 的 ORS。室內算路可單獨運作。 [ORS 自架說明](https://giscience.github.io/openrouteservice/run-instance/)
 
-### 4. 啟動兩個前端
+也可透過 `ORS_BASE_URL` 指向已啟用兩種 profile 的 ORS。室內路徑規劃不依賴 ORS。完整設定可參考 [ORS 自架文件](https://giscience.github.io/openrouteservice/run-instance/)。
 
-好行主程式：
+**5. 啟動 HowGo 主介面**
 
 ```sh
 cd frontend
@@ -92,90 +80,97 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-從另一個終端機開啟管理端：
+**6. 啟動場館管理端（需要管理／建圖時）**
 
 ```sh
 cd indoor/indoor-nav
 npm run dev
 ```
 
-- [好行](http://localhost:3000/)
-- [天母體育館室內導航](http://localhost:3000/?indoor=tianmu)
-- [好行管理](http://localhost:5174/admin.html)
+### **需要設定的環境參數（.env example）**
 
-兩個開發前端的 `/api/*` 都代理到 FastAPI。用手機連本機時，可用 `pnpm dev --host 0.0.0.0` 啟動 Nuxt，再用手機開啟開發電腦的區網 IP。一般瀏覽器的定位需要 HTTPS，台北通 WebView 可使用橋接。若要測試台北通 WebView，在台北通專案設定 `HOWGO_URL` 和 `HOWGO_ADMIN_URL`。室內即時定位需台北通的感測器橋接。 [室內啟動與台北通設定](indoor/README.md#台北通整合)
+主前端可在 `frontend/.env` 設定下列參數。
 
-| 環境變數 | 用途 |
-| --- | --- |
-| `ORS_BASE_URL`、`ORS_API_KEY` | 室外路由位址（預設 `http://127.0.0.1:8080/ors`）及必要時的後端金鑰 |
-| `ROLLX_API_TARGET`、`HOWGO_API_TARGET` | 分別設定 Nuxt、Vite 管理端的 FastAPI 代理位址（預設 `http://127.0.0.1:8000`） |
-| `ROLLX_DB_PATH` | 室外設施 SQLite 路徑（預設 `backend/data/facilities.sqlite`） |
-| `HOWGO_INDOOR_MAPDATA`、`HOWGO_INDOOR_PYTHON` | 室內資料根目錄（預設 `indoor/mapdata`）及管理端建圖使用的 Python（預設 FastAPI 的 Python） |
-| `NUXT_PUBLIC_TILE_URL` | 向量底圖初始化失敗時使用的 raster URL，含 `{z}/{x}/{y}`，預設為 OSM 公共圖磚 |
-
-## 室外路線演算法
-
-### 1. 取得候選路線
-
-起終點可由本機搜尋、地圖選點或目前位置取得，送往後端的座標格式為 `[經度, 緯度]`。ORS 起初在每個選點的 50 公尺半徑內尋找路網接點，若某端接不上，該端可擴大到 120 公尺重試。原選點與接點的直線距離超過 50 公尺時，介面會另行標示。距離與時間都以路網接點間的 ORS 結果為準，接點與原選點間的路程未計入。
-
-| 模式 | ORS 候選 | 通行限制 |
-| --- | --- | --- |
-| 最短距離 `fastest` | 一般步行 `foot-walking`，同時比較 `fastest` 與 `shortest` 權重產生的候選 | 一般步行，可經過階梯與坡段 |
-| 平衡 `balanced` | `foot-walking`，以 `recommended` 請求替代路線（`target_count=3`），再補一條 `shortest` 候選 | 排除比對到的過窄人行道、已知坡度達 8% 或標記為 `steep` 的坡段。最多接受一段 8 公尺以內的階梯，階梯資料缺失的候選會被淘汰 |
-| 無障礙 `accessible` | `wheelchair`，以 `recommended` 請求替代路線（`target_count=3`） | ORS 設定避開階梯、最大坡度參數 4%、最小寬度 0.9 公尺。後端另排除比對到的階梯、過窄人行道與已知坡段 |
-
-`shortest` 候選以相同的端點與當輪避讓條件查詢，依路線座標去除重複結果。替代路線數量取決於 ORS，替代請求失敗時會改查單條路線。`waytype=8` 用來識別階梯，連續階梯區間會合併。8 公尺是短階梯的專案判定值，用來近似一層樓梯。
-
-### 2. 比對人行道與坡度
-
-| 市府快照中的人行道寬度 | HowGo 通行分級 |
-| --- | --- |
-| 1.5 公尺以上 | 可行 |
-| 0.9 公尺以上、未滿 1.5 公尺 | 勉強可行 |
-| 未滿 0.9 公尺 | 不可行 |
-| 缺少寬度或比對不到人行道 | 待確認 |
-
-分級以目前人行道快照的寬度數值推估，尚未涵蓋障礙物、施工、路面狀態或現場淨寬。可行與勉強可行的覆蓋長度會合併路線實際經過的人行道與側別指引有證據的路段。同一路段若同時有兩級證據，以可行計算。路線與過窄人行道的單一面重疊至少 3 公尺時，平衡和無障礙會淘汰該候選，側別指引也會排除已知過窄的人行道。
-
-坡度證據來自市府快照的正坡度點位或面，以及本機 OSM 的 `incline` 線段。避讓只採用與路線有幾何證據的坡段，包括 1.5 公尺內的坡度點、方向一致且確實重疊的坡度線，或路線穿入的坡度面。附近出入口的坡度點可以標在地圖上，直行是否經過斜面仍須看實際路線。市府的 `-1` 代表缺值，本機 ORS 未啟用高程建模，4% 是路由設定，未測路段的坡度待確認。
-
-### 3. 評分與重算
-
-分數越低越優先，同分時取 ORS 預估秒數較低者。令 `d` 為候選距離（公尺），`d_min` 為該輪全部候選的最短距離，`G` 和 `F` 分別為可行、勉強可行的覆蓋比例，`S` 為階梯總長度（公尺），`I` 為比對到的已知坡段筆數。
-
-| 模式 | 目前評分 |
-| --- | --- |
-| 最短距離 | `ORS 預估秒數`。介面名稱為最短距離，實際依候選時間排序 |
-| 平衡 | `d / d_min - 0.22 × G - 0.10 × F + 0.015 × S + 0.04 × I` |
-| 無障礙 | `d - 0.55 × G - 0.20 × F`。目前網頁以距離為主，人行道覆蓋最多扣 0.55 分，影響不到 1 公尺的距離分數 |
-
-無障礙的舊 API 呼叫仍可傳 `preferences`。指定時，公式中的 `d` 改為 `d / d_min - 0.45 × 所選品質指標的平均`。品質指標分別是實際人行道覆蓋比例、以每公里 12 處為滿分的近路線坡道密度，以及以每公里 5 處為滿分的行穿道密度。密度計算的分母至少為 150 公尺。網頁端直接使用三種模式。
-
-平衡候選都未通過且有階梯限制問題時，會再查一次全面避開階梯的路線。平衡和無障礙若仍沒有合格候選，會取被淘汰路線中預估最快的一條，把比對到的障礙加入避讓多邊形，最多重算兩輪。無法找到合格結果時，個別模式回傳原因，其他可用模式仍可選。不同模式可以選中同一條路線。時間沿用各 ORS profile 的估算。
-
-**驗證案例。** 既有本機驗證以芝山捷運站一號出口到天母棒球場測試，最短距離與平衡同為 2.19 公里、約 26 分鐘，無障礙約 2.35 公里、30 分鐘。三種模式的路網終點都距原選點約 72 公尺。
-
-```sh
-curl -sS http://127.0.0.1:8000/v1/route-options \
-  -H 'Content-Type: application/json' \
-  -d '{"start":[121.52285,25.100628],"end":[121.533413,25.114081]}'
+```dotenv
+ROLLX_API_TARGET=http://127.0.0.1:8000
+NUXT_PUBLIC_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
 ```
 
-室外指令按路線順序列出轉向、直行、行人穿越道與階梯。人行道和騎樓的左右側是依行進方向與圖資推估。接點無障礙坡道與沿線坡度量測點分開顯示。圖資缺漏或現場臨時障礙仍需現場確認。
+後端使用程序環境變數，以下以終端機設定為例，設定後再啟動 Uvicorn。
 
-## 室內導航、定位與建圖
+```sh
+export ORS_BASE_URL='http://127.0.0.1:8080/ors'
+```
 
-- 場館資料位於 `indoor/mapdata/data/tianmu/`。GeoJSON 使用場館內的公尺座標，前端根據 `venue.json` 的原點與方位轉成經緯度。
-- 前端用 Dijkstra 依樓層路網算路。無障礙選項只走標為可通行的路段，跨樓層走電梯。導航可依定位進度更新指令，偏離時重新規劃。
-- 即時定位在裝置端融合計步、地磁與可用的 Wi‑Fi 指紋，並以氣壓計和 Wi‑Fi 判斷樓層。缺少 Wi‑Fi 掃描能力的裝置可由已知起點使用計步、地磁及場館平面約束。
-- 管理端可上傳場勘紀錄、建置 Wi‑Fi 指紋與地磁地圖，也可錄製和回放定位驗證資料。FastAPI 將舊版場館資料備份至 `mapdata/history/`。
+管理端如需改用其他後端位址，在啟動 Vite 的終端機設定。
 
-[室內操作與建圖](indoor/README.md) · [場館圖資格式](indoor/mapdata/SCHEMA.md) · [場勘與定位資料格式](indoor/mapdata/SURVEY_SCHEMA.md) · [室內管理 API](indoor/mapdata/ADMIN_API.md)
+```sh
+export HOWGO_API_TARGET='http://127.0.0.1:8000'
+```
 
-## 資料來源
+| 參數 | 說明 |
+| --- | --- |
+| `ROLLX_API_TARGET` | Nuxt 開發代理的 FastAPI 位址 |
+| `NUXT_PUBLIC_TILE_URL` | 向量底圖初始化失敗時的 raster 備援圖磚 |
+| `ORS_BASE_URL` | 後端連線的 ORS 根路徑，預設包含 `/ors` |
+| `ORS_API_KEY` | 視 ORS 服務需求設定，僅供後端使用 |
+| `ROLLX_DB_PATH` | 設施 SQLite 路徑；地點搜尋資料庫另行建立 |
+| `HOWGO_INDOOR_MAPDATA` | 室內場館資料根目錄 |
+| `HOWGO_INDOOR_PYTHON` | 管理建圖工作使用的 Python 執行檔 |
+| `HOWGO_API_TARGET` | Vite 管理端開發代理的 FastAPI 位址 |
 
-| 資料集或來源 | 提供者 | HowGo 的用途 |
+後端參數請以環境變數注入，單獨建立 `.env` 檔不代表會自動讀取。瀏覽器定位需要使用者授權及安全來源，手機區網 HTTP 測試可能無法定位，請使用 HTTPS 或支援定位橋接的台北通 WebView。室內即時感測定位需原生橋接；iOS 的 Wi-Fi 掃描能力受限，需要搭配已知／手動起點及可用感測器。
+
+## **4. 功能說明 / Features**
+
+| 功能編號 | 功能名稱 | 功能說明 | 使用資料／技術 |
+| --- | --- | --- | --- |
+| F01 | 地圖探索與圖層篩選 | 以地圖為主，依需求顯示設施及通行空間，點選查看資料 | MapLibre、OpenFreeMap、市府快照 |
+| F02 | 起終點設定 | 支援目前位置、地圖選點、本機地點與地址搜尋 | 瀏覽器／原生定位橋接、SQLite FTS5 |
+| F03 | 三種路線比較 | 比較最短距離、平衡與無障礙路線的時間及距離 | ORS、FastAPI、本機通行資料 |
+| F04 | 室外導航 | 顯示直行、轉彎及有資料依據的穿越道、側別和設施指引 | ORS 幾何、指令整併、空間比對 |
+| F05 | 路線與設施高亮 | 依選取路段區分路線、人行道面及相關坡道等設施 | GeoJSON、MapLibre 圖層 |
+| F06 | 身障停車格查詢 | 顯示身心障礙專用格位，可設為起點或終點 | 臺北市路邊停車格位快照 |
+| F07 | 室內地點與跨樓層導航 | 瀏覽館內設施、前往二樓藍區等目的地，無障礙跨層使用電梯 | 團隊場館圖資、Dijkstra |
+| F08 | 室內感測定位 | 融合可用的計步、地磁、Wi-Fi 與氣壓資料，更新進度 | 裝置端定位、台北通感測橋接 |
+| F09 | 場館管理及定位驗證 | 平面圖與 POI 建置、Wi-Fi／地磁建圖、定位效果驗證 | Vite 管理端、FastAPI、Python 工具 |
+| F10 | 友善模式與雙語 | 高對比、大字體及簡化流程；主要使用者介面支援中英文 | Vue 語系機制、語言偏好保存 |
+
+圖上的人行道以紅色、黃色及藍綠色，分別呈現不可行、勉強可行及可行的通行分級，協助使用者快速辨識差異。**目前分級由 HowGo 依來源寬度門檻推估，不等同市府對所有使用者的通行認證**；具體門檻與缺值處理如下。
+
+### **三種路線如何選擇**
+
+ORS 負責依 OSM 路網產生候選；**市府資料的後置篩選與評分由 HowGo 的 FastAPI 負責**。ORS 不會自動理解專案本機資料庫中的所有設施與通行分級。
+
+| 模式 | ORS 候選來源 | HowGo 的限制與選擇方式 |
+| --- | --- | --- |
+| 最短距離 `fastest` | `foot-walking`，比較 `fastest` 與補充的 `shortest` 候選 | 可經階梯及坡段，以 ORS 預估秒數排序 |
+| 平衡 `balanced` | `foot-walking` 的 `recommended` 替代候選，再補 `shortest` | 排除過窄人行道、已知坡度達 8% 或 `steep` 坡段；最多接受一段總長不超過 8 公尺的階梯，缺少階梯資料的候選淘汰；通過後依繞路、人行道、階梯與坡段評分 |
+| 無障礙 `accessible` | `wheelchair` 的 `recommended` 替代候選 | ORS 設定避開階梯、最大坡度 4%、最小寬度 0.9 公尺；後端另排除已知階梯、過窄人行道及與路線實際比對到的已知坡段 |
+
+「一段 8 公尺以內的階梯」是目前用來近似少量階梯的專案門檻，並非已確認的一層樓。人行道依來源寬度分為 **可行（≥ 1.5 公尺）、勉強可行（≥ 0.9 且 < 1.5 公尺）、不可行（< 0.9 公尺）**，缺少寬度或未比對到則為待確認。這項分級未包含臨時障礙或現場有效淨寬。
+
+目前的候選評分如下，分數越低越優先，同分時比較 ORS 預估時間。
+
+| 模式 | 評分公式 |
+| --- | --- |
+| 最短距離 | `ORS 預估秒數` |
+| 平衡 | `d / d_min − 0.22 × G − 0.10 × F + 0.015 × S + 0.04 × I` |
+| 無障礙（目前網頁預設） | `d − 0.55 × G − 0.20 × F` |
+
+`d` 為候選距離（公尺），`d_min` 為該輪候選最短距離，`G`、`F` 分別為可行、勉強可行的人行道覆蓋比例（0～1），`S` 為階梯總長（公尺），`I` 為比對到的已知坡段筆數。舊 API 仍保留可選的 `preferences` 評分分支，網頁目前直接使用三種模式。
+
+**目前無障礙模式通過限制後，排序仍以距離為主。** 覆蓋比例最多折抵 0.55 分，其影響不到 1 公尺的距離分數，因此尚不能宣稱會積極繞行以取得更多人行道覆蓋。
+
+平衡模式若因階梯限制找不到合格候選，會再嘗試全面避開階梯。平衡與無障礙仍無合格結果時，後端會將被淘汰候選比對到的障礙轉成避讓多邊形，累積條件後最多重算兩輪。有合格候選時直接排序選擇，尚未持續搜尋所有可能的更佳繞路。個別模式失敗不影響其他可用模式。
+
+原始選點先在 50 公尺內尋找路網接點，失敗端點可擴大到 120 公尺重試；偏移超過 50 公尺會另行標示。**時間與距離以路網接點間的結果計算，原選點到接點的接近路程未計入，也不代表兩者之間已有可通行路徑。**
+
+### **使用資料集與來源**
+
+本服務整合市府設施資料、OSM 路網與搜尋資料，以及團隊建置的室內場館資料，涵蓋超過 10 種通行相關圖資。下表列出 7 項資料來源及另行使用的底圖服務；其中室內場館圖資為團隊建置，未將它直接列為政府開放資料集。
+
+| 資料集／來源 | 提供者 | 使用方式 |
 | --- | --- | --- |
 | [輪行臺北設施資料](https://data.taipei/dataset/detail?id=2b58f15a-dec6-4b9d-91be-4eaccfda5ae7) | 臺北市政府交通局 | 斜坡道、無障礙電梯、公園、出入口、友善店家、廁所、停車與大眾運輸站點，以及人行道、標線型人行道、行穿線和坡度紀錄。2026-11-07 的無障礙廁所快照沒有點位。 |
 | [臺北捷運車站出入口無障礙電梯、無障礙坡道 GPS 座標](https://data.taipei/dataset/detail?id=0a3bb422-9eb5-459b-a9d4-138456516183) | 臺北大眾捷運股份有限公司 | 電梯歸入「身障設施」，坡道歸入「出入口／坡道」。匯入時與輪行臺北快照合併。 |
@@ -204,13 +199,13 @@ curl -sS http://127.0.0.1:8000/v1/route-options \
 | `POST /v1/route-options` | 以同一起終點比較三種室外路線，每種模式各自回傳結果或錯誤。 |
 | `POST /v1/routes` | 查單一模式，省略 `mode` 時使用 `accessible`。 |
 | `GET /v1/places`、`/v1/meta` | 本機地點搜尋，以及資料類型和快照狀態。 |
-| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 依地圖視窗範圍取得室外圖層。`/v1/walkways` 的實體人行道含 `grade` 通行分級。 |
+| `GET /v1/facilities`、`/v1/walkways`、`/v1/slopes` | 依地圖視窗範圍取得室外圖層。 |
 | `GET /v1/indoor/venues`、`/v1/indoor/data/{venue}/{path}` | 場館清單與室內圖資。 |
 
-Cloudflare Worker 的設定在 `deploy/cloudflare/`。好行以 `pnpm exec nuxt generate` 產生靜態前端，好行管理以 `npm run build` 產生管理端。部署好行時在 `deploy/cloudflare/howgo/` 執行 `npm run deploy`，它以 `cf` CLI 上傳 `frontend/.output/public` 並帶入 `../secrets.env` 的代理金鑰。Worker 已存有金鑰時，可改用 `npx cf deploy --message "<說明>"`。Worker 讀取建置產物，並經 Cloudflare Tunnel 將 `/api/*` 代理至 FastAPI。室內編輯、上傳和建圖端點原本供本機管理端使用，FastAPI 目前沒有使用者驗證。公開部署前須確認代理只讓一般使用者呼叫導航所需 API，並限制管理功能的存取。 [Worker 代理](deploy/cloudflare/worker/index.js) · [室內管理端點](backend/rollx/indoor.py)
+Cloudflare Worker 的設定在 `deploy/cloudflare/`。好行以 `pnpm exec nuxt generate` 產生靜態前端，好行管理以 `npm run build` 產生管理端。Worker 讀取建置產物，並經 Cloudflare Tunnel 將 `/api/*` 代理至 FastAPI。室內編輯、上傳和建圖端點原本供本機管理端使用，FastAPI 目前沒有使用者驗證。公開部署前須確認代理只讓一般使用者呼叫導航所需 API，並限制管理功能的存取。 [Worker 代理](deploy/cloudflare/worker/index.js) · [室內管理端點](backend/rollx/indoor.py)
 
 ## 驗證與效能
 
-- 好行前端在 `frontend/` 執行 `pnpm typecheck` 或 `pnpm build`。調整地圖或導航畫面時，可用 Playwright 開手機尺寸的無頭瀏覽器，授予定位後從開發伺服器走完「搜尋目的地 → 預覽路線 → 開始導航 → 鍵盤左右鍵切換步驟」截圖比對。室內管理端和定位測試在 `indoor/indoor-nav/` 執行 `npm test` 或 `npm run build`。
+- 好行前端在 `frontend/` 執行 `pnpm typecheck` 或 `pnpm build`。室內管理端和定位測試在 `indoor/indoor-nav/` 執行 `npm test` 或 `npm run build`。
 - 後端在 `backend/` 的 venv 安裝 `pytest` 後執行 `python -m pytest`。室外算路可使用上方的芝山站測試指令。
 - 既有圖層優先改善項目是首次開圖及平移後的載入時間。現行程式會按縮放層級限制圖層請求，平移後仍依視窗查詢。下一步是讓相鄰視窗重用資料，再用手機 Safari 比較請求次數、傳輸量與圖層穩定時間。
